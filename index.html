@@ -910,6 +910,103 @@
             }
         }
 
+        // Process Disease Import
+        async function processDiseaseImport(startRow, replaceExisting) {
+            const processedData = [];
+            const errors = [];
+            const duplicateCodes = new Set();
+            
+            for (let i = startRow; i < selectedFileData.length; i++) {
+                const row = selectedFileData[i];
+                const code = row[0] ? row[0].toString().trim() : '';
+                const name = row[1] ? row[1].toString().trim() : '';
+                
+                if (!code || !name) {
+                    if (code || name) {
+                        errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วน`);
+                    }
+                    continue;
+                }
+                
+                if (duplicateCodes.has(code)) {
+                    errors.push(`แถว ${i + 1}: รหัสโรค ${code} ซ้ำในไฟล์`);
+                    continue;
+                }
+                
+                duplicateCodes.add(code);
+                processedData.push({ code, name });
+            }
+            
+            if (processedData.length === 0) {
+                throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
+            }
+            
+            let existingDiseases = await loadFromFirebase('diseases');
+            if (!replaceExisting) {
+                const existingCodes = new Set(existingDiseases.map(d => d.code));
+                const duplicateExisting = processedData.filter(d => existingCodes.has(d.code));
+                
+                if (duplicateExisting.length > 0) {
+                    errors.push(`รหัสโรคที่มีข้อมูลแล้ว: ${duplicateExisting.map(d => d.code).join(', ')}`);
+                }
+                
+                const newData = processedData.filter(d => !existingCodes.has(d.code));
+                processedData.length = 0;
+                processedData.push(...newData);
+            }
+            
+            if (errors.length > 0) {
+                const errorMsg = `พบข้อผิดพลาด ${errors.length} รายการ:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`;
+                if (!confirm(`${errorMsg}\n\nต้องการดำเนินการต่อกับข้อมูลที่ถูกต้องหรือไม่?`)) {
+                    throw new Error('ยกเลิกการนำเข้าโดยผู้ใช้');
+                }
+            }
+            
+            if (processedData.length === 0) {
+                throw new Error('ไม่มีข้อมูลใหม่ที่จะนำเข้า');
+            }
+            
+            const finalData = replaceExisting ? processedData : [...existingDiseases, ...processedData];
+            await saveToFirebase('diseases', finalData);
+            
+            const message = replaceExisting 
+                ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
+                : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
+            
+            showNotification(message, 'success');
+        }
+
+        // Import diseases from Excel
+        async function importDiseases() {
+            showImportDialog('diseases', 2, processDiseaseImport);
+        }
+
+        // Download disease sample file
+        function downloadDiseaseSample() {
+            const headers = [['รหัสโรค', 'ชื่อโรค']];
+            const sampleData = [
+                ['01', 'อหิวาตกโรค'],
+                ['26', 'ไข้เลือดออก'],
+                ['66', 'อาหารเป็นพิษ']
+            ];
+            
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.aoa_to_sheet([...headers, ...sampleData]);
+            
+            // Set column widths
+            worksheet['!cols'] = [
+                { wch: 15 }, // รหัสโรค
+                { wch: 40 }  // ชื่อโรค
+            ];
+            
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'ข้อมูลโรค');
+            
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `ตัวอย่าง_รหัสโรคและชื่อโรค_${dateStr}.xlsx`;
+            
+            XLSX.writeFile(workbook, filename);
+        }
+
         async function loadFromFirebase(path) {
             try {
                 const { database, ref, get } = window.firebaseDB;
@@ -2481,6 +2578,18 @@
                                                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
                                             </svg>
                                             เพิ่มรายโรค
+                                        </button>
+                                        <button onclick="importDiseases()" class="btn-secondary text-sm ml-4">
+                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
+                                            </svg>
+                                            นำเข้า Excel
+                                        </button>
+                                        <button onclick="downloadDiseaseSample()" class="btn-white text-sm ml-4">
+                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"/>
+                                            </svg>
+                                            ดาวน์โหลดตัวอย่าง
                                         </button>
                                     </div>
                                 </td></tr>` :
