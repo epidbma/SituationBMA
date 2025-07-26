@@ -6057,7 +6057,7 @@
         }
 
         // Show preview of Excel data
-        function showPreview(data, dataType = 'diseases') {
+        function showPreview(data, dataType = 'agePopulation') {
             const skipFirstRow = document.getElementById('skipFirstRow').checked;
             const startRow = skipFirstRow ? 1 : 0;
             const previewData = data.slice(startRow, startRow + 5);
@@ -6067,10 +6067,9 @@
                 return;
             }
             
-            const isResponsible = dataType === 'responsible';
+            const isThailandPopulation = dataType === 'thailandPopulation';
             const isPopulation = dataType === 'population';
             const isAgePopulation = dataType === 'agePopulation';
-            const isThailandPopulation = dataType === 'thailandPopulation';
             const previewTable = document.getElementById('previewTable');
             
             if (isThailandPopulation) {
@@ -6138,50 +6137,7 @@
                         </tbody>
                     </table>
                 `;
-            } else if (isResponsible) {
-                previewTable.innerHTML = `
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">รหัสโรค</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ผู้รับผิดชอบ</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ตำแหน่ง</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ผู้ตรวจทาน</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ตำแหน่งผู้ตรวจทาน</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            ${previewData.map(row => `
-                                <tr>
-                                    <td class="px-4 py-2 text-sm text-gray-900">${row[0] || '-'}</td>
-                                    <td class="px-4 py-2 text-sm text-gray-900">${row[1] || '-'}</td>
-                                    <td class="px-4 py-2 text-sm text-gray-900">${row[2] || '-'}</td>
-                                    <td class="px-4 py-2 text-sm text-gray-900">${row[3] || '-'}</td>
-                                    <td class="px-4 py-2 text-sm text-gray-900">${row[4] || '-'}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } else {
-                previewTable.innerHTML = `
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">รหัสโรค</th>
-                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">ชื่อโรค</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            ${previewData.map(row => `
-                                <tr>
-                                    <td class="px-4 py-2 text-sm text-gray-900">${row[0] || '-'}</td>
-                                    <td class="px-4 py-2 text-sm text-gray-900">${row[1] || '-'}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
+            }
             }
             
             // Show summary
@@ -6206,19 +6162,6 @@
                     row[0] && row[0].toString().trim() && // ชื่อเขต
                     row[1] && !isNaN(Number(row[1])) && Number(row[1]) >= 0 && // ประชากรชาย
                     row[2] && !isNaN(Number(row[2])) && Number(row[2]) >= 0    // ประชากรหญิง
-                ).length;
-            } else if (isResponsible) {
-                validRows = data.slice(startRow).filter(row => 
-                    row[0] && row[0].toString().trim() && // รหัสโรค
-                    row[1] && row[1].toString().trim() && // ผู้รับผิดชอบ
-                    row[2] && row[2].toString().trim() && // ตำแหน่งผู้รับผิดชอบ
-                    row[3] && row[3].toString().trim() && // ผู้ตรวจทาน
-                    row[4] && row[4].toString().trim()    // ตำแหน่งผู้ตรวจทาน
-                ).length;
-            } else {
-                validRows = data.slice(startRow).filter(row => 
-                    row[0] && row[0].toString().trim() && 
-                    row[1] && row[1].toString().trim()
                 ).length;
             }
             
