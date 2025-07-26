@@ -4852,16 +4852,22 @@
                                             <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">A</th>
                                             <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">B</th>
                                             <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">C</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">D</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">E</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white">
                                         <tr class="bg-yellow-50">
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ลำดับ</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">เขต</td>
-                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">จำนวนประชากรชาย</td>
-                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">จำนวนประชากรหญิง</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">จำนวนประชากร</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ชาย</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">หญิง</td>
                                         </tr>
                                         <tr>
+                                            <td class="px-3 py-2 border border-gray-300">1</td>
                                             <td class="px-3 py-2 border border-gray-300">พระนคร</td>
+                                            <td class="px-3 py-2 border border-gray-300">31500</td>
                                             <td class="px-3 py-2 border border-gray-300">15000</td>
                                             <td class="px-3 py-2 border border-gray-300">16500</td>
                                         </tr>
@@ -4966,12 +4972,12 @@
         // Download population example file
         function downloadPopulationExampleFile() {
             const data = [
-                ['เขต', 'จำนวนประชากรชาย', 'จำนวนประชากรหญิง'],
-                ['พระนคร', 15000, 16500],
-                ['ดุสิต', 12000, 13000],
-                ['หนองจอก', 18000, 19500],
-                ['บางรัก', 9000, 9800],
-                ['บางเขน', 21000, 22500]
+                ['ลำดับ', 'เขต', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                ['1', 'พระนคร', 31500, 15000, 16500],
+                ['2', 'ดุสิต', 25000, 12000, 13000],
+                ['3', 'หนองจอก', 37500, 18000, 19500],
+                ['4', 'บางรัก', 18800, 9000, 9800],
+                ['5', 'บางเขน', 43500, 21000, 22500]
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
