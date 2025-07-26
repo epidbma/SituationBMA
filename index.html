@@ -29,6 +29,32 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+
+        // Check Firebase connection status
+        const connectedRef = ref(database, '.info/connected');
+        onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                console.log('🟢 Connected to Firebase');
+                const firebaseStatus = document.getElementById('firebaseStatus');
+                if (firebaseStatus) {
+                    firebaseStatus.className = 'mt-2 inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium';
+                    firebaseStatus.innerHTML = `
+                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                        🔥 เชื่อมต่อ Firebase (เอเชีย) แล้ว
+                    `;
+                }
+            } else {
+                console.log('🔴 Disconnected from Firebase');
+                const firebaseStatus = document.getElementById('firebaseStatus');
+                if (firebaseStatus) {
+                    firebaseStatus.className = 'mt-2 inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium';
+                    firebaseStatus.innerHTML = `
+                        <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                        ❌ ขาดการเชื่อมต่อ Firebase
+                    `;
+                }
+            }
+        });
         
         // Make Firebase functions globally available
         window.firebaseDB = {
@@ -898,21 +924,41 @@
         // Firebase data management functions
         async function saveToFirebase(path, data) {
             try {
+                if (!window.firebaseDB) {
+                    throw new Error('Firebase ยังไม่พร้อมใช้งาน กรุณารอสักครู่แล้วลองใหม่อีกครั้ง');
+                }
+
                 const { database, ref, set } = window.firebaseDB;
+                console.log(`📤 Saving to Firebase: ${path}`);
+                
                 await set(ref(database, path), data);
-                console.log(`✅ Saved to Firebase: ${path}`);
+                console.log(`✅ บันทึกข้อมูลสำเร็จ: ${path}`);
                 return true;
             } catch (error) {
-                console.error(`❌ Error saving to Firebase (${path}):`, error);
+                const errorMsg = `❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล (${path}): ${error.message}`;
+                console.error(errorMsg);
+                alert(errorMsg);
+                
                 // Fallback to localStorage
-                localStorage.setItem(path.replace('/', '_'), JSON.stringify(data));
+                try {
+                    localStorage.setItem(path.replace('/', '_'), JSON.stringify(data));
+                    console.log('💾 บันทึกข้อมูลสำรองลงใน localStorage แล้ว');
+                } catch (e) {
+                    console.error('⚠️ ไม่สามารถบันทึกข้อมูลสำรองได้:', e);
+                }
                 return false;
             }
         }
 
         async function loadFromFirebase(path) {
             try {
+                if (!window.firebaseDB) {
+                    throw new Error('Firebase ยังไม่พร้อมใช้งาน กรุณารอสักครู่แล้วลองใหม่อีกครั้ง');
+                }
+
                 const { database, ref, get } = window.firebaseDB;
+                console.log(`📥 Loading from Firebase: ${path}`);
+                
                 const snapshot = await get(ref(database, path));
                 if (snapshot.exists()) {
                     const data = snapshot.val();
@@ -927,7 +973,9 @@
                         console.log(`🔄 Converted object to array: ${arrayData.length} items`);
                         return arrayData;
                     } else {
-                        console.log(`⚠️ Data format unexpected for ${path}:`, typeof data);
+                        const errorMsg = `⚠️ รูปแบบข้อมูลไม่ถูกต้องสำหรับ ${path}: ${typeof data}`;
+                        console.error(errorMsg);
+                        alert(errorMsg);
                         return [];
                     }
                 } else {
