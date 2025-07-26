@@ -2409,7 +2409,7 @@
             }
             
             // Add import button for diseases, responsible, population, agePopulation, and thailandPopulation
-            if (type === 'population' || type === 'agePopulation' || type === 'thailandPopulation' || type === 'bangkokDistricts' || type === 'epidemicWeeks') {
+            if (type === 'agePopulation' || type === 'thailandPopulation' || type === 'bangkokDistricts' || type === 'epidemicWeeks') {
                 const importButton = document.createElement('button');
                 importButton.id = 'importExcelButton';
                 importButton.className = 'btn-secondary';
@@ -2675,17 +2675,7 @@
                                 <div class="text-2xl font-bold text-green-600">${totalPopulation.toLocaleString()}</div>
                             </div>
                         </div>
-                        <div class="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 rounded-lg p-3 max-w-md">
-                            <div class="flex items-start">
-                                <svg class="w-4 h-4 mr-2 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
-                                </svg>
-                                <div>
-                                    <strong>รูปแบบไฟล์ Excel:</strong><br>
-                                    A=เขต, B=ประชากรชาย, C=ประชากรหญิง
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
 
@@ -2706,7 +2696,7 @@
                                 `<tr><td colspan="6" class="px-6 py-20 text-center text-gray-500">
                                     <div class="text-6xl mb-4">🏙️</div>
                                     <p class="font-semibold text-xl text-gray-700 mb-2">ยังไม่มีข้อมูลประชากร</p>
-                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลประชากรหรือนำเข้าจากไฟล์ Excel</p>
+                                    <p class="text-gray-500 mb-4">กรุณาเพิ่มข้อมูลประชากร</p>
                                     <div class="flex justify-center space-x-4">
                                         <button onclick="addNewMasterData('population')" class="btn-primary text-sm">
                                             <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
@@ -2714,10 +2704,6 @@
                                             </svg>
                                             เพิ่มข้อมูลประชากร
                                         </button>
-                                        <button onclick="showImportExcelModal('population')" class="btn-secondary text-sm">
-                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
-                                            </svg>
                                             นำเข้า Excel
                                         </button>
                                     </div>
@@ -6372,8 +6358,6 @@
                     await processThailandPopulationImport(startRow, replaceExisting);
                 } else if (dataType === 'agePopulation') {
                     await processAgePopulationImport(startRow, replaceExisting);
-                } else if (dataType === 'population') {
-                    await processPopulationImport(startRow, replaceExisting);
                 } else if (dataType === 'bangkokDistricts') {
                     await processBangkokDistrictsImport(startRow, replaceExisting);
                 } else if (dataType === 'epidemicWeeks') {
@@ -6386,8 +6370,6 @@
                     await loadThailandPopulationTable();
                 } else if (dataType === 'agePopulation') {
                     await loadAgePopulationTable();
-                } else if (dataType === 'population') {
-                    await loadPopulationTable();
                 } else if (dataType === 'responsible') {
                     await loadResponsibleTable();
                 } else if (dataType === 'bangkokDistricts') {
@@ -6407,83 +6389,7 @@
 
 
 
-        // Process population import
-        async function processPopulationImport(startRow, replaceExisting) {
-            const processedData = [];
-            const errors = [];
-            const duplicateDistricts = new Set();
-            
-            for (let i = startRow; i < selectedFileData.length; i++) {
-                const row = selectedFileData[i];
-                const districtName = row[0] ? row[0].toString().trim() : '';
-                const malePopulation = row[1] ? Number(row[1]) : NaN;
-                const femalePopulation = row[2] ? Number(row[2]) : NaN;
-                
-                if (!districtName || isNaN(malePopulation) || isNaN(femalePopulation)) {
-                    if (districtName || !isNaN(malePopulation) || !isNaN(femalePopulation)) {
-                        errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วนหรือตัวเลขไม่ถูกต้อง`);
-                    }
-                    continue;
-                }
-                
-                // Validate positive numbers
-                if (malePopulation < 0 || femalePopulation < 0) {
-                    errors.push(`แถว ${i + 1}: ตัวเลขต้องเป็นค่าบวกเท่านั้น`);
-                    continue;
-                }
-                
-                if (duplicateDistricts.has(districtName)) {
-                    errors.push(`แถว ${i + 1}: ชื่อเขต "${districtName}" ซ้ำในไฟล์`);
-                    continue;
-                }
-                
-                duplicateDistricts.add(districtName);
-                processedData.push({
-                    district: districtName,
-                    malePopulation: malePopulation,
-                    femalePopulation: femalePopulation,
-                    totalPopulation: malePopulation + femalePopulation
-                });
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
-            }
-            
-            let existingPopulation = await loadFromFirebase('population');
-            if (!replaceExisting) {
-                const existingDistricts = new Set(existingPopulation.map(p => p.district));
-                const duplicateExisting = processedData.filter(p => existingDistricts.has(p.district));
-                
-                if (duplicateExisting.length > 0) {
-                    errors.push(`เขตที่มีข้อมูลแล้ว: ${duplicateExisting.map(p => p.district).join(', ')}`);
-                }
-                
-                const newData = processedData.filter(p => !existingDistricts.has(p.district));
-                processedData.length = 0;
-                processedData.push(...newData);
-            }
-            
-            if (errors.length > 0) {
-                const errorMsg = `พบข้อผิดพลาด ${errors.length} รายการ:\\n${errors.slice(0, 5).join('\\n')}${errors.length > 5 ? '\\n...' : ''}`;
-                if (!confirm(`${errorMsg}\\n\\nต้องการดำเนินการต่อกับข้อมูลที่ถูกต้องหรือไม่?`)) {
-                    throw new Error('ยกเลิกการนำเข้าโดยผู้ใช้');
-                }
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่มีข้อมูลใหม่ที่จะนำเข้า');
-            }
-            
-            const finalData = replaceExisting ? processedData : [...existingPopulation, ...processedData];
-            await saveToFirebase('population', finalData);
-            
-            const message = replaceExisting 
-                ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
-                : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
-            
-            showNotification(message, 'success');
-        }
+
 
         // Process age population import
         async function processAgePopulationImport(startRow, replaceExisting) {
