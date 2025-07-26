@@ -2408,22 +2408,7 @@
                 existingImportBtn.remove();
             }
             
-            // Add import button for diseases, responsible, population, agePopulation, and thailandPopulation
-            if (type === 'epidemicWeeks') {
-                const importButton = document.createElement('button');
-                importButton.id = 'importExcelButton';
-                importButton.className = 'btn-secondary';
-                importButton.innerHTML = `
-                    <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
-                    </svg>
-                    นำเข้า Excel
-                `;
-                importButton.onclick = () => showImportExcelModal(type);
-                
-                // Insert before the add button
-                buttonContainer.insertBefore(importButton, addButton);
-            }
+            // No import buttons - all Excel import functionality removed
             
             loadMasterDataDetail(type);
         }
@@ -6385,106 +6370,7 @@
 
 
 
-        // Process Epidemic Weeks import
-        async function processEpidemicWeeksImport(startRow, replaceExisting) {
-            const processedData = [];
-            const errors = [];
-            const duplicateWeeks = new Set();
-            
-            for (let i = startRow; i < selectedFileData.length; i++) {
-                const row = selectedFileData[i];
-                const year = row[0] ? Number(row[0]) : NaN;
-                const weekNumber = row[1] ? Number(row[1]) : NaN;
-                const startDate = row[2] ? row[2].toString().trim() : '';
-                const endDate = row[3] ? row[3].toString().trim() : '';
-                const note = row[4] ? row[4].toString().trim() : '';
-                
-                if (isNaN(year) || isNaN(weekNumber) || !startDate || !endDate) {
-                    if (year || weekNumber || startDate || endDate) {
-                        errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วน`);
-                    }
-                    continue;
-                }
-                
-                // Validate year and week number
-                if (year < 2500 || year > 2600) {
-                    errors.push(`แถว ${i + 1}: ปีต้องอยู่ระหว่าง 2500-2600`);
-                    continue;
-                }
-                
-                if (weekNumber < 1 || weekNumber > 53) {
-                    errors.push(`แถว ${i + 1}: สัปดาห์ที่ต้องอยู่ระหว่าง 1-53`);
-                    continue;
-                }
-                
-                // Validate dates
-                const startDateObj = new Date(startDate);
-                const endDateObj = new Date(endDate);
-                
-                if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
-                    errors.push(`แถว ${i + 1}: รูปแบบวันที่ไม่ถูกต้อง ต้องเป็น YYYY-MM-DD`);
-                    continue;
-                }
-                
-                if (endDateObj < startDateObj) {
-                    errors.push(`แถว ${i + 1}: วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่มต้น`);
-                    continue;
-                }
-                
-                const key = `${year}-${weekNumber}`;
-                if (duplicateWeeks.has(key)) {
-                    errors.push(`แถว ${i + 1}: ปีและสัปดาห์ที่ซ้ำในไฟล์`);
-                    continue;
-                }
-                
-                duplicateWeeks.add(key);
-                processedData.push({
-                    year: year.toString(),
-                    weekNumber: weekNumber,
-                    startDate,
-                    endDate,
-                    note
-                });
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
-            }
-            
-            let existingWeeks = await loadFromFirebase('epidemicWeeks');
-            if (!replaceExisting) {
-                const existingKeys = new Set(existingWeeks.map(w => `${w.year}-${w.weekNumber}`));
-                const duplicateExisting = processedData.filter(w => existingKeys.has(`${w.year}-${w.weekNumber}`));
-                
-                if (duplicateExisting.length > 0) {
-                    errors.push(`สัปดาห์ที่มีข้อมูลแล้ว: ${duplicateExisting.map(w => `ปี ${w.year} สัปดาห์ที่ ${w.weekNumber}`).join(', ')}`);
-                }
-                
-                const newData = processedData.filter(w => !existingKeys.has(`${w.year}-${w.weekNumber}`));
-                processedData.length = 0;
-                processedData.push(...newData);
-            }
-            
-            if (errors.length > 0) {
-                const errorMsg = `พบข้อผิดพลาด ${errors.length} รายการ:\\n${errors.slice(0, 5).join('\\n')}${errors.length > 5 ? '\\n...' : ''}`;
-                if (!confirm(`${errorMsg}\\n\\nต้องการดำเนินการต่อกับข้อมูลที่ถูกต้องหรือไม่?`)) {
-                    throw new Error('ยกเลิกการนำเข้าโดยผู้ใช้');
-                }
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่มีข้อมูลใหม่ที่จะนำเข้า');
-            }
-            
-            const finalData = replaceExisting ? processedData : [...existingWeeks, ...processedData];
-            await saveToFirebase('epidemicWeeks', finalData);
-            
-            const message = replaceExisting 
-                ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
-                : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
-            
-            showNotification(message, 'success');
-        }
+
 
 
 
