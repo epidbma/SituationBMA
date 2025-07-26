@@ -2413,12 +2413,16 @@
                 importButton.id = 'importExcelButton';
                 importButton.className = 'btn-secondary text-sm flex items-center ml-2';
                 importButton.onclick = () => {
-                    if (type === 'diseases') {
-                        showImportDiseaseModal();
-                    } else if (type === 'responsible') {
-                        showImportResponsibleModal();
-                    } else if (type === 'population') {
-                        showImportPopulationModal();
+                    switch (type) {
+                        case 'diseases':
+                            showImportDiseaseModal();
+                            break;
+                        case 'responsible':
+                            showImportResponsibleModal();
+                            break;
+                        case 'population':
+                            showImportPopulationModal();
+                            break;
                     }
                 };
                 importButton.innerHTML = `
@@ -4730,6 +4734,85 @@
             }
         }
 
+        // Save population data
+        async function savePopulationData(event, editIndex = null) {
+            event.preventDefault();
+            
+            const district = document.getElementById('populationDistrict').value.trim();
+            const male = parseInt(document.getElementById('populationMale').value) || 0;
+            const female = parseInt(document.getElementById('populationFemale').value) || 0;
+            const total = male + female;
+            
+            if (!district || total <= 0) {
+                showNotification('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง', 'error');
+                return;
+            }
+            
+            // Show loading
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = `
+                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังบันทึก...
+            `;
+            submitBtn.disabled = true;
+            
+            try {
+                const population = await loadFromFirebase('population');
+                
+                // Check for duplicate district (only if not editing the same record)
+                const existingIndex = population.findIndex(p => p.district.toLowerCase() === district.toLowerCase());
+                if (existingIndex !== -1 && existingIndex !== editIndex) {
+                    showNotification('เขตนี้มีข้อมูลแล้ว กรุณาแก้ไขข้อมูลเดิมแทน', 'error');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                const newPopulation = {
+                    district,
+                    malePopulation: male,
+                    femalePopulation: female,
+                    totalPopulation: total,
+                    density: density
+                };
+                
+                if (editIndex !== null) {
+                    // Edit existing population
+                    population[editIndex] = newPopulation;
+                    showNotification('แก้ไขข้อมูลประชากรสำเร็จ!', 'success');
+                } else {
+                    // Add new population
+                    population.push(newPopulation);
+                    showNotification('เพิ่มข้อมูลประชากรใหม่สำเร็จ!', 'success');
+                }
+                
+                // Save to Firebase
+                await saveToFirebase('population', population);
+                
+                // Close modal
+                closePopulationModal();
+                
+                // Refresh table
+                await loadPopulationTable();
+                
+            } catch (error) {
+                console.error('Error saving population:', error);
+                showNotification('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Edit population function
+        function editPopulation(index) {
+            showPopulationForm(index);
+        }
+
+        // Delete population function
         // Show import population modal
         function showImportPopulationModal() {
             const modalOverlay = document.createElement('div');
@@ -4773,23 +4856,22 @@
                                     </thead>
                                     <tbody class="bg-white">
                                         <tr class="bg-yellow-50">
-                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">แขวง</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">เขต</td>
-                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">จังหวัด</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">จำนวนประชากรชาย</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">จำนวนประชากรหญิง</td>
                                         </tr>
                                         <tr>
-                                            <td class="px-3 py-2 border border-gray-300">ลาดยาว</td>
-                                            <td class="px-3 py-2 border border-gray-300">จตุจักร</td>
-                                            <td class="px-3 py-2 border border-gray-300">กรุงเทพมหานคร</td>
+                                            <td class="px-3 py-2 border border-gray-300">พระนคร</td>
+                                            <td class="px-3 py-2 border border-gray-300">15000</td>
+                                            <td class="px-3 py-2 border border-gray-300">16500</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
                             <div class="mt-3 text-xs text-purple-700 space-y-1">
                                 <p>• <strong>แถวสีเหลือง:</strong> หัวตาราง (สามารถข้ามได้โดยเลือก "ข้ามแถวแรก")</p>
-                                <p>• <strong>แขวง:</strong> ชื่อแขวงในกรุงเทพมหานคร</p>
-                                <p>• <strong>เขต:</strong> ชื่อเขตในกรุงเทพมหานคร</p>
-                                <p>• <strong>จังหวัด:</strong> ระบุ "กรุงเทพมหานคร" เท่านั้น</p>
+                                <p>• <strong>จำนวนประชากร:</strong> ต้องเป็นตัวเลขเท่านั้น</p>
+                                <p>• <strong>ชื่อแขวง/เขต:</strong> ต้องตรงตามทะเบียนราชการ</p>
                             </div>
                         </div>
 
@@ -4884,13 +4966,12 @@
         // Download population example file
         function downloadPopulationExampleFile() {
             const data = [
-                ['แขวง', 'เขต', 'จังหวัด'],
-                ['ลาดยาว', 'จตุจักร', 'กรุงเทพมหานคร'],
-                ['จันทรเกษม', 'จตุจักร', 'กรุงเทพมหานคร'],
-                ['จอมพล', 'จตุจักร', 'กรุงเทพมหานคร'],
-                ['คลองถนน', 'สายไหม', 'กรุงเทพมหานคร'],
-                ['สายไหม', 'สายไหม', 'กรุงเทพมหานคร'],
-                ['ออเงิน', 'สายไหม', 'กรุงเทพมหานคร']
+                ['เขต', 'จำนวนประชากรชาย', 'จำนวนประชากรหญิง'],
+                ['พระนคร', 15000, 16500],
+                ['ดุสิต', 12000, 13000],
+                ['หนองจอก', 18000, 19500],
+                ['บางรัก', 9000, 9800],
+                ['บางเขน', 21000, 22500]
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -4899,7 +4980,7 @@
             
             // Auto-size columns
             const colWidths = data[0].map((col, i) => {
-                return {wch: Math.max(...data.map(row => row[i].length))};
+                return {wch: Math.max(...data.map(row => row[i].toString().length))};
             });
             ws['!cols'] = colWidths;
             
@@ -4942,37 +5023,36 @@
                         let startRow = skipFirstRow ? 1 : 0;
                         const processedData = [];
                         const errors = [];
-                        const duplicates = new Set();
+                        const duplicateKeys = new Set();
                         
                         for (let i = startRow; i < jsonData.length; i++) {
                             const row = jsonData[i];
-                            const subdistrict = row[0] ? row[0].toString().trim() : '';
-                            const district = row[1] ? row[1].toString().trim() : '';
-                            const province = row[2] ? row[2].toString().trim() : '';
+                            const district = row[0] ? row[0].toString().trim() : '';
+                            const malePopulation = row[1] ? Number(row[1]) : NaN;
+                            const femalePopulation = row[2] ? Number(row[2]) : NaN;
                             
-                            if (!subdistrict || !district || !province) {
-                                if (subdistrict || district || province) {
-                                    errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วน`);
+                            if (!district || isNaN(malePopulation) || isNaN(femalePopulation)) {
+                                if (district || row[1] || row[2]) {
+                                    errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วนหรือไม่ถูกต้อง`);
                                 }
                                 continue;
                             }
                             
-                            if (province.toLowerCase() !== 'กรุงเทพมหานคร') {
-                                errors.push(`แถว ${i + 1}: จังหวัดต้องเป็น "กรุงเทพมหานคร" เท่านั้น`);
+                            if (malePopulation < 0 || femalePopulation < 0) {
+                                errors.push(`แถว ${i + 1}: จำนวนประชากรต้องไม่ต่ำกว่า 0`);
                                 continue;
                             }
                             
-                            const key = `${subdistrict}-${district}`;
-                            if (duplicates.has(key)) {
-                                errors.push(`แถว ${i + 1}: ข้อมูลแขวง ${subdistrict} เขต ${district} ซ้ำในไฟล์`);
+                            if (duplicateKeys.has(district)) {
+                                errors.push(`แถว ${i + 1}: ข้อมูลเขต ${district} ซ้ำในไฟล์`);
                                 continue;
                             }
                             
-                            duplicates.add(key);
+                            duplicateKeys.add(district);
                             processedData.push({
-                                subdistrict,
                                 district,
-                                province
+                                malePopulation,
+                                femalePopulation
                             });
                         }
                         
@@ -4980,16 +5060,16 @@
                             throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
                         }
                         
-                        let existingPopulation = await loadFromFirebase('bangkokDistricts');
+                        let existingPopulation = await loadFromFirebase('population');
                         if (!replaceExisting) {
-                            const existingKeys = new Set(existingPopulation.map(p => `${p.subdistrict}-${p.district}`));
-                            const duplicateExisting = processedData.filter(p => existingKeys.has(`${p.subdistrict}-${p.district}`));
+                            const existingKeys = new Set(existingPopulation.map(p => p.district));
+                            const duplicateExisting = processedData.filter(p => existingKeys.has(p.district));
                             
                             if (duplicateExisting.length > 0) {
-                                errors.push(`พบข้อมูลที่ซ้ำกับในระบบ: ${duplicateExisting.map(p => `${p.subdistrict} (${p.district})`).join(', ')}`);
+                                errors.push(`พบข้อมูลที่มีอยู่แล้ว: ${duplicateExisting.map(p => p.district).join(', ')}`);
                             }
                             
-                            const newData = processedData.filter(p => !existingKeys.has(`${p.subdistrict}-${p.district}`));
+                            const newData = processedData.filter(p => !existingKeys.has(p.district));
                             processedData.length = 0;
                             processedData.push(...newData);
                         }
@@ -5006,7 +5086,7 @@
                         }
                         
                         const finalData = replaceExisting ? processedData : [...existingPopulation, ...processedData];
-                        await saveToFirebase('bangkokDistricts', finalData);
+                        await saveToFirebase('population', finalData);
                         
                         const message = replaceExisting 
                             ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
@@ -5014,7 +5094,7 @@
                         
                         showNotification(message, 'success');
                         closeImportPopulationModal();
-                        loadBangkokDistrictsTable();
+                        loadPopulationTable();
                         
                     } catch (error) {
                         console.error('Error processing Excel file:', error);
@@ -5034,85 +5114,6 @@
             }
         }
 
-        // Save population data
-        async function savePopulationData(event, editIndex = null) {
-            event.preventDefault();
-            
-            const district = document.getElementById('populationDistrict').value.trim();
-            const male = parseInt(document.getElementById('populationMale').value) || 0;
-            const female = parseInt(document.getElementById('populationFemale').value) || 0;
-            const total = male + female;
-            
-            if (!district || total <= 0) {
-                showNotification('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง', 'error');
-                return;
-            }
-            
-            // Show loading
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = `
-                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                กำลังบันทึก...
-            `;
-            submitBtn.disabled = true;
-            
-            try {
-                const population = await loadFromFirebase('population');
-                
-                // Check for duplicate district (only if not editing the same record)
-                const existingIndex = population.findIndex(p => p.district.toLowerCase() === district.toLowerCase());
-                if (existingIndex !== -1 && existingIndex !== editIndex) {
-                    showNotification('เขตนี้มีข้อมูลแล้ว กรุณาแก้ไขข้อมูลเดิมแทน', 'error');
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                    return;
-                }
-                
-                const newPopulation = {
-                    district,
-                    malePopulation: male,
-                    femalePopulation: female,
-                    totalPopulation: total,
-                    density: density
-                };
-                
-                if (editIndex !== null) {
-                    // Edit existing population
-                    population[editIndex] = newPopulation;
-                    showNotification('แก้ไขข้อมูลประชากรสำเร็จ!', 'success');
-                } else {
-                    // Add new population
-                    population.push(newPopulation);
-                    showNotification('เพิ่มข้อมูลประชากรใหม่สำเร็จ!', 'success');
-                }
-                
-                // Save to Firebase
-                await saveToFirebase('population', population);
-                
-                // Close modal
-                closePopulationModal();
-                
-                // Refresh table
-                await loadPopulationTable();
-                
-            } catch (error) {
-                console.error('Error saving population:', error);
-                showNotification('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }
-        }
-
-        // Edit population function
-        function editPopulation(index) {
-            showPopulationForm(index);
-        }
-
-        // Delete population function
         async function deletePopulation(index) {
             const population = await loadFromFirebase('population');
             const pop = population[index];
