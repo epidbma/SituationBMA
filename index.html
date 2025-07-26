@@ -2666,62 +2666,25 @@
             const population = await loadFromFirebase('population');
             const content = document.getElementById('masterDataDetailContent');
             
-            // Group by year
-            const populationByYear = population.reduce((acc, pop) => {
-                const year = pop.year || 'ไม่ระบุปี';
-                if (!acc[year]) {
-                    acc[year] = [];
-                }
-                acc[year].push(pop);
-                return acc;
-            }, {});
-
-            // Sort years in descending order
-            const years = Object.keys(populationByYear).sort((a, b) => parseInt(b) - parseInt(a));
-            
-            // Get the selected year (default to latest year)
-            const selectedYear = document.getElementById('yearFilter')?.value || years[0] || 'ไม่ระบุปี';
-            const selectedData = populationByYear[selectedYear] || [];
-            
-            // Calculate totals for the selected year
-            const totalPopulation = selectedData.reduce((sum, pop) => sum + parseInt(pop.total || pop.malePopulation + pop.femalePopulation || 0), 0);
-            const totalMale = selectedData.reduce((sum, pop) => sum + parseInt(pop.malePopulation || 0), 0);
-            const totalFemale = selectedData.reduce((sum, pop) => sum + parseInt(pop.femalePopulation || 0), 0);
+            // Calculate totals for summary
+            const totalPopulation = population.reduce((sum, pop) => sum + parseInt(pop.totalPopulation || pop.malePopulation + pop.femalePopulation || 0), 0);
+            const totalMale = population.reduce((sum, pop) => sum + parseInt(pop.malePopulation || 0), 0);
+            const totalFemale = population.reduce((sum, pop) => sum + parseInt(pop.femalePopulation || 0), 0);
             
             content.innerHTML = `
                 <div class="mb-6">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-4 md:space-y-0">
-                        <!-- Year Filter -->
+                    <div class="flex justify-between items-center mb-4">
                         <div class="flex items-center space-x-4">
-                            <label class="text-gray-700 font-medium">ปี พ.ศ.</label>
-                            <select id="yearFilter" onchange="loadPopulationTable()" class="form-select rounded-lg border-gray-300 shadow-sm">
-                                ${years.map(year => `
-                                    <option value="${year}" ${year === selectedYear ? 'selected' : ''}>
-                                        ${year === 'ไม่ระบุปี' ? year : year}
-                                    </option>
-                                `).join('')}
-                            </select>
-                        </div>
-
-                        <!-- Statistics -->
-                        <div class="flex flex-wrap gap-4">
                             <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3">
                                 <div class="text-gray-600 text-sm">จำนวนเขต</div>
-                                <div class="text-2xl font-bold text-blue-600">${selectedData.length}</div>
+                                <div class="text-2xl font-bold text-blue-600">${population.length}</div>
                             </div>
                             <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3">
                                 <div class="text-gray-600 text-sm">ประชากรรวม</div>
                                 <div class="text-2xl font-bold text-green-600">${totalPopulation.toLocaleString()}</div>
                             </div>
-                            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3">
-                                <div class="text-gray-600 text-sm">ชาย</div>
-                                <div class="text-2xl font-bold text-indigo-600">${totalMale.toLocaleString()}</div>
-                            </div>
-                            <div class="bg-gradient-to-r from-pink-50 to-red-50 rounded-lg p-3">
-                                <div class="text-gray-600 text-sm">หญิง</div>
-                                <div class="text-2xl font-bold text-pink-600">${totalFemale.toLocaleString()}</div>
-                            </div>
                         </div>
+
                     </div>
                 </div>
 
@@ -3666,123 +3629,6 @@
         }
 
         // Delete disease function
-        // Show import age population modal
-        function showImportAgePopulationModal() {
-            const modalOverlay = document.createElement('div');
-            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            modalOverlay.id = 'importAgePopulationModal';
-            
-            modalOverlay.innerHTML = `
-                <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-2xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent">
-                            นำเข้าข้อมูลประชากรจำแนกตามอายุ
-                        </h3>
-                        <button onclick="closeImportAgePopulationModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <h4 class="text-blue-800 font-semibold mb-2">วิธีการนำเข้าข้อมูล</h4>
-                            <ol class="list-decimal list-inside text-sm text-blue-700 space-y-1">
-                                <li>ดาวน์โหลดไฟล์ตัวอย่างเพื่อดูรูปแบบข้อมูลที่ถูกต้อง</li>
-                                <li>เตรียมข้อมูลในไฟล์ Excel ตามรูปแบบที่กำหนด</li>
-                                <li>เลือกไฟล์ Excel ที่ต้องการนำเข้า</li>
-                                <li>กดปุ่ม "นำเข้าข้อมูล" เพื่อเริ่มการนำเข้า</li>
-                            </ol>
-                        </div>
-
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h4 class="text-gray-700 font-semibold mb-4">ตัวอย่างรูปแบบข้อมูล</h4>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full text-sm border border-gray-300 rounded">
-                                    <thead class="bg-gray-100">
-                                        <tr>
-                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">A</th>
-                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">B</th>
-                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">C</th>
-                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">D</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white">
-                                        <tr class="bg-yellow-50">
-                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">กลุ่มอายุ</td>
-                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">จำนวนประชากร</td>
-                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ชาย</td>
-                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">หญิง</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="px-3 py-2 border border-gray-300">0-4 ปี</td>
-                                            <td class="px-3 py-2 border border-gray-300">31500</td>
-                                            <td class="px-3 py-2 border border-gray-300">15000</td>
-                                            <td class="px-3 py-2 border border-gray-300">16500</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3 text-xs text-purple-700 space-y-1">
-                                <p>• <strong>แถวสีเหลือง:</strong> หัวตาราง (สามารถข้ามได้โดยเลือก "ข้ามแถวแรก")</p>
-                                <p>• <strong>จำนวนประชากร:</strong> ต้องเป็นตัวเลขเท่านั้น</p>
-                                <p>• <strong>กลุ่มอายุ:</strong> ต้องระบุช่วงอายุให้ชัดเจน เช่น 0-4 ปี, 5-9 ปี</p>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col space-y-4">
-                            <div>
-                                <input type="file" id="agePopulationExcelFile" accept=".xlsx, .xls" class="hidden" onchange="handleAgePopulationFileSelect(this)">
-                                <div class="flex justify-between items-center">
-                                    <button onclick="document.getElementById('agePopulationExcelFile').click()" class="btn-secondary text-sm">
-                                        <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z"/>
-                                        </svg>
-                                        เลือกไฟล์ Excel
-                                    </button>
-                                    <button onclick="downloadAgePopulationExampleFile()" class="btn-secondary text-sm">
-                                        <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
-                                        </svg>
-                                        ดาวน์โหลดไฟล์ตัวอย่าง
-                                    </button>
-                                </div>
-                                <div id="agePopulationFileInfo" class="mt-2 text-sm text-gray-600"></div>
-                            </div>
-
-                            <label class="flex items-center space-x-2">
-                                <input type="checkbox" id="skipFirstRowAgePopulation" class="form-checkbox text-green-600">
-                                <span class="text-sm text-gray-700">ข้ามแถวแรก (หัวตาราง)</span>
-                            </label>
-
-                            <label class="flex items-center space-x-2">
-                                <input type="checkbox" id="replaceExistingAgePopulation" class="form-checkbox text-green-600">
-                                <span class="text-sm text-gray-700">แทนที่ข้อมูลเดิมทั้งหมด</span>
-                            </label>
-                        </div>
-
-                        <div class="flex space-x-4 mt-8">
-                            <button onclick="processAgePopulationImport()" class="flex-1 btn-primary" id="importAgePopulationButton" disabled>
-                                <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.293a1 1 0 011.414 0L10 8.586V3a1 1 0 012 0v5.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
-                                </svg>
-                                นำเข้าข้อมูล
-                            </button>
-                            <button onclick="closeImportAgePopulationModal()" class="flex-1 btn-secondary">
-                                <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
-                                </svg>
-                                ยกเลิก
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modalOverlay);
-        }
-
         // Show import disease modal
         function showImportDiseaseModal() {
             const modalOverlay = document.createElement('div');
@@ -4733,10 +4579,6 @@
             modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
             modalOverlay.id = 'populationModal';
             
-            // Get current Buddhist year and previous years
-            const currentYear = new Date().getFullYear() + 543;
-            const years = Array.from({length: 10}, (_, i) => currentYear - i);
-            
             modalOverlay.innerHTML = `
                 <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop max-h-[90vh] overflow-y-auto">
                     <div class="flex items-center justify-between mb-6">
@@ -4894,21 +4736,13 @@
         async function savePopulationData(event, editIndex = null) {
             event.preventDefault();
             
-            const year = parseInt(document.getElementById('populationYear').value);
             const district = document.getElementById('populationDistrict').value.trim();
             const male = parseInt(document.getElementById('populationMale').value) || 0;
             const female = parseInt(document.getElementById('populationFemale').value) || 0;
             const total = male + female;
             
-            if (!year || !district || total <= 0) {
+            if (!district || total <= 0) {
                 showNotification('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง', 'error');
-                return;
-            }
-            
-            // Validate year
-            const currentYear = new Date().getFullYear() + 543;
-            if (year < currentYear - 100 || year > currentYear + 1) {
-                showNotification('ปี พ.ศ. ไม่ถูกต้อง', 'error');
                 return;
             }
             
@@ -5167,15 +5001,6 @@
                 showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
                 return;
             }
-            
-            const currentYear = new Date().getFullYear() + 543;
-            
-            // Valid district list
-            const validDistricts = [
-                'พระนคร', 'ดุสิต', 'หนองจอก', 'บางรัก', 'บางเขน', 
-                'บางกะปิ', 'ปทุมวัน', 'ป้อมปราบศัตรูพ่าย', 'พระโขนง', 'มีนบุรี'
-                // Add more districts
-            ];
             
             const importButton = document.getElementById('importPopulationButton');
             const originalText = importButton.innerHTML;
