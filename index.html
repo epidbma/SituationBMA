@@ -2408,11 +2408,11 @@
                 existingImportBtn.remove();
             }
             
-            if (type === 'diseases') {
+            if (type === 'diseases' || type === 'responsible') {
                 const importButton = document.createElement('button');
                 importButton.id = 'importExcelButton';
                 importButton.className = 'btn-secondary text-sm flex items-center ml-2';
-                importButton.onclick = () => showImportDiseaseModal();
+                importButton.onclick = () => type === 'diseases' ? showImportDiseaseModal() : showImportResponsibleModal();
                 importButton.innerHTML = `
                     <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
@@ -4094,6 +4094,319 @@
             const modal = document.getElementById('responsibleModal');
             if (modal) {
                 modal.remove();
+            }
+        }
+
+        // Show import responsible modal
+        function showImportResponsibleModal() {
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modalOverlay.id = 'importResponsibleModal';
+            
+            modalOverlay.innerHTML = `
+                <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent">
+                            นำเข้าข้อมูลผู้รับผิดชอบจัดทำรายงาน
+                        </h3>
+                        <button onclick="closeImportResponsibleModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="text-blue-800 font-semibold mb-2">วิธีการนำเข้าข้อมูล</h4>
+                            <ol class="list-decimal list-inside text-sm text-blue-700 space-y-1">
+                                <li>ดาวน์โหลดไฟล์ตัวอย่างเพื่อดูรูปแบบข้อมูลที่ถูกต้อง</li>
+                                <li>เตรียมข้อมูลในไฟล์ Excel ตามรูปแบบที่กำหนด</li>
+                                <li>เลือกไฟล์ Excel ที่ต้องการนำเข้า</li>
+                                <li>กดปุ่ม "นำเข้าข้อมูล" เพื่อเริ่มการนำเข้า</li>
+                            </ol>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="text-gray-700 font-semibold mb-4">ตัวอย่างรูปแบบข้อมูล</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-sm border border-gray-300 rounded">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">A</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">B</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">C</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">D</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">E</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <tr class="bg-yellow-50">
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">รหัสโรค</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ชื่อผู้รับผิดชอบ</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ตำแหน่งผู้รับผิดชอบ</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ชื่อผู้ตรวจทาน</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ตำแหน่งผู้ตรวจทาน</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2 border border-gray-300 font-mono text-blue-600">A00</td>
+                                            <td class="px-3 py-2 border border-gray-300">นายแพทย์สมชาย ใจดี</td>
+                                            <td class="px-3 py-2 border border-gray-300">แพทย์ชำนาญการ</td>
+                                            <td class="px-3 py-2 border border-gray-300">นายแพทย์มานะ รักงาน</td>
+                                            <td class="px-3 py-2 border border-gray-300">แพทย์เชี่ยวชาญ</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3 text-xs text-purple-700 space-y-1">
+                                <p>• <strong>แถวสีเหลือง:</strong> หัวตาราง (สามารถข้ามได้โดยเลือก "ข้ามแถวแรก")</p>
+                                <p>• <strong>รหัสโรค:</strong> ต้องมีในระบบแล้ว (เพิ่มโรคก่อนถึงจะเพิ่มผู้รับผิดชอบได้)</p>
+                                <p>• <strong>ชื่อบุคคล:</strong> ใส่คำนำหน้าและชื่อ-นามสกุลเต็ม</p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col space-y-4">
+                            <div>
+                                <input type="file" id="responsibleExcelFile" accept=".xlsx, .xls" class="hidden" onchange="handleResponsibleFileSelect(this)">
+                                <div class="flex justify-between items-center">
+                                    <button onclick="document.getElementById('responsibleExcelFile').click()" class="btn-secondary text-sm">
+                                        <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z"/>
+                                        </svg>
+                                        เลือกไฟล์ Excel
+                                    </button>
+                                    <button onclick="downloadResponsibleExampleFile()" class="btn-secondary text-sm">
+                                        <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                        </svg>
+                                        ดาวน์โหลดไฟล์ตัวอย่าง
+                                    </button>
+                                </div>
+                                <div id="responsibleFileInfo" class="mt-2 text-sm text-gray-600"></div>
+                            </div>
+
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="skipFirstRowResponsible" class="form-checkbox text-green-600">
+                                <span class="text-sm text-gray-700">ข้ามแถวแรก (หัวตาราง)</span>
+                            </label>
+
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="replaceExistingResponsible" class="form-checkbox text-green-600">
+                                <span class="text-sm text-gray-700">แทนที่ข้อมูลเดิมทั้งหมด</span>
+                            </label>
+                        </div>
+
+                        <div class="flex space-x-4 mt-8">
+                            <button onclick="processResponsibleImport()" class="flex-1 btn-primary" id="importResponsibleButton" disabled>
+                                <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.293a1 1 0 011.414 0L10 8.586V3a1 1 0 012 0v5.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                                </svg>
+                                นำเข้าข้อมูล
+                            </button>
+                            <button onclick="closeImportResponsibleModal()" class="flex-1 btn-secondary">
+                                <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                                </svg>
+                                ยกเลิก
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalOverlay);
+        }
+
+        // Close import responsible modal
+        function closeImportResponsibleModal() {
+            const modal = document.getElementById('importResponsibleModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Handle responsible file select
+        function handleResponsibleFileSelect(input) {
+            const fileInfo = document.getElementById('responsibleFileInfo');
+            const importButton = document.getElementById('importResponsibleButton');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const fileName = file.name;
+                const fileSize = (file.size / 1024).toFixed(2);
+                
+                if (!fileName.match(/\.(xls|xlsx)$/)) {
+                    fileInfo.innerHTML = '<span class="text-red-600">❌ กรุณาเลือกไฟล์ Excel (.xls, .xlsx) เท่านั้น</span>';
+                    importButton.disabled = true;
+                    return;
+                }
+                
+                fileInfo.innerHTML = `
+                    <span class="text-green-600">✓ ${fileName}</span>
+                    <span class="text-gray-500">(${fileSize} KB)</span>
+                `;
+                importButton.disabled = false;
+                
+            } else {
+                fileInfo.innerHTML = '';
+                importButton.disabled = true;
+            }
+        }
+
+        // Download responsible example file
+        function downloadResponsibleExampleFile() {
+            const data = [
+                ['รหัสโรค', 'ชื่อผู้รับผิดชอบ', 'ตำแหน่งผู้รับผิดชอบ', 'ชื่อผู้ตรวจทาน', 'ตำแหน่งผู้ตรวจทาน'],
+                ['A00', 'นายแพทย์สมชาย ใจดี', 'แพทย์ชำนาญการ', 'นายแพทย์มานะ รักงาน', 'แพทย์เชี่ยวชาญ'],
+                ['B01', 'แพทย์หญิงสมหญิง รักษาดี', 'แพทย์ชำนาญการพิเศษ', 'นายแพทย์วิชัย สุขภาพดี', 'ผู้อำนวยการโรงพยาบาล'],
+                ['C02', 'นายแพทย์ธีระ วิจัย', 'แพทย์เชี่ยวชาญ', 'แพทย์หญิงรัตนา ผู้ดูแล', 'หัวหน้ากลุ่มงาน']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'ข้อมูลผู้รับผิดชอบ');
+            
+            // Auto-size columns
+            const colWidths = data[0].map((col, i) => {
+                return {wch: Math.max(...data.map(row => row[i].length))};
+            });
+            ws['!cols'] = colWidths;
+            
+            XLSX.writeFile(wb, 'ตัวอย่างไฟล์นำเข้าข้อมูลผู้รับผิดชอบ.xlsx');
+        }
+
+        // Process responsible import
+        async function processResponsibleImport() {
+            const fileInput = document.getElementById('responsibleExcelFile');
+            const skipFirstRow = document.getElementById('skipFirstRowResponsible').checked;
+            const replaceExisting = document.getElementById('replaceExistingResponsible').checked;
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
+                return;
+            }
+            
+            const importButton = document.getElementById('importResponsibleButton');
+            const originalText = importButton.innerHTML;
+            importButton.innerHTML = `
+                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังนำเข้าข้อมูล...
+            `;
+            importButton.disabled = true;
+            
+            try {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = async function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                        
+                        let startRow = skipFirstRow ? 1 : 0;
+                        const processedData = [];
+                        const errors = [];
+                        const duplicateCodes = new Set();
+                        
+                        // Load existing diseases to validate disease codes
+                        const diseases = await loadFromFirebase('diseases');
+                        const validDiseaseCodes = new Set(diseases.map(d => d.code));
+                        
+                        for (let i = startRow; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            const diseaseCode = row[0] ? row[0].toString().trim() : '';
+                            const responsibleName = row[1] ? row[1].toString().trim() : '';
+                            const responsiblePosition = row[2] ? row[2].toString().trim() : '';
+                            const reviewerName = row[3] ? row[3].toString().trim() : '';
+                            const reviewerPosition = row[4] ? row[4].toString().trim() : '';
+                            
+                            if (!diseaseCode || !responsibleName || !responsiblePosition || !reviewerName || !reviewerPosition) {
+                                if (diseaseCode || responsibleName || responsiblePosition || reviewerName || reviewerPosition) {
+                                    errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วน`);
+                                }
+                                continue;
+                            }
+                            
+                            if (!validDiseaseCodes.has(diseaseCode)) {
+                                errors.push(`แถว ${i + 1}: ไม่พบรหัสโรค ${diseaseCode} ในระบบ`);
+                                continue;
+                            }
+                            
+                            if (duplicateCodes.has(diseaseCode)) {
+                                errors.push(`แถว ${i + 1}: รหัสโรค ${diseaseCode} ซ้ำในไฟล์`);
+                                continue;
+                            }
+                            
+                            duplicateCodes.add(diseaseCode);
+                            processedData.push({
+                                diseaseCode,
+                                responsibleName,
+                                responsiblePosition,
+                                reviewerName,
+                                reviewerPosition
+                            });
+                        }
+                        
+                        if (processedData.length === 0) {
+                            throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
+                        }
+                        
+                        let existingResponsible = await loadFromFirebase('responsible');
+                        if (!replaceExisting) {
+                            const existingCodes = new Set(existingResponsible.map(r => r.diseaseCode));
+                            const duplicateExisting = processedData.filter(r => existingCodes.has(r.diseaseCode));
+                            
+                            if (duplicateExisting.length > 0) {
+                                errors.push(`รหัสโรคที่มีข้อมูลผู้รับผิดชอบแล้ว: ${duplicateExisting.map(r => r.diseaseCode).join(', ')}`);
+                            }
+                            
+                            const newData = processedData.filter(r => !existingCodes.has(r.diseaseCode));
+                            processedData.length = 0;
+                            processedData.push(...newData);
+                        }
+                        
+                        if (errors.length > 0) {
+                            const errorMsg = `พบข้อผิดพลาด ${errors.length} รายการ:\\n${errors.slice(0, 5).join('\\n')}${errors.length > 5 ? '\\n...' : ''}`;
+                            if (!confirm(`${errorMsg}\\n\\nต้องการดำเนินการต่อกับข้อมูลที่ถูกต้องหรือไม่?`)) {
+                                throw new Error('ยกเลิกการนำเข้าโดยผู้ใช้');
+                            }
+                        }
+                        
+                        if (processedData.length === 0) {
+                            throw new Error('ไม่มีข้อมูลใหม่ที่จะนำเข้า');
+                        }
+                        
+                        const finalData = replaceExisting ? processedData : [...existingResponsible, ...processedData];
+                        await saveToFirebase('responsible', finalData);
+                        
+                        const message = replaceExisting 
+                            ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
+                            : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
+                        
+                        showNotification(message, 'success');
+                        closeImportResponsibleModal();
+                        loadResponsibleTable();
+                        
+                    } catch (error) {
+                        console.error('Error processing Excel file:', error);
+                        showNotification(error.message || 'เกิดข้อผิดพลาดในการประมวลผลไฟล์', 'error');
+                        importButton.innerHTML = originalText;
+                        importButton.disabled = false;
+                    }
+                };
+                
+                reader.readAsArrayBuffer(file);
+                
+            } catch (error) {
+                console.error('Error reading file:', error);
+                showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
+                importButton.innerHTML = originalText;
+                importButton.disabled = false;
             }
         }
 
