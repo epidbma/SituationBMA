@@ -910,103 +910,6 @@
             }
         }
 
-        // Process Disease Import
-        async function processDiseaseImport(startRow, replaceExisting) {
-            const processedData = [];
-            const errors = [];
-            const duplicateCodes = new Set();
-            
-            for (let i = startRow; i < selectedFileData.length; i++) {
-                const row = selectedFileData[i];
-                const code = row[0] ? row[0].toString().trim() : '';
-                const name = row[1] ? row[1].toString().trim() : '';
-                
-                if (!code || !name) {
-                    if (code || name) {
-                        errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วน`);
-                    }
-                    continue;
-                }
-                
-                if (duplicateCodes.has(code)) {
-                    errors.push(`แถว ${i + 1}: รหัสโรค ${code} ซ้ำในไฟล์`);
-                    continue;
-                }
-                
-                duplicateCodes.add(code);
-                processedData.push({ code, name });
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
-            }
-            
-            let existingDiseases = await loadFromFirebase('diseases');
-            if (!replaceExisting) {
-                const existingCodes = new Set(existingDiseases.map(d => d.code));
-                const duplicateExisting = processedData.filter(d => existingCodes.has(d.code));
-                
-                if (duplicateExisting.length > 0) {
-                    errors.push(`รหัสโรคที่มีข้อมูลแล้ว: ${duplicateExisting.map(d => d.code).join(', ')}`);
-                }
-                
-                const newData = processedData.filter(d => !existingCodes.has(d.code));
-                processedData.length = 0;
-                processedData.push(...newData);
-            }
-            
-            if (errors.length > 0) {
-                const errorMsg = `พบข้อผิดพลาด ${errors.length} รายการ:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`;
-                if (!confirm(`${errorMsg}\n\nต้องการดำเนินการต่อกับข้อมูลที่ถูกต้องหรือไม่?`)) {
-                    throw new Error('ยกเลิกการนำเข้าโดยผู้ใช้');
-                }
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่มีข้อมูลใหม่ที่จะนำเข้า');
-            }
-            
-            const finalData = replaceExisting ? processedData : [...existingDiseases, ...processedData];
-            await saveToFirebase('diseases', finalData);
-            
-            const message = replaceExisting 
-                ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
-                : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
-            
-            showNotification(message, 'success');
-        }
-
-        // Import diseases from Excel
-        async function importDiseases() {
-            showImportDialog('diseases', 2, processDiseaseImport);
-        }
-
-        // Download disease sample file
-        function downloadDiseaseSample() {
-            const headers = [['รหัสโรค', 'ชื่อโรค']];
-            const sampleData = [
-                ['01', 'อหิวาตกโรค'],
-                ['26', 'ไข้เลือดออก'],
-                ['66', 'อาหารเป็นพิษ']
-            ];
-            
-            const workbook = XLSX.utils.book_new();
-            const worksheet = XLSX.utils.aoa_to_sheet([...headers, ...sampleData]);
-            
-            // Set column widths
-            worksheet['!cols'] = [
-                { wch: 15 }, // รหัสโรค
-                { wch: 40 }  // ชื่อโรค
-            ];
-            
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'ข้อมูลโรค');
-            
-            const dateStr = new Date().toISOString().split('T')[0];
-            const filename = `ตัวอย่าง_รหัสโรคและชื่อโรค_${dateStr}.xlsx`;
-            
-            XLSX.writeFile(workbook, filename);
-        }
-
         async function loadFromFirebase(path) {
             try {
                 const { database, ref, get } = window.firebaseDB;
@@ -2505,7 +2408,19 @@
                 existingImportBtn.remove();
             }
             
-            // No import buttons - all Excel import functionality removed
+            if (type === 'diseases') {
+                const importButton = document.createElement('button');
+                importButton.id = 'importExcelButton';
+                importButton.className = 'btn-secondary text-sm flex items-center ml-2';
+                importButton.onclick = () => showImportDiseaseModal();
+                importButton.innerHTML = `
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                    </svg>
+                    นำเข้า Excel
+                `;
+                buttonContainer.appendChild(importButton);
+            }
             
             loadMasterDataDetail(type);
         }
@@ -2578,18 +2493,6 @@
                                                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
                                             </svg>
                                             เพิ่มรายโรค
-                                        </button>
-                                        <button onclick="importDiseases()" class="btn-secondary text-sm ml-4">
-                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
-                                            </svg>
-                                            นำเข้า Excel
-                                        </button>
-                                        <button onclick="downloadDiseaseSample()" class="btn-white text-sm ml-4">
-                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"/>
-                                            </svg>
-                                            ดาวน์โหลดตัวอย่าง
                                         </button>
                                     </div>
                                 </td></tr>` :
@@ -3716,6 +3619,298 @@
         }
 
         // Delete disease function
+        // Show import disease modal
+        function showImportDiseaseModal() {
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modalOverlay.id = 'importDiseaseModal';
+            
+            modalOverlay.innerHTML = `
+                <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent">
+                            นำเข้าข้อมูลโรค
+                        </h3>
+                        <button onclick="closeImportDiseaseModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="text-blue-800 font-semibold mb-2">วิธีการนำเข้าข้อมูล</h4>
+                            <ol class="list-decimal list-inside text-sm text-blue-700 space-y-1">
+                                <li>ดาวน์โหลดไฟล์ตัวอย่างเพื่อดูรูปแบบข้อมูลที่ถูกต้อง</li>
+                                <li>เตรียมข้อมูลในไฟล์ Excel ตามรูปแบบที่กำหนด</li>
+                                <li>เลือกไฟล์ Excel ที่ต้องการนำเข้า</li>
+                                <li>กดปุ่ม "นำเข้าข้อมูล" เพื่อเริ่มการนำเข้า</li>
+                            </ol>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="text-gray-700 font-semibold mb-4">ตัวอย่างรูปแบบข้อมูล</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-sm border border-gray-300 rounded">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">A</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">B</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <tr class="bg-yellow-50">
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">รหัสโรค</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ชื่อโรค</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2 border border-gray-300 font-mono text-blue-600">A00</td>
+                                            <td class="px-3 py-2 border border-gray-300">อหิวาตกโรค</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2 border border-gray-300 font-mono text-blue-600">B01</td>
+                                            <td class="px-3 py-2 border border-gray-300">โรคไข้หวัดใหญ่</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3 text-xs text-purple-700 space-y-1">
+                                <p>• <strong>แถวสีเหลือง:</strong> หัวตาราง (สามารถข้ามได้โดยเลือก "ข้ามแถวแรก")</p>
+                                <p>• <strong>รหัสโรค:</strong> ใช้รหัสมาตรฐาน ICD-10 หรือรหัสที่กำหนดเอง</p>
+                                <p>• <strong>ชื่อโรค:</strong> ชื่อเต็มของโรคภาษาไทย</p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col space-y-4">
+                            <div>
+                                <input type="file" id="diseaseExcelFile" accept=".xlsx, .xls" class="hidden" onchange="handleDiseaseFileSelect(this)">
+                                <div class="flex justify-between items-center">
+                                    <button onclick="document.getElementById('diseaseExcelFile').click()" class="btn-secondary text-sm">
+                                        <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z"/>
+                                        </svg>
+                                        เลือกไฟล์ Excel
+                                    </button>
+                                    <button onclick="downloadDiseaseExampleFile()" class="btn-secondary text-sm">
+                                        <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                        </svg>
+                                        ดาวน์โหลดไฟล์ตัวอย่าง
+                                    </button>
+                                </div>
+                                <div id="diseaseFileInfo" class="mt-2 text-sm text-gray-600"></div>
+                            </div>
+
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="skipFirstRow" class="form-checkbox text-green-600">
+                                <span class="text-sm text-gray-700">ข้ามแถวแรก (หัวตาราง)</span>
+                            </label>
+
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" id="replaceExisting" class="form-checkbox text-green-600">
+                                <span class="text-sm text-gray-700">แทนที่ข้อมูลเดิมทั้งหมด</span>
+                            </label>
+                        </div>
+
+                        <div class="flex space-x-4 mt-8">
+                            <button onclick="processDiseaseImport()" class="flex-1 btn-primary" id="importDiseaseButton" disabled>
+                                <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.293a1 1 0 011.414 0L10 8.586V3a1 1 0 012 0v5.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                                </svg>
+                                นำเข้าข้อมูล
+                            </button>
+                            <button onclick="closeImportDiseaseModal()" class="flex-1 btn-secondary">
+                                <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                                </svg>
+                                ยกเลิก
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalOverlay);
+        }
+
+        // Close import disease modal
+        function closeImportDiseaseModal() {
+            const modal = document.getElementById('importDiseaseModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Handle disease file select
+        function handleDiseaseFileSelect(input) {
+            const fileInfo = document.getElementById('diseaseFileInfo');
+            const importButton = document.getElementById('importDiseaseButton');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const fileName = file.name;
+                const fileSize = (file.size / 1024).toFixed(2);
+                
+                if (!fileName.match(/\.(xls|xlsx)$/)) {
+                    fileInfo.innerHTML = '<span class="text-red-600">❌ กรุณาเลือกไฟล์ Excel (.xls, .xlsx) เท่านั้น</span>';
+                    importButton.disabled = true;
+                    return;
+                }
+                
+                fileInfo.innerHTML = `
+                    <span class="text-green-600">✓ ${fileName}</span>
+                    <span class="text-gray-500">(${fileSize} KB)</span>
+                `;
+                importButton.disabled = false;
+                
+            } else {
+                fileInfo.innerHTML = '';
+                importButton.disabled = true;
+            }
+        }
+
+        // Download disease example file
+        function downloadDiseaseExampleFile() {
+            const data = [
+                ['รหัสโรค', 'ชื่อโรค'],
+                ['A00', 'อหิวาตกโรค'],
+                ['B01', 'โรคไข้หวัดใหญ่'],
+                ['C02', 'โรคติดเชื้อทางเดินหายใจ'],
+                ['D03', 'โรคท้องเสีย'],
+                ['E04', 'โรคเบาหวาน']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'ข้อมูลโรค');
+            
+            // Auto-size columns
+            const colWidths = data[0].map((col, i) => {
+                return {wch: Math.max(...data.map(row => row[i].length))};
+            });
+            ws['!cols'] = colWidths;
+            
+            XLSX.writeFile(wb, 'ตัวอย่างไฟล์นำเข้าข้อมูลโรค.xlsx');
+        }
+
+        // Process disease import
+        async function processDiseaseImport() {
+            const fileInput = document.getElementById('diseaseExcelFile');
+            const skipFirstRow = document.getElementById('skipFirstRow').checked;
+            const replaceExisting = document.getElementById('replaceExisting').checked;
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
+                return;
+            }
+            
+            const importButton = document.getElementById('importDiseaseButton');
+            const originalText = importButton.innerHTML;
+            importButton.innerHTML = `
+                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังนำเข้าข้อมูล...
+            `;
+            importButton.disabled = true;
+            
+            try {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = async function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                        
+                        let startRow = skipFirstRow ? 1 : 0;
+                        const processedData = [];
+                        const errors = [];
+                        const duplicateCodes = new Set();
+                        
+                        for (let i = startRow; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            const code = row[0] ? row[0].toString().trim() : '';
+                            const name = row[1] ? row[1].toString().trim() : '';
+                            
+                            if (!code || !name) {
+                                if (code || name) {
+                                    errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วน`);
+                                }
+                                continue;
+                            }
+                            
+                            if (duplicateCodes.has(code)) {
+                                errors.push(`แถว ${i + 1}: รหัสโรค ${code} ซ้ำในไฟล์`);
+                                continue;
+                            }
+                            
+                            duplicateCodes.add(code);
+                            processedData.push({code, name});
+                        }
+                        
+                        if (processedData.length === 0) {
+                            throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
+                        }
+                        
+                        let existingDiseases = await loadFromFirebase('diseases');
+                        if (!replaceExisting) {
+                            const existingCodes = new Set(existingDiseases.map(d => d.code));
+                            const duplicateExisting = processedData.filter(d => existingCodes.has(d.code));
+                            
+                            if (duplicateExisting.length > 0) {
+                                errors.push(`รหัสโรคที่มีข้อมูลแล้ว: ${duplicateExisting.map(d => d.code).join(', ')}`);
+                            }
+                            
+                            const newData = processedData.filter(d => !existingCodes.has(d.code));
+                            processedData.length = 0;
+                            processedData.push(...newData);
+                        }
+                        
+                        if (errors.length > 0) {
+                            const errorMsg = `พบข้อผิดพลาด ${errors.length} รายการ:\\n${errors.slice(0, 5).join('\\n')}${errors.length > 5 ? '\\n...' : ''}`;
+                            if (!confirm(`${errorMsg}\\n\\nต้องการดำเนินการต่อกับข้อมูลที่ถูกต้องหรือไม่?`)) {
+                                throw new Error('ยกเลิกการนำเข้าโดยผู้ใช้');
+                            }
+                        }
+                        
+                        if (processedData.length === 0) {
+                            throw new Error('ไม่มีข้อมูลใหม่ที่จะนำเข้า');
+                        }
+                        
+                        const finalData = replaceExisting ? processedData : [...existingDiseases, ...processedData];
+                        await saveToFirebase('diseases', finalData);
+                        
+                        const message = replaceExisting 
+                            ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
+                            : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
+                        
+                        showNotification(message, 'success');
+                        closeImportDiseaseModal();
+                        loadDiseasesTable();
+                        
+                    } catch (error) {
+                        console.error('Error processing Excel file:', error);
+                        showNotification(error.message || 'เกิดข้อผิดพลาดในการประมวลผลไฟล์', 'error');
+                        importButton.innerHTML = originalText;
+                        importButton.disabled = false;
+                    }
+                };
+                
+                reader.readAsArrayBuffer(file);
+                
+            } catch (error) {
+                console.error('Error reading file:', error);
+                showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
+                importButton.innerHTML = originalText;
+                importButton.disabled = false;
+            }
+        }
+
         async function deleteDisease(index) {
             const diseases = await loadFromFirebase('diseases');
             const disease = diseases[index];
