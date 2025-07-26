@@ -2409,7 +2409,7 @@
             }
             
             // Add import button for diseases, responsible, population, agePopulation, and thailandPopulation
-            if (type === 'agePopulation' || type === 'thailandPopulation' || type === 'bangkokDistricts' || type === 'epidemicWeeks') {
+            if (type === 'bangkokDistricts' || type === 'epidemicWeeks') {
                 const importButton = document.createElement('button');
                 importButton.id = 'importExcelButton';
                 importButton.className = 'btn-secondary';
@@ -5857,18 +5857,7 @@
                             </div>
                             <div class="mt-3 text-xs text-blue-700 space-y-1">
                                 <p>• <strong>แถวสีเหลือง:</strong> หัวตาราง (สามารถข้ามได้โดยเลือก "ข้ามแถวแรก")</p>
-                                <p>• <strong>ชื่อจังหวัด:</strong> ใช้ชื่อจังหวัดทั้ง 77 จังหวัดของไทย</p>
-                                <p>• <strong>ตัวเลขประชากร:</strong> ใส่เฉพาะตัวเลขบวก ไม่ต้องใส่เครื่องหมายจุลภาค</p>
-                                <p>• <strong>ประชากรรวม:</strong> ระบบจะคำนวณอัตโนมัติจากชาย + หญิง</p>
-                            </div>
-                            <div class="mt-4 flex justify-center">
-                                <button onclick="downloadThailandPopulationExampleFile()" class="btn-secondary text-sm flex items-center">
-                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
-                                    </svg>
-                                    ดาวน์โหลดไฟล์ตัวอย่าง Excel
-                                </button>
-                            </div>
+
                         </div>
                         ` : ''}
                         
@@ -6354,11 +6343,7 @@
                 const replaceExisting = document.getElementById('replaceExisting').checked;
                 const startRow = skipFirstRow ? 1 : 0;
                 
-                if (dataType === 'thailandPopulation') {
-                    await processThailandPopulationImport(startRow, replaceExisting);
-                } else if (dataType === 'agePopulation') {
-                    await processAgePopulationImport(startRow, replaceExisting);
-                } else if (dataType === 'bangkokDistricts') {
+                if (dataType === 'bangkokDistricts') {
                     await processBangkokDistrictsImport(startRow, replaceExisting);
                 } else if (dataType === 'epidemicWeeks') {
                     await processEpidemicWeeksImport(startRow, replaceExisting);
@@ -6391,102 +6376,7 @@
 
 
 
-        // Process age population import
-        async function processAgePopulationImport(startRow, replaceExisting) {
-            const processedData = [];
-            const errors = [];
-            const duplicateDistricts = new Set();
-            
-            for (let i = startRow; i < selectedFileData.length; i++) {
-                const row = selectedFileData[i];
-                const district = row[0] ? row[0].toString().trim() : '';
-                const ageGroup0_14 = row[1];
-                const ageGroup15_59 = row[2];
-                const ageGroup60Plus = row[3];
-                
-                if (!district) {
-                    if (ageGroup0_14 || ageGroup15_59 || ageGroup60Plus) {
-                        errors.push(`แถว ${i + 1}: ไม่มีชื่อเขต`);
-                    }
-                    continue;
-                }
-                
-                // Validate numbers
-                if (!ageGroup0_14 || isNaN(Number(ageGroup0_14)) || Number(ageGroup0_14) < 0) {
-                    errors.push(`แถว ${i + 1}: ประชากร 0-14 ปี ไม่ถูกต้อง`);
-                    continue;
-                }
-                
-                if (!ageGroup15_59 || isNaN(Number(ageGroup15_59)) || Number(ageGroup15_59) < 0) {
-                    errors.push(`แถว ${i + 1}: ประชากร 15-59 ปี ไม่ถูกต้อง`);
-                    continue;
-                }
-                
-                if (!ageGroup60Plus || isNaN(Number(ageGroup60Plus)) || Number(ageGroup60Plus) < 0) {
-                    errors.push(`แถว ${i + 1}: ประชากร 60+ ปี ไม่ถูกต้อง`);
-                    continue;
-                }
-                
-                if (duplicateDistricts.has(district)) {
-                    errors.push(`แถว ${i + 1}: เขต "${district}" ซ้ำในไฟล์`);
-                    continue;
-                }
-                
-                duplicateDistricts.add(district);
-                
-                const popAge0_14 = Number(ageGroup0_14);
-                const popAge15_59 = Number(ageGroup15_59);
-                const popAge60Plus = Number(ageGroup60Plus);
-                const totalPopulation = popAge0_14 + popAge15_59 + popAge60Plus;
-                
-                processedData.push({
-                    district,
-                    ageGroup0_14: popAge0_14,
-                    ageGroup15_59: popAge15_59,
-                    ageGroup60Plus: popAge60Plus,
-                    totalPopulation,
-                    year: new Date().getFullYear()
-                });
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
-            }
-            
-            let existingAgePopulation = await loadFromFirebase('agePopulation') || [];
-            if (!replaceExisting) {
-                const existingDistricts = new Set(existingAgePopulation.map(p => p.district));
-                const duplicateExisting = processedData.filter(p => existingDistricts.has(p.district));
-                
-                if (duplicateExisting.length > 0) {
-                    errors.push(`เขตที่มีข้อมูลแล้ว: ${duplicateExisting.map(p => p.district).join(', ')}`);
-                }
-                
-                const newData = processedData.filter(p => !existingDistricts.has(p.district));
-                processedData.length = 0;
-                processedData.push(...newData);
-            }
-            
-            if (errors.length > 0) {
-                const errorMsg = `พบข้อผิดพลาด ${errors.length} รายการ:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`;
-                if (!confirm(`${errorMsg}\n\nต้องการดำเนินการต่อกับข้อมูลที่ถูกต้องหรือไม่?`)) {
-                    throw new Error('ยกเลิกการนำเข้าโดยผู้ใช้');
-                }
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่มีข้อมูลใหม่ที่จะนำเข้า');
-            }
-            
-            const finalData = replaceExisting ? processedData : [...existingAgePopulation, ...processedData];
-            await saveToFirebase('agePopulation', finalData);
-            
-            const message = replaceExisting 
-                ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
-                : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
-            
-            showNotification(message, 'success');
-        }
+
 
         // Process Epidemic Weeks import
         async function processEpidemicWeeksImport(startRow, replaceExisting) {
@@ -6660,93 +6550,7 @@
             showNotification(message, 'success');
         }
 
-        // Process Thailand population import
-        async function processThailandPopulationImport(startRow, replaceExisting) {
-            const processedData = [];
-            const errors = [];
-            const duplicateProvinces = new Set();
-            
-            for (let i = startRow; i < selectedFileData.length; i++) {
-                const row = selectedFileData[i];
-                const province = row[0] ? row[0].toString().trim() : '';
-                const malePopulation = row[1];
-                const femalePopulation = row[2];
-                
-                if (!province) {
-                    if (malePopulation || femalePopulation) {
-                        errors.push(`แถว ${i + 1}: ไม่มีชื่อจังหวัด`);
-                    }
-                    continue;
-                }
-                
-                // Validate numbers
-                if (!malePopulation || isNaN(Number(malePopulation)) || Number(malePopulation) < 0) {
-                    errors.push(`แถว ${i + 1}: ประชากรชายไม่ถูกต้อง`);
-                    continue;
-                }
-                
-                if (!femalePopulation || isNaN(Number(femalePopulation)) || Number(femalePopulation) < 0) {
-                    errors.push(`แถว ${i + 1}: ประชากรหญิงไม่ถูกต้อง`);
-                    continue;
-                }
-                
-                if (duplicateProvinces.has(province)) {
-                    errors.push(`แถว ${i + 1}: จังหวัด "${province}" ซ้ำในไฟล์`);
-                    continue;
-                }
-                
-                duplicateProvinces.add(province);
-                
-                const male = Number(malePopulation);
-                const female = Number(femalePopulation);
-                const total = male + female;
-                
-                processedData.push({
-                    province,
-                    male,
-                    female,
-                    total
-                });
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
-            }
-            
-            let existingThailandPopulation = await loadFromFirebase('thailandPopulation') || [];
-            if (!replaceExisting) {
-                const existingProvinces = new Set(existingThailandPopulation.map(p => p.province));
-                const duplicateExisting = processedData.filter(p => existingProvinces.has(p.province));
-                
-                if (duplicateExisting.length > 0) {
-                    errors.push(`จังหวัดที่มีข้อมูลแล้ว: ${duplicateExisting.map(p => p.province).join(', ')}`);
-                }
-                
-                const newData = processedData.filter(p => !existingProvinces.has(p.province));
-                processedData.length = 0;
-                processedData.push(...newData);
-            }
-            
-            if (errors.length > 0) {
-                const errorMsg = `พบข้อผิดพลาด ${errors.length} รายการ:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`;
-                if (!confirm(`${errorMsg}\n\nต้องการดำเนินการต่อกับข้อมูลที่ถูกต้องหรือไม่?`)) {
-                    throw new Error('ยกเลิกการนำเข้าโดยผู้ใช้');
-                }
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่มีข้อมูลใหม่ที่จะนำเข้า');
-            }
-            
-            const finalData = replaceExisting ? processedData : [...existingThailandPopulation, ...processedData];
-            await saveToFirebase('thailandPopulation', finalData);
-            
-            const message = replaceExisting 
-                ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
-                : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
-            
-            showNotification(message, 'success');
-        }
+
 
         // Download example Excel file for population
         function downloadPopulationExampleFile() {
@@ -6932,55 +6736,7 @@
             showNotification('ดาวน์โหลดไฟล์ตัวอย่างเรียบร้อยแล้ว!', 'success');
         }
 
-        // Download example Excel file for Thailand population
-        function downloadThailandPopulationExampleFile() {
-            // Create sample data
-            const sampleData = [
-                ['ชื่อจังหวัด', 'ประชากรชาย', 'ประชากรหญิง'],
-                ['กรุงเทพมหานคร', 2850000, 3150000],
-                ['เชียงใหม่', 850000, 920000],
-                ['นครราชสีมา', 1300000, 1380000],
-                ['ขอนแก่น', 890000, 940000],
-                ['สงขลา', 720000, 760000],
-                ['เชียงราย', 640000, 670000],
-                ['อุบลราชธานี', 950000, 1000000],
-                ['สุราษฎร์ธานี', 520000, 540000],
-                ['นครศรีธรรมราช', 780000, 820000],
-                ['พิษณุโลก', 430000, 450000],
-                ['ลำปาง', 380000, 400000],
-                ['อุดรธานี', 800000, 850000],
-                ['ระยอง', 340000, 370000],
-                ['ชลบุรี', 780000, 820000],
-                ['นนทบุรี', 650000, 700000]
-            ];
 
-            // Create workbook and worksheet
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(sampleData);
-
-            // Set column widths
-            ws['!cols'] = [
-                { wch: 20 },  // ชื่อจังหวัด
-                { wch: 15 },  // ประชากรชาย
-                { wch: 15 }   // ประชากรหญิง
-            ];
-
-            // Style the header row
-            const headerStyle = {
-                font: { bold: true, color: { rgb: "000000" } },
-                fill: { fgColor: { rgb: "87CEEB" } },
-                alignment: { horizontal: "center", vertical: "center" }
-            };
-
-            // Apply header styling
-            ['A1', 'B1', 'C1'].forEach(cell => {
-                if (ws[cell]) ws[cell].s = headerStyle;
-            });
-
-            // Add number formatting for population columns
-            const numberStyle = {
-                numFmt: "#,##0"
-            };
 
             // Apply number formatting to data rows
             for (let row = 2; row <= sampleData.length; row++) {
