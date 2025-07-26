@@ -2409,7 +2409,7 @@
             }
             
             // Add import button for diseases, responsible, population, agePopulation, and thailandPopulation
-            if (type === 'responsible' || type === 'population' || type === 'agePopulation' || type === 'thailandPopulation' || type === 'bangkokDistricts' || type === 'epidemicWeeks') {
+            if (type === 'population' || type === 'agePopulation' || type === 'thailandPopulation' || type === 'bangkokDistricts' || type === 'epidemicWeeks') {
                 const importButton = document.createElement('button');
                 importButton.id = 'importExcelButton';
                 importButton.className = 'btn-secondary';
@@ -2562,18 +2562,7 @@
                                 <div class="text-2xl font-bold text-green-600">${responsible.length}</div>
                             </div>
                         </div>
-                        <div class="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 rounded-lg p-3 max-w-md">
-                            <div class="flex items-start">
-                                <svg class="w-4 h-4 mr-2 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
-                                </svg>
-                                <div>
-                                    <strong>รูปแบบไฟล์ Excel:</strong><br>
-                                    A=รหัสโรค, B=ชื่อผู้รับผิดชอบ, C=ตำแหน่ง<br>
-                                    D=ชื่อผู้ตรวจทาน, E=ตำแหน่งผู้ตรวจทาน
-                                </div>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
 
@@ -6385,8 +6374,6 @@
                     await processAgePopulationImport(startRow, replaceExisting);
                 } else if (dataType === 'population') {
                     await processPopulationImport(startRow, replaceExisting);
-                } else if (dataType === 'responsible') {
-                    await processResponsibleImport(startRow, replaceExisting);
                 } else if (dataType === 'bangkokDistricts') {
                     await processBangkokDistrictsImport(startRow, replaceExisting);
                 } else if (dataType === 'epidemicWeeks') {
@@ -6419,85 +6406,7 @@
 
 
 
-        // Process responsible import
-        async function processResponsibleImport(startRow, replaceExisting) {
-            const processedData = [];
-            const errors = [];
-            const duplicateCodes = new Set();
-            
-            // Get existing diseases for validation
-            const existingDiseases = await loadFromFirebase('diseases');
-            const diseaseCodeSet = new Set(existingDiseases.map(d => d.code));
-            
-            for (let i = startRow; i < selectedFileData.length; i++) {
-                const row = selectedFileData[i];
-                const diseaseCode = row[0] ? row[0].toString().trim() : '';
-                const responsibleName = row[1] ? row[1].toString().trim() : '';
-                const responsiblePosition = row[2] ? row[2].toString().trim() : '';
-                const reviewerName = row[3] ? row[3].toString().trim() : '';
-                const reviewerPosition = row[4] ? row[4].toString().trim() : '';
-                
-                if (!diseaseCode || !responsibleName || !responsiblePosition || !reviewerName || !reviewerPosition) {
-                    if (diseaseCode || responsibleName || responsiblePosition || reviewerName || reviewerPosition) {
-                        errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วน`);
-                    }
-                    continue;
-                }
-                
-                // Check if disease code exists
-                if (!diseaseCodeSet.has(diseaseCode)) {
-                    errors.push(`แถว ${i + 1}: ไม่พบรหัสโรค "${diseaseCode}" ในระบบ (ต้องเพิ่มโรคก่อน)`);
-                    continue;
-                }
-                
-                if (duplicateCodes.has(diseaseCode)) {
-                    errors.push(`แถว ${i + 1}: รหัสโรค "${diseaseCode}" ซ้ำในไฟล์`);
-                    continue;
-                }
-                
-                duplicateCodes.add(diseaseCode);
-                processedData.push({
-                    diseaseCode,
-                    responsibleName,
-                    responsiblePosition,
-                    reviewerName,
-                    reviewerPosition
-                });
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
-            }
-            
-            let existingResponsible = await loadFromFirebase('responsible');
-            if (!replaceExisting) {
-                const existingCodes = new Set(existingResponsible.map(r => r.diseaseCode));
-                const duplicateExisting = processedData.filter(r => existingCodes.has(r.diseaseCode));
-                
-                if (duplicateExisting.length > 0) {
-                    errors.push(`รหัสโรคที่มีผู้รับผิดชอบแล้ว: ${duplicateExisting.map(r => r.diseaseCode).join(', ')}`);
-                }
-                
-                const newData = processedData.filter(r => !existingCodes.has(r.diseaseCode));
-                processedData.length = 0;
-                processedData.push(...newData);
-            }
-            
-            if (errors.length > 0) {
-                const errorMsg = `พบข้อผิดพลาด ${errors.length} รายการ:\\n${errors.slice(0, 5).join('\\n')}${errors.length > 5 ? '\\n...' : ''}`;
-                if (!confirm(`${errorMsg}\\n\\nต้องการดำเนินการต่อกับข้อมูลที่ถูกต้องหรือไม่?`)) {
-                    throw new Error('ยกเลิกการนำเข้าโดยผู้ใช้');
-                }
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่มีข้อมูลใหม่ที่จะนำเข้า');
-            }
-            
-            const finalData = replaceExisting ? processedData : [...existingResponsible, ...processedData];
-            await saveToFirebase('responsible', finalData);
-            
-            const message = replaceExisting 
+
                 ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
                 : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
             
