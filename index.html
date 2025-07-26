@@ -558,7 +558,7 @@
                         <p class="text-gray-600 text-lg">จัดการข้อมูลผู้ป่วยและนำเข้าจากไฟล์ Excel</p>
                     </div>
                     <div class="flex space-x-4">
-                        <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" onchange="importExcel()">
+
                         <button onclick="document.getElementById('excelFile').click()" class="btn-primary">
                             <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
@@ -1120,34 +1120,7 @@
             }, 2000);
         }
 
-        // High-performance Excel import for large datasets (100K+ records)
-        function importExcel() {
-            const file = document.getElementById('excelFile').files[0];
-            if (!file) return;
-
-            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
-            console.log(`📊 File size: ${fileSizeMB} MB`);
-            
-            // Enhanced file size warnings with performance tips
-            if (file.size > 100 * 1024 * 1024) { // 100MB+
-                const confirmed = confirm(
-                    `⚠️ ไฟล์ขนาดใหญ่มาก: ${fileSizeMB} MB\n\n` +
-                    `🚀 เทคนิคเพิ่มความเร็ว:\n` +
-                    `• ปิดแท็บอื่น ๆ ทั้งหมด\n` +
-                    `• ปิดโปรแกรมอื่น ๆ ที่ไม่จำเป็น\n` +
-                    `• ใช้ Chrome หรือ Edge (เร็วกว่า Firefox)\n` +
-                    `• เสียบสายชาร์จ (ถ้าเป็นแล็ปท็อป)\n\n` +
-                    `⏱️ เวลาประมาณ: 5-15 นาที\n` +
-                    `📈 ข้อมูลประมาณ: ${Math.round(file.size / 200).toLocaleString()} รายการ\n\n` +
-                    `ต้องการดำเนินการต่อหรือไม่?`
-                );
-                
-                if (!confirmed) return;
-                
-                // Show performance mode notification
-                showPerformanceModeNotification();
-                
-            } else if (file.size > 50 * 1024 * 1024) { // 50MB+
+        // Remove Excel Import Function
                 const confirmed = confirm(
                     `📁 ไฟล์ขนาดใหญ่: ${fileSizeMB} MB\n\n` +
                     `⚡ ระบบจะใช้โหมดประสิทธิภาพสูง:\n` +
@@ -2409,20 +2382,7 @@
             }
             
             // Add import button for diseases, responsible, population, agePopulation, and thailandPopulation
-            if (type === 'diseases' || type === 'responsible' || type === 'population' || type === 'agePopulation' || type === 'thailandPopulation' || type === 'bangkokDistricts' || type === 'epidemicWeeks') {
-                const importButton = document.createElement('button');
-                importButton.id = 'importExcelButton';
-                importButton.className = 'btn-secondary';
-                importButton.innerHTML = `
-                    <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
-                    </svg>
-                    นำเข้า Excel
-                `;
-                importButton.onclick = () => showImportExcelModal(type);
-                
-                // Insert before the add button
-                buttonContainer.insertBefore(importButton, addButton);
+            // Excel import button has been removed
             }
             
             loadMasterDataDetail(type);
@@ -2497,19 +2457,13 @@
                                 `<tr><td colspan="4" class="px-6 py-20 text-center text-gray-500">
                                     <div class="text-6xl mb-4">📋</div>
                                     <p class="font-semibold text-xl text-gray-700 mb-2">ยังไม่มีข้อมูลโรค</p>
-                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลรายโรคหรือนำเข้าจากไฟล์ Excel</p>
-                                    <div class="flex justify-center space-x-4">
+                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลรายโรค</p>
+                                    <div class="flex justify-center">
                                         <button onclick="addNewMasterData('diseases')" class="btn-primary text-sm">
                                             <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
                                             </svg>
                                             เพิ่มรายโรค
-                                        </button>
-                                        <button onclick="showImportExcelModal()" class="btn-secondary text-sm">
-                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
-                                            </svg>
-                                            นำเข้า Excel
                                         </button>
                                     </div>
                                 </td></tr>` :
@@ -2610,19 +2564,13 @@
                                 `<tr><td colspan="8" class="px-6 py-20 text-center text-gray-500">
                                     <div class="text-6xl mb-4">�</div>
                                     <p class="font-semibold text-xl text-gray-700 mb-2">ยังไม่มีข้อมูลผู้รับผิดชอบ</p>
-                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลผู้รับผิดชอบหรือนำเข้าจากไฟล์ Excel</p>
-                                    <div class="flex justify-center space-x-4">
+                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลผู้รับผิดชอบ</p>
+                                    <div class="flex justify-center">
                                         <button onclick="addNewMasterData('responsible')" class="btn-primary text-sm">
                                             <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
                                             </svg>
                                             เพิ่มผู้รับผิดชอบ
-                                        </button>
-                                        <button onclick="showImportExcelModal('responsible')" class="btn-secondary text-sm">
-                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
-                                            </svg>
-                                            นำเข้า Excel
                                         </button>
                                     </div>
                                 </td></tr>` :
@@ -2731,19 +2679,13 @@
                                 `<tr><td colspan="6" class="px-6 py-20 text-center text-gray-500">
                                     <div class="text-6xl mb-4">🏙️</div>
                                     <p class="font-semibold text-xl text-gray-700 mb-2">ยังไม่มีข้อมูลประชากร</p>
-                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลประชากรหรือนำเข้าจากไฟล์ Excel</p>
-                                    <div class="flex justify-center space-x-4">
+                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลประชากร</p>
+                                    <div class="flex justify-center">
                                         <button onclick="addNewMasterData('population')" class="btn-primary text-sm">
                                             <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
                                             </svg>
                                             เพิ่มข้อมูลประชากร
-                                        </button>
-                                        <button onclick="showImportExcelModal('population')" class="btn-secondary text-sm">
-                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
-                                            </svg>
-                                            นำเข้า Excel
                                         </button>
                                     </div>
                                 </td></tr>` :
@@ -5473,35 +5415,34 @@
 
         // Excel Import Functions
         function showImportExcelModal(dataType = 'diseases') {
+            const isResponsible = dataType === 'responsible';
+            const isPopulation = dataType === 'population';
+            const isAgePopulation = dataType === 'agePopulation';
+            const isThailandPopulation = dataType === 'thailandPopulation';
+            const isBangkokDistricts = dataType === 'bangkokDistricts';
+            
             let title, icon;
-            switch (dataType) {
-                case 'responsible':
-                    title = 'นำเข้าข้อมูลผู้รับผิดชอบจากไฟล์ Excel';
-                    icon = '👥';
-                    break;
-                case 'population':
-                    title = 'นำเข้าข้อมูลประชากรจากไฟล์ Excel';
-                    icon = '🏙️';
-                    break;
-                case 'agePopulation':
-                    title = 'นำเข้าข้อมูลประชากรจำแนกตามอายุจากไฟล์ Excel';
-                    icon = '👶👵';
-                    break;
-                case 'bangkokDistricts':
-                    title = 'นำเข้าข้อมูลเขตในกรุงเทพมหานครจากไฟล์ Excel';
-                    icon = '🏛️';
-                    break;
-                case 'epidemicWeeks':
-                    title = 'นำเข้าข้อมูลสัปดาห์การระบาดจากไฟล์ Excel';
-                    icon = '📅';
-                    break;
-                case 'thailandPopulation':
-                    title = 'นำเข้าข้อมูลประชากรประเทศไทยจากไฟล์ Excel';
-                    icon = '🇹🇭';
-                    break;
-                default:
-                    title = 'นำเข้าข้อมูลโรคจากไฟล์ Excel';
-                    icon = '📊';
+            if (isResponsible) {
+                title = 'นำเข้าข้อมูลผู้รับผิดชอบจากไฟล์ Excel';
+                icon = '👥';
+            } else if (isPopulation) {
+                title = 'นำเข้าข้อมูลประชากรจากไฟล์ Excel';
+                icon = '🏙️';
+            } else if (isAgePopulation) {
+                title = 'นำเข้าข้อมูลประชากรจำแนกตามอายุจากไฟล์ Excel';
+                icon = '👶👵';
+            } else if (isBangkokDistricts) {
+                title = 'นำเข้าข้อมูลเขตในกรุงเทพมหานครจากไฟล์ Excel';
+                icon = '🏛️';
+            } else if (dataType === 'epidemicWeeks') {
+                title = 'นำเข้าข้อมูลสัปดาห์การระบาดจากไฟล์ Excel';
+                icon = '📅';
+            } else if (isThailandPopulation) {
+                title = 'นำเข้าข้อมูลประชากรประเทศไทยจากไฟล์ Excel';
+                icon = '🇹🇭';
+            } else {
+                title = 'นำเข้าข้อมูลโรคจากไฟล์ Excel';
+                icon = '📊';
             }
             
             // Create modal overlay
@@ -5531,44 +5472,33 @@
                             รูปแบบไฟล์ Excel ที่ต้องการ
                         </h4>
                         <div class="text-sm text-blue-700 space-y-2">
-                            ${(() => {
-                                switch (dataType) {
-                                    case 'responsible':
-                                        return `
-                                            <p>• <strong>คอลัมน์ A:</strong> รหัสโรค (เช่น A00, B01, C02)</p>
-                                            <p>• <strong>คอลัมน์ B:</strong> ชื่อผู้รับผิดชอบ (เช่น นายสมชาย ใจดี)</p>
-                                            <p>• <strong>คอลัมน์ C:</strong> ตำแหน่งผู้รับผิดชอบ (เช่น นักวิชาการสาธารณสุข)</p>
-                                            <p>• <strong>คอลัมน์ D:</strong> ชื่อผู้ตรวจทาน (เช่น นายสมศักดิ์ รู้ดี)</p>
-                                            <p>• <strong>คอลัมน์ E:</strong> ตำแหน่งผู้ตรวจทาน (เช่น หัวหน้ากลุ่มงาน)</p>
-                                            <p>• <strong>รหัสโรค:</strong> ต้องมีอยู่ในระบบแล้ว (ต้องเพิ่มโรคก่อน)</p>
-                                        `;
-                                    case 'population':
-                                        return `
-                                            <p>• <strong>คอลัมน์ A:</strong> ชื่อเขต (เช่น บางรัก, วัฒนา, ปทุมวัน)</p>
-                                            <p>• <strong>คอลัมน์ B:</strong> จำนวนประชากรชาย (เช่น 25000, 30000)</p>
-                                            <p>• <strong>คอลัมน์ C:</strong> จำนวนประชากรหญิง (เช่น 27000, 32000)</p>
-                                            <p>• <strong>ชื่อเขต:</strong> ต้องไม่ซ้ำกันและไม่เป็นค่าว่าง</p>
-                                            <p>• <strong>ตัวเลข:</strong> ต้องเป็นตัวเลขบวกเท่านั้น</p>
-                                        `;
-                                    case 'agePopulation':
-                                        return `
-                                            <p>• <strong>คอลัมน์ A:</strong> ชื่อเขต (เช่น บางรัก, วัฒนา, ปทุมวัน)</p>
-                                            <p>• <strong>คอลัมน์ B:</strong> 0-14 ปี (เช่น 12000, 15000)</p>
-                                            <p>• <strong>คอลัมน์ C:</strong> 15-59 ปี (เช่น 35000, 42000)</p>
-                                            <p>• <strong>คอลัมน์ D:</strong> 60+ ปี (เช่น 8000, 10000)</p>
-                                            <p>• <strong>ชื่อเขต:</strong> ต้องไม่ซ้ำกันและไม่เป็นค่าว่าง</p>
-                                            <p>• <strong>ตัวเลข:</strong> ต้องเป็นตัวเลขบวกเท่านั้น</p>
-                                        `;
-                                    case 'thailandPopulation':
-                                        return `
-                                            <p>• <strong>คอลัมน์ A:</strong> ชื่อจังหวัด (เช่น กรุงเทพมหานคร, เชียงใหม่)</p>
-                                            <p>• <strong>คอลัมน์ B:</strong> จำนวนประชากรชาย (เช่น 2500000, 850000)</p>
-                                            <p>• <strong>คอลัมน์ C:</strong> จำนวนประชากรหญิง (เช่น 2700000, 920000)</p>
-                                            <p>• <strong>ชื่อจังหวัด:</strong> ต้องไม่ซ้ำกันและไม่เป็นค่าว่าง</p>
-                                            <p>• <strong>ตัวเลข:</strong> ต้องเป็นตัวเลขบวกเท่านั้น</p>
-                                        `;
-                                    default:
-                                        return `
+                            ${isResponsible ? `
+                                <p>• <strong>คอลัมน์ A:</strong> รหัสโรค (เช่น A00, B01, C02)</p>
+                                <p>• <strong>คอลัมน์ B:</strong> ชื่อผู้รับผิดชอบ (เช่น นายสมชาย ใจดี)</p>
+                                <p>• <strong>คอลัมน์ C:</strong> ตำแหน่งผู้รับผิดชอบ (เช่น นักวิชาการสาธารณสุข)</p>
+                                <p>• <strong>คอลัมน์ D:</strong> ชื่อผู้ตรวจทาน (เช่น นายสมศักดิ์ รู้ดี)</p>
+                                <p>• <strong>คอลัมน์ E:</strong> ตำแหน่งผู้ตรวจทาน (เช่น หัวหน้ากลุ่มงาน)</p>
+                                <p>• <strong>รหัสโรค:</strong> ต้องมีอยู่ในระบบแล้ว (ต้องเพิ่มโรคก่อน)</p>
+                            ` : isPopulation ? `
+                                <p>• <strong>คอลัมน์ A:</strong> ชื่อเขต (เช่น บางรัก, วัฒนา, ปทุมวัน)</p>
+                                <p>• <strong>คอลัมน์ B:</strong> จำนวนประชากรชาย (เช่น 25000, 30000)</p>
+                                <p>• <strong>คอลัมน์ C:</strong> จำนวนประชากรหญิง (เช่น 27000, 32000)</p>
+                                <p>• <strong>ชื่อเขต:</strong> ต้องไม่ซ้ำกันและไม่เป็นค่าว่าง</p>
+                                <p>• <strong>ตัวเลข:</strong> ต้องเป็นตัวเลขบวกเท่านั้น</p>
+                            ` : isAgePopulation ? `
+                                <p>• <strong>คอลัมน์ A:</strong> ชื่อเขต (เช่น บางรัก, วัฒนา, ปทุมวัน)</p>
+                                <p>• <strong>คอลัมน์ B:</strong> 0-14 ปี (เช่น 12000, 15000)</p>
+                                <p>• <strong>คอลัมน์ C:</strong> 15-59 ปี (เช่น 35000, 42000)</p>
+                                <p>• <strong>คอลัมน์ D:</strong> 60+ ปี (เช่น 8000, 10000)</p>
+                                <p>• <strong>ชื่อเขต:</strong> ต้องไม่ซ้ำกันและไม่เป็นค่าว่าง</p>
+                                <p>• <strong>ตัวเลข:</strong> ต้องเป็นตัวเลขบวกเท่านั้น</p>
+                            ` : isThailandPopulation ? `
+                                <p>• <strong>คอลัมน์ A:</strong> ชื่อจังหวัด (เช่น กรุงเทพมหานคร, เชียงใหม่)</p>
+                                <p>• <strong>คอลัมน์ B:</strong> จำนวนประชากรชาย (เช่น 2500000, 850000)</p>
+                                <p>• <strong>คอลัมน์ C:</strong> จำนวนประชากรหญิง (เช่น 2700000, 920000)</p>
+                                <p>• <strong>ชื่อจังหวัด:</strong> ต้องไม่ซ้ำกันและไม่เป็นค่าว่าง</p>
+                                <p>• <strong>ตัวเลข:</strong> ต้องเป็นตัวเลขบวกเท่านั้น</p>
+                            ` : `
                                 <p>• <strong>คอลัมน์ A:</strong> รหัสโรค (เช่น A00, B01, C02)</p>
                                 <p>• <strong>คอลัมน์ B:</strong> ชื่อโรค (เช่น อหิวาตกโรค, โรคไข้หวัดใหญ่)</p>
                                 <p>• <strong>รหัสโรค:</strong> ต้องไม่ซ้ำกันและไม่เป็นค่าว่าง</p>
@@ -5992,7 +5922,7 @@
                         </div>
                         ` : ''}
                         
-                        ${dataType === 'diseases' ? `
+                        ${!isResponsible && !isPopulation && !isAgePopulation && !isThailandPopulation && !isBangkokDistricts && dataType !== 'epidemicWeeks' ? `
                         <!-- Example Table for Disease Import -->
                         <div class="mt-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
                             <h5 class="font-bold text-green-800 mb-3 flex items-center">
@@ -6214,10 +6144,13 @@
                 return;
             }
             
+            const isResponsible = dataType === 'responsible';
+            const isPopulation = dataType === 'population';
+            const isAgePopulation = dataType === 'agePopulation';
+            const isThailandPopulation = dataType === 'thailandPopulation';
             const previewTable = document.getElementById('previewTable');
             
-            switch (dataType) {
-                case 'thailandPopulation':
+            if (isThailandPopulation) {
                 previewTable.innerHTML = `
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
@@ -6332,57 +6265,50 @@
             const totalRows = data.length - (skipFirstRow ? 1 : 0);
             let validRows;
             
-            switch (dataType) {
-                case 'epidemicWeeks':
-                    validRows = data.slice(startRow).filter(row =>
-                        row[0] && !isNaN(Number(row[0])) && // ปี
-                        row[1] && !isNaN(Number(row[1])) && // สัปดาห์ที่
-                        row[2] && row[2].toString().trim() && // วันที่เริ่มต้น
-                        row[3] && row[3].toString().trim()    // วันที่สิ้นสุด
-                    ).length;
-                    break;
-                case 'bangkokDistricts':
-                    validRows = data.slice(startRow).filter(row =>
-                        row[0] && row[0].toString().trim() && // แขวง
-                        row[1] && row[1].toString().trim()    // เขต
-                    ).length;
-                    break;
-                case 'thailandPopulation':
-                    validRows = data.slice(startRow).filter(row => 
-                        row[0] && row[0].toString().trim() && // ชื่อจังหวัด
-                        row[1] && !isNaN(Number(row[1])) && Number(row[1]) >= 0 && // ประชากรชาย
-                        row[2] && !isNaN(Number(row[2])) && Number(row[2]) >= 0    // ประชากรหญิง
-                    ).length;
-                    break;
-                case 'agePopulation':
-                    validRows = data.slice(startRow).filter(row => 
-                        row[0] && row[0].toString().trim() && // ชื่อเขต
-                        row[1] && !isNaN(Number(row[1])) && Number(row[1]) >= 0 && // 0-14 ปี
-                        row[2] && !isNaN(Number(row[2])) && Number(row[2]) >= 0 && // 15-59 ปี
-                        row[3] && !isNaN(Number(row[3])) && Number(row[3]) >= 0    // 60+ ปี
-                    ).length;
-                    break;
-                case 'population':
-                    validRows = data.slice(startRow).filter(row => 
-                        row[0] && row[0].toString().trim() && // ชื่อเขต
-                        row[1] && !isNaN(Number(row[1])) && Number(row[1]) >= 0 && // ประชากรชาย
-                        row[2] && !isNaN(Number(row[2])) && Number(row[2]) >= 0    // ประชากรหญิง
-                    ).length;
-                    break;
-                case 'responsible':
-                    validRows = data.slice(startRow).filter(row => 
-                        row[0] && row[0].toString().trim() && // รหัสโรค
-                        row[1] && row[1].toString().trim() && // ผู้รับผิดชอบ
-                        row[2] && row[2].toString().trim() && // ตำแหน่งผู้รับผิดชอบ
-                        row[3] && row[3].toString().trim() && // ผู้ตรวจทาน
-                        row[4] && row[4].toString().trim()    // ตำแหน่งผู้ตรวจทาน
-                    ).length;
-                    break;
-                default:
-                    validRows = data.slice(startRow).filter(row => 
-                        row[0] && row[0].toString().trim() && 
-                        row[1] && row[1].toString().trim()
-                    ).length;
+            if (dataType === 'epidemicWeeks') {
+                validRows = data.slice(startRow).filter(row =>
+                    row[0] && !isNaN(Number(row[0])) && // ปี
+                    row[1] && !isNaN(Number(row[1])) && // สัปดาห์ที่
+                    row[2] && row[2].toString().trim() && // วันที่เริ่มต้น
+                    row[3] && row[3].toString().trim()    // วันที่สิ้นสุด
+                ).length;
+            } else if (isBangkokDistricts) {
+                validRows = data.slice(startRow).filter(row =>
+                    row[0] && row[0].toString().trim() && // แขวง
+                    row[1] && row[1].toString().trim()    // เขต
+                ).length;
+            } else if (isThailandPopulation) {
+                validRows = data.slice(startRow).filter(row => 
+                    row[0] && row[0].toString().trim() && // ชื่อจังหวัด
+                    row[1] && !isNaN(Number(row[1])) && Number(row[1]) >= 0 && // ประชากรชาย
+                    row[2] && !isNaN(Number(row[2])) && Number(row[2]) >= 0    // ประชากรหญิง
+                ).length;
+            } else if (isAgePopulation) {
+                validRows = data.slice(startRow).filter(row => 
+                    row[0] && row[0].toString().trim() && // ชื่อเขต
+                    row[1] && !isNaN(Number(row[1])) && Number(row[1]) >= 0 && // 0-14 ปี
+                    row[2] && !isNaN(Number(row[2])) && Number(row[2]) >= 0 && // 15-59 ปี
+                    row[3] && !isNaN(Number(row[3])) && Number(row[3]) >= 0    // 60+ ปี
+                ).length;
+            } else if (isPopulation) {
+                validRows = data.slice(startRow).filter(row => 
+                    row[0] && row[0].toString().trim() && // ชื่อเขต
+                    row[1] && !isNaN(Number(row[1])) && Number(row[1]) >= 0 && // ประชากรชาย
+                    row[2] && !isNaN(Number(row[2])) && Number(row[2]) >= 0    // ประชากรหญิง
+                ).length;
+            } else if (isResponsible) {
+                validRows = data.slice(startRow).filter(row => 
+                    row[0] && row[0].toString().trim() && // รหัสโรค
+                    row[1] && row[1].toString().trim() && // ผู้รับผิดชอบ
+                    row[2] && row[2].toString().trim() && // ตำแหน่งผู้รับผิดชอบ
+                    row[3] && row[3].toString().trim() && // ผู้ตรวจทาน
+                    row[4] && row[4].toString().trim()    // ตำแหน่งผู้ตรวจทาน
+                ).length;
+            } else {
+                validRows = data.slice(startRow).filter(row => 
+                    row[0] && row[0].toString().trim() && 
+                    row[1] && row[1].toString().trim()
+                ).length;
             }
             
             document.getElementById('previewSummary').innerHTML = `
