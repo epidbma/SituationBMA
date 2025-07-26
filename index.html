@@ -2666,25 +2666,62 @@
             const population = await loadFromFirebase('population');
             const content = document.getElementById('masterDataDetailContent');
             
-            // Calculate totals for summary
-            const totalPopulation = population.reduce((sum, pop) => sum + parseInt(pop.totalPopulation || pop.malePopulation + pop.femalePopulation || 0), 0);
-            const totalMale = population.reduce((sum, pop) => sum + parseInt(pop.malePopulation || 0), 0);
-            const totalFemale = population.reduce((sum, pop) => sum + parseInt(pop.femalePopulation || 0), 0);
+            // Group by year
+            const populationByYear = population.reduce((acc, pop) => {
+                const year = pop.year || 'ไม่ระบุปี';
+                if (!acc[year]) {
+                    acc[year] = [];
+                }
+                acc[year].push(pop);
+                return acc;
+            }, {});
+
+            // Sort years in descending order
+            const years = Object.keys(populationByYear).sort((a, b) => parseInt(b) - parseInt(a));
+            
+            // Get the selected year (default to latest year)
+            const selectedYear = document.getElementById('yearFilter')?.value || years[0] || 'ไม่ระบุปี';
+            const selectedData = populationByYear[selectedYear] || [];
+            
+            // Calculate totals for the selected year
+            const totalPopulation = selectedData.reduce((sum, pop) => sum + parseInt(pop.total || pop.malePopulation + pop.femalePopulation || 0), 0);
+            const totalMale = selectedData.reduce((sum, pop) => sum + parseInt(pop.malePopulation || 0), 0);
+            const totalFemale = selectedData.reduce((sum, pop) => sum + parseInt(pop.femalePopulation || 0), 0);
             
             content.innerHTML = `
                 <div class="mb-6">
-                    <div class="flex justify-between items-center mb-4">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-4 md:space-y-0">
+                        <!-- Year Filter -->
                         <div class="flex items-center space-x-4">
+                            <label class="text-gray-700 font-medium">ปี พ.ศ.</label>
+                            <select id="yearFilter" onchange="loadPopulationTable()" class="form-select rounded-lg border-gray-300 shadow-sm">
+                                ${years.map(year => `
+                                    <option value="${year}" ${year === selectedYear ? 'selected' : ''}>
+                                        ${year === 'ไม่ระบุปี' ? year : year}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+
+                        <!-- Statistics -->
+                        <div class="flex flex-wrap gap-4">
                             <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3">
                                 <div class="text-gray-600 text-sm">จำนวนเขต</div>
-                                <div class="text-2xl font-bold text-blue-600">${population.length}</div>
+                                <div class="text-2xl font-bold text-blue-600">${selectedData.length}</div>
                             </div>
                             <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3">
                                 <div class="text-gray-600 text-sm">ประชากรรวม</div>
                                 <div class="text-2xl font-bold text-green-600">${totalPopulation.toLocaleString()}</div>
                             </div>
+                            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3">
+                                <div class="text-gray-600 text-sm">ชาย</div>
+                                <div class="text-2xl font-bold text-indigo-600">${totalMale.toLocaleString()}</div>
+                            </div>
+                            <div class="bg-gradient-to-r from-pink-50 to-red-50 rounded-lg p-3">
+                                <div class="text-gray-600 text-sm">หญิง</div>
+                                <div class="text-2xl font-bold text-pink-600">${totalFemale.toLocaleString()}</div>
+                            </div>
                         </div>
-
                     </div>
                 </div>
 
