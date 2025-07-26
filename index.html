@@ -2585,7 +2585,7 @@
                                 `<tr><td colspan="8" class="px-6 py-20 text-center text-gray-500">
                                     <div class="text-6xl mb-4">�</div>
                                     <p class="font-semibold text-xl text-gray-700 mb-2">ยังไม่มีข้อมูลผู้รับผิดชอบ</p>
-                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลผู้รับผิดชอบหรือนำเข้าจากไฟล์ Excel</p>
+                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลผู้รับผิดชอบ</p>
                                     <div class="flex justify-center space-x-4">
                                         <button onclick="addNewMasterData('responsible')" class="btn-primary text-sm">
                                             <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
@@ -6406,12 +6406,6 @@
 
 
 
-
-                ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
-                : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
-            
-            showNotification(message, 'success');
-        }
 
         // Process population import
         async function processPopulationImport(startRow, replaceExisting) {
