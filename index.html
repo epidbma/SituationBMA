@@ -29,32 +29,6 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
-
-        // Check Firebase connection status
-        const connectedRef = ref(database, '.info/connected');
-        onValue(connectedRef, (snap) => {
-            if (snap.val() === true) {
-                console.log('🟢 Connected to Firebase');
-                const firebaseStatus = document.getElementById('firebaseStatus');
-                if (firebaseStatus) {
-                    firebaseStatus.className = 'mt-2 inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium';
-                    firebaseStatus.innerHTML = `
-                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                        🔥 เชื่อมต่อ Firebase (เอเชีย) แล้ว
-                    `;
-                }
-            } else {
-                console.log('🔴 Disconnected from Firebase');
-                const firebaseStatus = document.getElementById('firebaseStatus');
-                if (firebaseStatus) {
-                    firebaseStatus.className = 'mt-2 inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium';
-                    firebaseStatus.innerHTML = `
-                        <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
-                        ❌ ขาดการเชื่อมต่อ Firebase
-                    `;
-                }
-            }
-        });
         
         // Make Firebase functions globally available
         window.firebaseDB = {
@@ -69,47 +43,21 @@
         };
         
         // Initialize the application after Firebase is ready
-        window.initializeFirebaseApp = async function() {
-            try {
-                console.log('🔥 Connecting to Firebase in Asia Southeast region...');
-                
-                // Update Firebase status indicator
-                const firebaseStatus = document.getElementById('firebaseStatus');
-                if (firebaseStatus) {
-                    firebaseStatus.className = 'mt-2 inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium';
-                    firebaseStatus.innerHTML = `
-                        <div class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></div>
-                        ⏳ กำลังเชื่อมต่อ Firebase...
-                    `;
-                }
-
-                // Initialize data
-                await initializeData();
-                
-                // Update status after successful initialization
-                if (firebaseStatus) {
-                    firebaseStatus.className = 'mt-2 inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium';
-                    firebaseStatus.innerHTML = `
-                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                        🔥 เชื่อมต่อ Firebase (เอเชีย) แล้ว
-                    `;
-                }
-
-                console.log('✅ Firebase initialization complete');
-                showPage('summary');
-            } catch (error) {
-                console.error('❌ Firebase initialization error:', error);
-                
-                if (firebaseStatus) {
-                    firebaseStatus.className = 'mt-2 inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium';
-                    firebaseStatus.innerHTML = `
-                        <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
-                        ❌ เกิดข้อผิดพลาดในการเชื่อมต่อ Firebase
-                    `;
-                }
-
-                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ Firebase กรุณารีเฟรชหน้าเว็บแล้วลองใหม่อีกครั้ง');
+        window.initializeFirebaseApp = function() {
+            console.log('🔥 Firebase connected to Asia Southeast region!');
+            
+            // Update Firebase status indicator
+            const firebaseStatus = document.getElementById('firebaseStatus');
+            if (firebaseStatus) {
+                firebaseStatus.className = 'mt-2 inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium';
+                firebaseStatus.innerHTML = `
+                    <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    🔥 เชื่อมต่อ Firebase (เอเชีย) แล้ว
+                `;
             }
+            
+            initializeData();
+            showPage('summary');
             
             // Show connection status notification
             const statusDiv = document.createElement('div');
@@ -610,7 +558,7 @@
                         <p class="text-gray-600 text-lg">จัดการข้อมูลผู้ป่วยและนำเข้าจากไฟล์ Excel</p>
                     </div>
                     <div class="flex space-x-4">
-
+                        <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" onchange="importExcel()">
                         <button onclick="document.getElementById('excelFile').click()" class="btn-primary">
                             <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
@@ -950,41 +898,21 @@
         // Firebase data management functions
         async function saveToFirebase(path, data) {
             try {
-                if (!window.firebaseDB) {
-                    throw new Error('Firebase ยังไม่พร้อมใช้งาน กรุณารอสักครู่แล้วลองใหม่อีกครั้ง');
-                }
-
                 const { database, ref, set } = window.firebaseDB;
-                console.log(`📤 Saving to Firebase: ${path}`);
-                
                 await set(ref(database, path), data);
-                console.log(`✅ บันทึกข้อมูลสำเร็จ: ${path}`);
+                console.log(`✅ Saved to Firebase: ${path}`);
                 return true;
             } catch (error) {
-                const errorMsg = `❌ เกิดข้อผิดพลาดในการบันทึกข้อมูล (${path}): ${error.message}`;
-                console.error(errorMsg);
-                alert(errorMsg);
-                
+                console.error(`❌ Error saving to Firebase (${path}):`, error);
                 // Fallback to localStorage
-                try {
-                    localStorage.setItem(path.replace('/', '_'), JSON.stringify(data));
-                    console.log('💾 บันทึกข้อมูลสำรองลงใน localStorage แล้ว');
-                } catch (e) {
-                    console.error('⚠️ ไม่สามารถบันทึกข้อมูลสำรองได้:', e);
-                }
+                localStorage.setItem(path.replace('/', '_'), JSON.stringify(data));
                 return false;
             }
         }
 
         async function loadFromFirebase(path) {
             try {
-                if (!window.firebaseDB) {
-                    throw new Error('Firebase ยังไม่พร้อมใช้งาน กรุณารอสักครู่แล้วลองใหม่อีกครั้ง');
-                }
-
                 const { database, ref, get } = window.firebaseDB;
-                console.log(`📥 Loading from Firebase: ${path}`);
-                
                 const snapshot = await get(ref(database, path));
                 if (snapshot.exists()) {
                     const data = snapshot.val();
@@ -999,9 +927,7 @@
                         console.log(`🔄 Converted object to array: ${arrayData.length} items`);
                         return arrayData;
                     } else {
-                        const errorMsg = `⚠️ รูปแบบข้อมูลไม่ถูกต้องสำหรับ ${path}: ${typeof data}`;
-                        console.error(errorMsg);
-                        alert(errorMsg);
+                        console.log(`⚠️ Data format unexpected for ${path}:`, typeof data);
                         return [];
                     }
                 } else {
@@ -1054,22 +980,14 @@
         async function initializeData() {
             console.log('🔄 Initializing data with Firebase...');
             
-            try {
-                // Initialize all data collections
-                const collections = [
-                    'diseases', 'responsible', 'patients', 'population', 
-                    'agePopulation', 'thailandPopulation', 'epidemicWeeks', 'bangkokDistricts'
-                ];
-                
-                // Show loading indicator
-                const loadingStatus = document.createElement('div');
-                loadingStatus.className = 'fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-lg z-50';
-                loadingStatus.innerHTML = '<div class="flex items-center"><div class="animate-spin w-5 h-5 mr-3 border-t-2 border-b-2 border-blue-500 rounded-full"></div>กำลังโหลดข้อมูล...</div>';
-                document.body.appendChild(loadingStatus);
-                
-                for (const collection of collections) {
-                    console.log(`📥 Loading ${collection}...`);
-                    const data = await loadFromFirebase(collection);
+            // Initialize all data collections
+            const collections = [
+                'diseases', 'responsible', 'patients', 'population', 
+                'agePopulation', 'thailandPopulation', 'epidemicWeeks', 'bangkokDistricts'
+            ];
+            
+            for (const collection of collections) {
+                const data = await loadFromFirebase(collection);
                 
                 // Initialize with sample data if empty
                 if (collection === 'diseases' && data.length === 0) {
@@ -1093,48 +1011,24 @@
         }
 
         // Page navigation with animation
-        async function showPage(page) {
-            try {
-                // Check if Firebase is initialized
-                if (!window.firebaseDB) {
-                    console.log('⏳ รอการเชื่อมต่อ Firebase...');
-                    await new Promise((resolve) => {
-                        const checkFirebase = setInterval(() => {
-                            if (window.firebaseDB) {
-                                clearInterval(checkFirebase);
-                                resolve();
-                            }
-                        }, 100);
-                    });
-                }
+        function showPage(page) {
+            // Hide all pages
+            const pages = ['summaryPage', 'reportPage', 'patientsPage', 'masterDataPage', 'masterDataDetailPage'];
+            pages.forEach(pageId => {
+                const element = document.getElementById(pageId);
+                element.classList.add('hidden');
+                element.classList.remove('slide-in');
+            });
 
-                // Hide all pages
-                const pages = ['summaryPage', 'reportPage', 'patientsPage', 'masterDataPage', 'masterDataDetailPage'];
-                pages.forEach(pageId => {
-                    const element = document.getElementById(pageId);
-                    if (element) {
-                        element.classList.add('hidden');
-                        element.classList.remove('slide-in');
-                    }
-                });
+            // Reset all tabs
+            const tabs = ['summaryTab', 'reportTab', 'patientsTab', 'masterDataTab'];
+            tabs.forEach(tabId => {
+                const tab = document.getElementById(tabId);
+                tab.className = tab.className.replace('tab-active', 'tab-inactive');
+            });
 
-                // Reset all tabs
-                const tabs = ['summaryTab', 'reportTab', 'patientsTab', 'masterDataTab'];
-                tabs.forEach(tabId => {
-                    const tab = document.getElementById(tabId);
-                    if (tab) {
-                        tab.className = tab.className.replace('tab-active', 'tab-inactive');
-                    }
-                });
-
-                // Show loading indicator
-                const loadingElement = document.createElement('div');
-                loadingElement.className = 'fixed top-0 left-0 w-full h-1 bg-blue-100';
-                loadingElement.innerHTML = '<div class="h-1 bg-blue-500 animate-loading-bar"></div>';
-                document.body.appendChild(loadingElement);
-
-                // Show selected page and activate tab
-                await new Promise(resolve => setTimeout(resolve, 100));
+            // Show selected page and activate tab
+            setTimeout(() => {
                 if (page === 'summary') {
                     const pageElement = document.getElementById('summaryPage');
                     pageElement.classList.remove('hidden');
@@ -1226,7 +1120,34 @@
             }, 2000);
         }
 
-        // Remove Excel Import Function
+        // High-performance Excel import for large datasets (100K+ records)
+        function importExcel() {
+            const file = document.getElementById('excelFile').files[0];
+            if (!file) return;
+
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+            console.log(`📊 File size: ${fileSizeMB} MB`);
+            
+            // Enhanced file size warnings with performance tips
+            if (file.size > 100 * 1024 * 1024) { // 100MB+
+                const confirmed = confirm(
+                    `⚠️ ไฟล์ขนาดใหญ่มาก: ${fileSizeMB} MB\n\n` +
+                    `🚀 เทคนิคเพิ่มความเร็ว:\n` +
+                    `• ปิดแท็บอื่น ๆ ทั้งหมด\n` +
+                    `• ปิดโปรแกรมอื่น ๆ ที่ไม่จำเป็น\n` +
+                    `• ใช้ Chrome หรือ Edge (เร็วกว่า Firefox)\n` +
+                    `• เสียบสายชาร์จ (ถ้าเป็นแล็ปท็อป)\n\n` +
+                    `⏱️ เวลาประมาณ: 5-15 นาที\n` +
+                    `📈 ข้อมูลประมาณ: ${Math.round(file.size / 200).toLocaleString()} รายการ\n\n` +
+                    `ต้องการดำเนินการต่อหรือไม่?`
+                );
+                
+                if (!confirmed) return;
+                
+                // Show performance mode notification
+                showPerformanceModeNotification();
+                
+            } else if (file.size > 50 * 1024 * 1024) { // 50MB+
                 const confirmed = confirm(
                     `📁 ไฟล์ขนาดใหญ่: ${fileSizeMB} MB\n\n` +
                     `⚡ ระบบจะใช้โหมดประสิทธิภาพสูง:\n` +
@@ -2488,7 +2409,20 @@
             }
             
             // Add import button for diseases, responsible, population, agePopulation, and thailandPopulation
-            // Excel import button has been removed
+            if (type === 'diseases' || type === 'responsible' || type === 'population' || type === 'agePopulation' || type === 'thailandPopulation' || type === 'bangkokDistricts' || type === 'epidemicWeeks') {
+                const importButton = document.createElement('button');
+                importButton.id = 'importExcelButton';
+                importButton.className = 'btn-secondary';
+                importButton.innerHTML = `
+                    <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                    </svg>
+                    นำเข้า Excel
+                `;
+                importButton.onclick = () => showImportExcelModal(type);
+                
+                // Insert before the add button
+                buttonContainer.insertBefore(importButton, addButton);
             }
             
             loadMasterDataDetail(type);
@@ -2563,13 +2497,19 @@
                                 `<tr><td colspan="4" class="px-6 py-20 text-center text-gray-500">
                                     <div class="text-6xl mb-4">📋</div>
                                     <p class="font-semibold text-xl text-gray-700 mb-2">ยังไม่มีข้อมูลโรค</p>
-                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลรายโรค</p>
-                                    <div class="flex justify-center">
+                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลรายโรคหรือนำเข้าจากไฟล์ Excel</p>
+                                    <div class="flex justify-center space-x-4">
                                         <button onclick="addNewMasterData('diseases')" class="btn-primary text-sm">
                                             <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
                                             </svg>
                                             เพิ่มรายโรค
+                                        </button>
+                                        <button onclick="showImportExcelModal()" class="btn-secondary text-sm">
+                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                            </svg>
+                                            นำเข้า Excel
                                         </button>
                                     </div>
                                 </td></tr>` :
@@ -2670,13 +2610,19 @@
                                 `<tr><td colspan="8" class="px-6 py-20 text-center text-gray-500">
                                     <div class="text-6xl mb-4">�</div>
                                     <p class="font-semibold text-xl text-gray-700 mb-2">ยังไม่มีข้อมูลผู้รับผิดชอบ</p>
-                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลผู้รับผิดชอบ</p>
-                                    <div class="flex justify-center">
+                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลผู้รับผิดชอบหรือนำเข้าจากไฟล์ Excel</p>
+                                    <div class="flex justify-center space-x-4">
                                         <button onclick="addNewMasterData('responsible')" class="btn-primary text-sm">
                                             <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
                                             </svg>
                                             เพิ่มผู้รับผิดชอบ
+                                        </button>
+                                        <button onclick="showImportExcelModal('responsible')" class="btn-secondary text-sm">
+                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                            </svg>
+                                            นำเข้า Excel
                                         </button>
                                     </div>
                                 </td></tr>` :
@@ -2785,13 +2731,19 @@
                                 `<tr><td colspan="6" class="px-6 py-20 text-center text-gray-500">
                                     <div class="text-6xl mb-4">🏙️</div>
                                     <p class="font-semibold text-xl text-gray-700 mb-2">ยังไม่มีข้อมูลประชากร</p>
-                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลประชากร</p>
-                                    <div class="flex justify-center">
+                                    <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลประชากรหรือนำเข้าจากไฟล์ Excel</p>
+                                    <div class="flex justify-center space-x-4">
                                         <button onclick="addNewMasterData('population')" class="btn-primary text-sm">
                                             <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
                                             </svg>
                                             เพิ่มข้อมูลประชากร
+                                        </button>
+                                        <button onclick="showImportExcelModal('population')" class="btn-secondary text-sm">
+                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                            </svg>
+                                            นำเข้า Excel
                                         </button>
                                     </div>
                                 </td></tr>` :
