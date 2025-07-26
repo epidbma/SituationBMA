@@ -5857,7 +5857,18 @@
                             </div>
                             <div class="mt-3 text-xs text-blue-700 space-y-1">
                                 <p>• <strong>แถวสีเหลือง:</strong> หัวตาราง (สามารถข้ามได้โดยเลือก "ข้ามแถวแรก")</p>
-
+                                <p>• <strong>ชื่อจังหวัด:</strong> ใช้ชื่อจังหวัดทั้ง 77 จังหวัดของไทย</p>
+                                <p>• <strong>ตัวเลขประชากร:</strong> ใส่เฉพาะตัวเลขบวก ไม่ต้องใส่เครื่องหมายจุลภาค</p>
+                                <p>• <strong>ประชากรรวม:</strong> ระบบจะคำนวณอัตโนมัติจากชาย + หญิง</p>
+                            </div>
+                            <div class="mt-4 flex justify-center">
+                                <button onclick="downloadThailandPopulationExampleFile()" class="btn-secondary text-sm flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                    </svg>
+                                    ดาวน์โหลดไฟล์ตัวอย่าง Excel
+                                </button>
+                            </div>
                         </div>
                         ` : ''}
                         
@@ -6351,9 +6362,7 @@
                 
                 // Close modal and refresh table
                 closeImportExcelModal();
-                if (dataType === 'thailandPopulation') {
-                    await loadThailandPopulationTable();
-                } else if (dataType === 'agePopulation') {
+                if (dataType === 'agePopulation') {
                     await loadAgePopulationTable();
                 } else if (dataType === 'responsible') {
                     await loadResponsibleTable();
@@ -6736,7 +6745,55 @@
             showNotification('ดาวน์โหลดไฟล์ตัวอย่างเรียบร้อยแล้ว!', 'success');
         }
 
+        // Download example Excel file for Thailand population
+        function downloadThailandPopulationExampleFile() {
+            // Create sample data
+            const sampleData = [
+                ['ชื่อจังหวัด', 'ประชากรชาย', 'ประชากรหญิง'],
+                ['กรุงเทพมหานคร', 2850000, 3150000],
+                ['เชียงใหม่', 850000, 920000],
+                ['นครราชสีมา', 1300000, 1380000],
+                ['ขอนแก่น', 890000, 940000],
+                ['สงขลา', 720000, 760000],
+                ['เชียงราย', 640000, 670000],
+                ['อุบลราชธานี', 950000, 1000000],
+                ['สุราษฎร์ธานี', 520000, 540000],
+                ['นครศรีธรรมราช', 780000, 820000],
+                ['พิษณุโลก', 430000, 450000],
+                ['ลำปาง', 380000, 400000],
+                ['อุดรธานี', 800000, 850000],
+                ['ระยอง', 340000, 370000],
+                ['ชลบุรี', 780000, 820000],
+                ['นนทบุรี', 650000, 700000]
+            ];
 
+            // Create workbook and worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(sampleData);
+
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 20 },  // ชื่อจังหวัด
+                { wch: 15 },  // ประชากรชาย
+                { wch: 15 }   // ประชากรหญิง
+            ];
+
+            // Style the header row
+            const headerStyle = {
+                font: { bold: true, color: { rgb: "000000" } },
+                fill: { fgColor: { rgb: "87CEEB" } },
+                alignment: { horizontal: "center", vertical: "center" }
+            };
+
+            // Apply header styling
+            ['A1', 'B1', 'C1'].forEach(cell => {
+                if (ws[cell]) ws[cell].s = headerStyle;
+            });
+
+            // Add number formatting for population columns
+            const numberStyle = {
+                numFmt: "#,##0"
+            };
 
             // Apply number formatting to data rows
             for (let row = 2; row <= sampleData.length; row++) {
