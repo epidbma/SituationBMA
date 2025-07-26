@@ -2409,7 +2409,7 @@
             }
             
             // Add import button for diseases, responsible, population, agePopulation, and thailandPopulation
-            if (type === 'bangkokDistricts' || type === 'epidemicWeeks') {
+            if (type === 'epidemicWeeks') {
                 const importButton = document.createElement('button');
                 importButton.id = 'importExcelButton';
                 importButton.className = 'btn-secondary';
@@ -6354,9 +6354,7 @@
                 const replaceExisting = document.getElementById('replaceExisting').checked;
                 const startRow = skipFirstRow ? 1 : 0;
                 
-                if (dataType === 'bangkokDistricts') {
-                    await processBangkokDistrictsImport(startRow, replaceExisting);
-                } else if (dataType === 'epidemicWeeks') {
+                if (dataType === 'epidemicWeeks') {
                     await processEpidemicWeeksImport(startRow, replaceExisting);
                 }
                 
@@ -6488,76 +6486,7 @@
             showNotification(message, 'success');
         }
 
-        // Process Bangkok Districts import
-        async function processBangkokDistrictsImport(startRow, replaceExisting) {
-            const processedData = [];
-            const errors = [];
-            const duplicateSubdistricts = new Set();
-            
-            for (let i = startRow; i < selectedFileData.length; i++) {
-                const row = selectedFileData[i];
-                const subdistrict = row[0] ? row[0].toString().trim() : '';
-                const district = row[1] ? row[1].toString().trim() : '';
-                
-                if (!subdistrict || !district) {
-                    if (subdistrict || district) {
-                        errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วน (แขวง: "${subdistrict}", เขต: "${district}")`);
-                    }
-                    continue;
-                }
-                
-                const key = `${subdistrict}-${district}`.toLowerCase();
-                if (duplicateSubdistricts.has(key)) {
-                    errors.push(`แถว ${i + 1}: แขวง "${subdistrict}" ในเขต "${district}" ซ้ำในไฟล์`);
-                    continue;
-                }
-                
-                duplicateSubdistricts.add(key);
-                processedData.push({
-                    subdistrict,
-                    district,
-                    province: 'กรุงเทพมหานคร'
-                });
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
-            }
-            
-            let existingDistricts = await loadFromFirebase('bangkokDistricts');
-            if (!replaceExisting) {
-                const existingKeys = new Set(existingDistricts.map(d => `${d.subdistrict}-${d.district}`.toLowerCase()));
-                const duplicateExisting = processedData.filter(d => existingKeys.has(`${d.subdistrict}-${d.district}`.toLowerCase()));
-                
-                if (duplicateExisting.length > 0) {
-                    errors.push(`แขวงที่มีข้อมูลแล้ว: ${duplicateExisting.map(d => `${d.subdistrict} (${d.district})`).join(', ')}`);
-                }
-                
-                const newData = processedData.filter(d => !existingKeys.has(`${d.subdistrict}-${d.district}`.toLowerCase()));
-                processedData.length = 0;
-                processedData.push(...newData);
-            }
-            
-            if (errors.length > 0) {
-                const errorMsg = `พบข้อผิดพลาด ${errors.length} รายการ:\\n${errors.slice(0, 5).join('\\n')}${errors.length > 5 ? '\\n...' : ''}`;
-                if (!confirm(`${errorMsg}\\n\\nต้องการดำเนินการต่อกับข้อมูลที่ถูกต้องหรือไม่?`)) {
-                    throw new Error('ยกเลิกการนำเข้าโดยผู้ใช้');
-                }
-            }
-            
-            if (processedData.length === 0) {
-                throw new Error('ไม่มีข้อมูลใหม่ที่จะนำเข้า');
-            }
-            
-            const finalData = replaceExisting ? processedData : [...existingDistricts, ...processedData];
-            await saveToFirebase('bangkokDistricts', finalData);
-            
-            const message = replaceExisting 
-                ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
-                : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
-            
-            showNotification(message, 'success');
-        }
+
 
 
 
