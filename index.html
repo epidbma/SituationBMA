@@ -2409,7 +2409,7 @@
             }
             
             // Add import button for diseases, responsible, population, agePopulation, and thailandPopulation
-            if (type === 'diseases' || type === 'responsible' || type === 'population' || type === 'agePopulation' || type === 'thailandPopulation' || type === 'bangkokDistricts') {
+            if (type === 'diseases' || type === 'responsible' || type === 'population' || type === 'agePopulation' || type === 'thailandPopulation' || type === 'bangkokDistricts' || type === 'epidemicWeeks') {
                 const importButton = document.createElement('button');
                 importButton.id = 'importExcelButton';
                 importButton.className = 'btn-secondary';
@@ -5492,6 +5492,9 @@
             } else if (isBangkokDistricts) {
                 title = 'นำเข้าข้อมูลเขตในกรุงเทพมหานครจากไฟล์ Excel';
                 icon = '🏛️';
+            } else if (dataType === 'epidemicWeeks') {
+                title = 'นำเข้าข้อมูลสัปดาห์การระบาดจากไฟล์ Excel';
+                icon = '📅';
             } else if (isThailandPopulation) {
                 title = 'นำเข้าข้อมูลประชากรประเทศไทยจากไฟล์ Excel';
                 icon = '🇹🇭';
@@ -5711,6 +5714,76 @@
                         </div>
                         ` : ''}
                         
+                        ${dataType === 'epidemicWeeks' ? `
+                        <!-- Example Table for Epidemic Weeks Import -->
+                        <div class="mt-4 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg">
+                            <h5 class="font-bold text-emerald-800 mb-3 flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                                </svg>
+                                ตัวอย่างข้อมูลในไฟล์ Excel
+                            </h5>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-sm border border-gray-300 rounded">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">A</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">B</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">C</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">D</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">E</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <tr class="bg-yellow-50">
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ปี</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">สัปดาห์ที่</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">วันที่เริ่มต้น</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">วันที่สิ้นสุด</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">หมายเหตุ</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2 border border-gray-300 text-emerald-600">2566</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-blue-600">1</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-purple-600">2566-01-01</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-purple-600">2566-01-07</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600">สัปดาห์แรกของปี</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2 border border-gray-300 text-emerald-600">2566</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-blue-600">2</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-purple-600">2566-01-08</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-purple-600">2566-01-14</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2 border border-gray-300 text-emerald-600">2566</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-blue-600">3</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-purple-600">2566-01-15</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-purple-600">2566-01-21</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3 text-xs text-emerald-700 space-y-1">
+                                <p>• <strong>แถวสีเหลือง:</strong> หัวตาราง (สามารถข้ามได้โดยเลือก "ข้ามแถวแรก")</p>
+                                <p>• <strong>ปี:</strong> ระบุปี พ.ศ. เป็นตัวเลข เช่น 2566</p>
+                                <p>• <strong>สัปดาห์ที่:</strong> ลำดับสัปดาห์ในปี (1-53)</p>
+                                <p>• <strong>วันที่:</strong> รูปแบบ YYYY-MM-DD เช่น 2566-01-01</p>
+                                <p>• <strong>หมายเหตุ:</strong> ข้อความเพิ่มเติม (ไม่บังคับ)</p>
+                            </div>
+                            <div class="mt-4 flex justify-center">
+                                <button onclick="downloadEpidemicWeeksExampleFile()" class="btn-secondary text-sm flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                    </svg>
+                                    ดาวน์โหลดไฟล์ตัวอย่าง Excel
+                                </button>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
                         ${isBangkokDistricts ? `
                         <!-- Example Table for Bangkok Districts Import -->
                         <div class="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-lg">
@@ -5907,7 +5980,7 @@
                         </div>
                         ` : ''}
                         
-                        ${!isResponsible && !isPopulation && !isAgePopulation && !isThailandPopulation ? `
+                        ${!isResponsible && !isPopulation && !isAgePopulation && !isThailandPopulation && !isBangkokDistricts ? `
                         <!-- Example Table for Disease Import -->
                         <div class="mt-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
                             <h5 class="font-bold text-green-800 mb-3 flex items-center">
@@ -6250,7 +6323,14 @@
             const totalRows = data.length - (skipFirstRow ? 1 : 0);
             let validRows;
             
-            if (isBangkokDistricts) {
+            if (dataType === 'epidemicWeeks') {
+                validRows = data.slice(startRow).filter(row =>
+                    row[0] && !isNaN(Number(row[0])) && // ปี
+                    row[1] && !isNaN(Number(row[1])) && // สัปดาห์ที่
+                    row[2] && row[2].toString().trim() && // วันที่เริ่มต้น
+                    row[3] && row[3].toString().trim()    // วันที่สิ้นสุด
+                ).length;
+            } else if (isBangkokDistricts) {
                 validRows = data.slice(startRow).filter(row =>
                     row[0] && row[0].toString().trim() && // แขวง
                     row[1] && row[1].toString().trim()    // เขต
@@ -6330,6 +6410,8 @@
                     await processResponsibleImport(startRow, replaceExisting);
                 } else if (dataType === 'bangkokDistricts') {
                     await processBangkokDistrictsImport(startRow, replaceExisting);
+                } else if (dataType === 'epidemicWeeks') {
+                    await processEpidemicWeeksImport(startRow, replaceExisting);
                 } else {
                     await processDiseaseImport(startRow, replaceExisting);
                 }
@@ -6346,6 +6428,8 @@
                     await loadResponsibleTable();
                 } else if (dataType === 'bangkokDistricts') {
                     await loadBangkokDistrictsTable();
+                } else if (dataType === 'epidemicWeeks') {
+                    await loadEpidemicWeeksTable();
                 } else {
                     await loadDiseasesTable();
                 }
@@ -6684,6 +6768,107 @@
             showNotification(message, 'success');
         }
 
+        // Process Epidemic Weeks import
+        async function processEpidemicWeeksImport(startRow, replaceExisting) {
+            const processedData = [];
+            const errors = [];
+            const duplicateWeeks = new Set();
+            
+            for (let i = startRow; i < selectedFileData.length; i++) {
+                const row = selectedFileData[i];
+                const year = row[0] ? Number(row[0]) : NaN;
+                const weekNumber = row[1] ? Number(row[1]) : NaN;
+                const startDate = row[2] ? row[2].toString().trim() : '';
+                const endDate = row[3] ? row[3].toString().trim() : '';
+                const note = row[4] ? row[4].toString().trim() : '';
+                
+                if (isNaN(year) || isNaN(weekNumber) || !startDate || !endDate) {
+                    if (year || weekNumber || startDate || endDate) {
+                        errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วน`);
+                    }
+                    continue;
+                }
+                
+                // Validate year and week number
+                if (year < 2500 || year > 2600) {
+                    errors.push(`แถว ${i + 1}: ปีต้องอยู่ระหว่าง 2500-2600`);
+                    continue;
+                }
+                
+                if (weekNumber < 1 || weekNumber > 53) {
+                    errors.push(`แถว ${i + 1}: สัปดาห์ที่ต้องอยู่ระหว่าง 1-53`);
+                    continue;
+                }
+                
+                // Validate dates
+                const startDateObj = new Date(startDate);
+                const endDateObj = new Date(endDate);
+                
+                if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
+                    errors.push(`แถว ${i + 1}: รูปแบบวันที่ไม่ถูกต้อง ต้องเป็น YYYY-MM-DD`);
+                    continue;
+                }
+                
+                if (endDateObj < startDateObj) {
+                    errors.push(`แถว ${i + 1}: วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่มต้น`);
+                    continue;
+                }
+                
+                const key = `${year}-${weekNumber}`;
+                if (duplicateWeeks.has(key)) {
+                    errors.push(`แถว ${i + 1}: ปีและสัปดาห์ที่ซ้ำในไฟล์`);
+                    continue;
+                }
+                
+                duplicateWeeks.add(key);
+                processedData.push({
+                    year: year.toString(),
+                    weekNumber: weekNumber,
+                    startDate,
+                    endDate,
+                    note
+                });
+            }
+            
+            if (processedData.length === 0) {
+                throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์');
+            }
+            
+            let existingWeeks = await loadFromFirebase('epidemicWeeks');
+            if (!replaceExisting) {
+                const existingKeys = new Set(existingWeeks.map(w => `${w.year}-${w.weekNumber}`));
+                const duplicateExisting = processedData.filter(w => existingKeys.has(`${w.year}-${w.weekNumber}`));
+                
+                if (duplicateExisting.length > 0) {
+                    errors.push(`สัปดาห์ที่มีข้อมูลแล้ว: ${duplicateExisting.map(w => `ปี ${w.year} สัปดาห์ที่ ${w.weekNumber}`).join(', ')}`);
+                }
+                
+                const newData = processedData.filter(w => !existingKeys.has(`${w.year}-${w.weekNumber}`));
+                processedData.length = 0;
+                processedData.push(...newData);
+            }
+            
+            if (errors.length > 0) {
+                const errorMsg = `พบข้อผิดพลาด ${errors.length} รายการ:\\n${errors.slice(0, 5).join('\\n')}${errors.length > 5 ? '\\n...' : ''}`;
+                if (!confirm(`${errorMsg}\\n\\nต้องการดำเนินการต่อกับข้อมูลที่ถูกต้องหรือไม่?`)) {
+                    throw new Error('ยกเลิกการนำเข้าโดยผู้ใช้');
+                }
+            }
+            
+            if (processedData.length === 0) {
+                throw new Error('ไม่มีข้อมูลใหม่ที่จะนำเข้า');
+            }
+            
+            const finalData = replaceExisting ? processedData : [...existingWeeks, ...processedData];
+            await saveToFirebase('epidemicWeeks', finalData);
+            
+            const message = replaceExisting 
+                ? `แทนที่ข้อมูลสำเร็จ! นำเข้า ${processedData.length} รายการ`
+                : `นำเข้าข้อมูลสำเร็จ! เพิ่มใหม่ ${processedData.length} รายการ`;
+            
+            showNotification(message, 'success');
+        }
+
         // Process Bangkok Districts import
         async function processBangkokDistrictsImport(startRow, replaceExisting) {
             const processedData = [];
@@ -6910,6 +7095,61 @@
             const now = new Date();
             const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
             const filename = `ตัวอย่าง_ประชากรกรุงเทพมหานคร_${dateStr}.xlsx`;
+
+            // Download the file
+            XLSX.writeFile(wb, filename);
+
+            // Show notification
+            showNotification('ดาวน์โหลดไฟล์ตัวอย่างเรียบร้อยแล้ว!', 'success');
+        }
+
+        // Download example Excel file for Epidemic Weeks
+        function downloadEpidemicWeeksExampleFile() {
+            // Create sample data
+            const currentYear = new Date().getFullYear();
+            const sampleData = [
+                ['ปี', 'สัปดาห์ที่', 'วันที่เริ่มต้น', 'วันที่สิ้นสุด', 'หมายเหตุ'],
+                [currentYear, 1, `${currentYear}-01-01`, `${currentYear}-01-07`, 'สัปดาห์แรกของปี'],
+                [currentYear, 2, `${currentYear}-01-08`, `${currentYear}-01-14`, ''],
+                [currentYear, 3, `${currentYear}-01-15`, `${currentYear}-01-21`, ''],
+                [currentYear, 4, `${currentYear}-01-22`, `${currentYear}-01-28`, ''],
+                [currentYear, 5, `${currentYear}-01-29`, `${currentYear}-02-04`, 'สัปดาห์แรกของเดือนกุมภาพันธ์']
+            ];
+
+            // Create workbook and worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(sampleData);
+
+            // Set column widths
+            ws['!cols'] = [
+                { wch: 8 },   // ปี
+                { wch: 12 },  // สัปดาห์ที่
+                { wch: 15 },  // วันที่เริ่มต้น
+                { wch: 15 },  // วันที่สิ้นสุด
+                { wch: 30 }   // หมายเหตุ
+            ];
+
+            // Set header style
+            const headerStyle = {
+                font: { bold: true, color: { rgb: "FF333333" } },
+                fill: { fgColor: { rgb: "FFFFF2CC" } }
+            };
+
+            // Apply header style to first row
+            for (let col of ['A', 'B', 'C', 'D', 'E']) {
+                const cell = col + '1';
+                if (ws[cell]) {
+                    ws[cell].s = headerStyle;
+                }
+            }
+
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'สัปดาห์การระบาด');
+
+            // Generate filename with current date
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0].replace(/-/g, '');
+            const filename = `ตัวอย่าง_สัปดาห์การระบาด_${dateStr}.xlsx`;
 
             // Download the file
             XLSX.writeFile(wb, filename);
