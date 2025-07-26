@@ -4733,6 +4733,10 @@
             modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
             modalOverlay.id = 'populationModal';
             
+            // Get current Buddhist year and previous years
+            const currentYear = new Date().getFullYear() + 543;
+            const years = Array.from({length: 10}, (_, i) => currentYear - i);
+            
             modalOverlay.innerHTML = `
                 <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop max-h-[90vh] overflow-y-auto">
                     <div class="flex items-center justify-between mb-6">
@@ -4890,13 +4894,21 @@
         async function savePopulationData(event, editIndex = null) {
             event.preventDefault();
             
+            const year = parseInt(document.getElementById('populationYear').value);
             const district = document.getElementById('populationDistrict').value.trim();
             const male = parseInt(document.getElementById('populationMale').value) || 0;
             const female = parseInt(document.getElementById('populationFemale').value) || 0;
             const total = male + female;
             
-            if (!district || total <= 0) {
+            if (!year || !district || total <= 0) {
                 showNotification('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง', 'error');
+                return;
+            }
+            
+            // Validate year
+            const currentYear = new Date().getFullYear() + 543;
+            if (year < currentYear - 100 || year > currentYear + 1) {
+                showNotification('ปี พ.ศ. ไม่ถูกต้อง', 'error');
                 return;
             }
             
@@ -5155,6 +5167,15 @@
                 showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
                 return;
             }
+            
+            const currentYear = new Date().getFullYear() + 543;
+            
+            // Valid district list
+            const validDistricts = [
+                'พระนคร', 'ดุสิต', 'หนองจอก', 'บางรัก', 'บางเขน', 
+                'บางกะปิ', 'ปทุมวัน', 'ป้อมปราบศัตรูพ่าย', 'พระโขนง', 'มีนบุรี'
+                // Add more districts
+            ];
             
             const importButton = document.getElementById('importPopulationButton');
             const originalText = importButton.innerHTML;
