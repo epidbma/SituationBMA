@@ -2719,7 +2719,7 @@
                                 </td></tr>` :
                                 population.map((pop, index) => `
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50">
-                                        <td class="px-6 py-4 text-sm text-gray-600">${index + 1}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-600">${pop.year || 2568}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${pop.district}</td>
                                         <td class="px-6 py-4 text-right font-semibold text-gray-900">${(pop.totalPopulation || pop.malePopulation + pop.femalePopulation).toLocaleString()}</td>
                                         <td class="px-6 py-4 text-right text-blue-600">${pop.malePopulation.toLocaleString()}</td>
