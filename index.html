@@ -2789,20 +2789,8 @@
             const content = document.getElementById('masterDataDetailContent');
             
             content.innerHTML = `
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center space-x-2">
-                        <button onclick="showMasterDataMenu()" class="btn-secondary text-sm">
-                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
-                            </svg>
-                            กลับ
-                        </button>
-                        <button onclick="addNewMasterData('agePopulation')" class="btn-primary text-sm">
-                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/>
-                            </svg>
-                            เพิ่มข้อมูล
-                        </button>
+                <div class="mb-6">
+                    <div class="flex justify-end items-center">
                         <button onclick="showImportAgePopulationModal()" class="btn-secondary text-sm">
                             <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.293a1 1 0 011.414 0L10 8.586V3a1 1 0 012 0v5.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
@@ -5459,12 +5447,14 @@
                                     </thead>
                                     <tbody class="bg-white">
                                         <tr class="bg-yellow-50">
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ปี</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">กลุ่มอายุ</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">จำนวนประชากร</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ชาย</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">หญิง</td>
                                         </tr>
                                         <tr>
+                                            <td class="px-3 py-2 border border-gray-300">2568</td>
                                             <td class="px-3 py-2 border border-gray-300">0-4 ปี</td>
                                             <td class="px-3 py-2 border border-gray-300">31500</td>
                                             <td class="px-3 py-2 border border-gray-300">15000</td>
@@ -5577,12 +5567,12 @@
         // Download age population example file
         function downloadAgePopulationExampleFile() {
             const data = [
-                ['กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
-                ['0-4 ปี', 31500, 15000, 16500],
-                ['5-9 ปี', 25000, 12000, 13000],
-                ['10-14 ปี', 37500, 18000, 19500],
-                ['15-19 ปี', 18800, 9000, 9800],
-                ['20-24 ปี', 43500, 21000, 22500]
+                ['ปี', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                [2568, '0-4 ปี', 31500, 15000, 16500],
+                [2568, '5-9 ปี', 25000, 12000, 13000],
+                [2568, '10-14 ปี', 37500, 18000, 19500],
+                [2568, '15-19 ปี', 18800, 9000, 9800],
+                [2568, '20-24 ปี', 43500, 21000, 22500]
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -5641,12 +5631,18 @@
                         const validData = [];
                         
                         rows.forEach((row, index) => {
-                            if (row.length < 4) {
+                            if (row.length < 5) {
                                 invalidRows.push(`แถวที่ ${skipFirstRow ? index + 2 : index + 1}: ข้อมูลไม่ครบถ้วน`);
                                 return;
                             }
                             
-                            const [ageGroup, total, male, female] = row;
+                            const [year, ageGroup, total, male, female] = row;
+                            
+                            const yearNum = parseInt(year);
+                            if (isNaN(yearNum) || yearNum < 2500 || yearNum > 2600) {
+                                invalidRows.push(`แถวที่ ${skipFirstRow ? index + 2 : index + 1}: ปีไม่ถูกต้อง (ต้องเป็นปี พ.ศ. ระหว่าง 2500-2600)`);
+                                return;
+                            }
                             
                             if (!ageGroup || typeof ageGroup !== 'string') {
                                 invalidRows.push(`แถวที่ ${skipFirstRow ? index + 2 : index + 1}: กลุ่มอายุไม่ถูกต้อง`);
@@ -5668,6 +5664,7 @@
                             }
                             
                             validData.push({
+                                year: yearNum,
                                 ageGroup,
                                 total: totalNum,
                                 male: maleNum,
