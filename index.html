@@ -5071,16 +5071,19 @@
                                 continue;
                             }
                             
-                            if (duplicateKeys.has(district)) {
-                                errors.push(`แถว ${i + 1}: ข้อมูลเขต ${district} ซ้ำในไฟล์`);
+                            const key = `${year}_${district}`;
+                            if (duplicateKeys.has(key)) {
+                                errors.push(`แถว ${i + 1}: ข้อมูลเขต ${district} ปี ${year} ซ้ำในไฟล์`);
                                 continue;
                             }
                             
-                            duplicateKeys.add(district);
+                            duplicateKeys.add(key);
                             processedData.push({
+                                year,
                                 district,
                                 malePopulation,
-                                femalePopulation
+                                femalePopulation,
+                                totalPopulation
                             });
                         }
                         
@@ -5090,14 +5093,14 @@
                         
                         let existingPopulation = await loadFromFirebase('population');
                         if (!replaceExisting) {
-                            const existingKeys = new Set(existingPopulation.map(p => p.district));
-                            const duplicateExisting = processedData.filter(p => existingKeys.has(p.district));
+                            const existingKeys = new Set(existingPopulation.map(p => `${p.year}_${p.district}`));
+                            const duplicateExisting = processedData.filter(p => existingKeys.has(`${p.year}_${p.district}`));
                             
                             if (duplicateExisting.length > 0) {
-                                errors.push(`พบข้อมูลที่มีอยู่แล้ว: ${duplicateExisting.map(p => p.district).join(', ')}`);
+                                errors.push(`พบข้อมูลที่มีอยู่แล้ว: ${duplicateExisting.map(p => `${p.district} (ปี ${p.year})`).join(', ')}`);
                             }
                             
-                            const newData = processedData.filter(p => !existingKeys.has(p.district));
+                            const newData = processedData.filter(p => !existingKeys.has(`${p.year}_${p.district}`));
                             processedData.length = 0;
                             processedData.push(...newData);
                         }
