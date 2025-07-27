@@ -2663,12 +2663,42 @@
 
         // Enhanced population table with full functionality
         async function loadPopulationTable() {
-            let population = await loadFromFirebase('population');
+            let population = await loadFromFirebase('population') || [];
             const content = document.getElementById('masterDataDetailContent');
+
+            // Default year if no data
+            const currentYear = 2568;
             
+            if (population.length === 0) {
+                content.innerHTML = `
+                    <div class="text-center py-20">
+                        <div class="text-6xl mb-4">🏙️</div>
+                        <p class="font-semibold text-xl text-gray-700 mb-2">ยังไม่มีข้อมูลประชากร</p>
+                        <p class="text-gray-500 mb-4">กรุณาเพิ่มข้อมูลประชากร</p>
+                        <div class="flex justify-center space-x-4">
+                            <button onclick="showPopulationForm()" class="btn-primary text-sm">
+                                <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                                </svg>
+                                เพิ่มข้อมูลประชากร
+                            </button>
+                            <button onclick="showImportPopulationModal()" class="btn-secondary text-sm">
+                                <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                </svg>
+                                นำเข้าจาก Excel
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
             // Sort population by year (newest first) and district
             population = population.sort((a, b) => {
-                if (b.year !== a.year) return b.year - a.year;
+                const yearA = a.year || currentYear;
+                const yearB = b.year || currentYear;
+                if (yearB !== yearA) return yearB - yearA;
                 return a.district.localeCompare(b.district, 'th');
             });
 
@@ -2773,7 +2803,7 @@
                                 </td></tr>` :
                                 population.map((pop, index) => `
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50">
-                                        <td class="px-6 py-4 text-sm text-gray-600">${pop.year || 2568}</td>
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${pop.year || currentYear}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${pop.district}</td>
                                         <td class="px-6 py-4 text-right font-semibold text-gray-900">${(pop.totalPopulation || pop.malePopulation + pop.femalePopulation).toLocaleString()}</td>
                                         <td class="px-6 py-4 text-right text-blue-600">${pop.malePopulation.toLocaleString()}</td>
