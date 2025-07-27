@@ -2667,24 +2667,45 @@
             const content = document.getElementById('masterDataDetailContent');
             
             // Calculate totals for summary
-            const totalPopulation = population.reduce((sum, pop) => sum + parseInt(pop.totalPopulation || pop.malePopulation + pop.femalePopulation || 0), 0);
-            const totalMale = population.reduce((sum, pop) => sum + parseInt(pop.malePopulation || 0), 0);
-            const totalFemale = population.reduce((sum, pop) => sum + parseInt(pop.femalePopulation || 0), 0);
+            // จัดกลุ่มข้อมูลตามปี
+            const dataByYear = population.reduce((acc, pop) => {
+                const year = pop.year || 2568; // ถ้าไม่มีปีให้ใช้ปีปัจจุบัน
+                if (!acc[year]) {
+                    acc[year] = {
+                        totalPopulation: 0,
+                        totalMale: 0,
+                        totalFemale: 0,
+                        districtCount: 0
+                    };
+                }
+                acc[year].totalPopulation += parseInt(pop.totalPopulation || pop.malePopulation + pop.femalePopulation || 0);
+                acc[year].totalMale += parseInt(pop.malePopulation || 0);
+                acc[year].totalFemale += parseInt(pop.femalePopulation || 0);
+                acc[year].districtCount += 1;
+                return acc;
+            }, {});
+
+            // เรียงปีจากมากไปน้อย
+            const years = Object.keys(dataByYear).sort((a, b) => b - a);
             
             content.innerHTML = `
                 <div class="mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <div class="flex items-center space-x-4">
-                            <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3">
-                                <div class="text-gray-600 text-sm">จำนวนเขต</div>
-                                <div class="text-2xl font-bold text-blue-600">${population.length}</div>
+                    <div class="grid grid-cols-1 md:grid-cols-${Math.min(years.length, 4)} gap-4">
+                        ${years.map(year => `
+                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
+                                <div class="text-lg font-bold text-gray-800 mb-2">ปี ${year}</div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <div class="text-gray-600 text-sm">จำนวนเขต</div>
+                                        <div class="text-xl font-bold text-blue-600">${dataByYear[year].districtCount}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-gray-600 text-sm">ประชากรรวม</div>
+                                        <div class="text-xl font-bold text-green-600">${dataByYear[year].totalPopulation.toLocaleString()}</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3">
-                                <div class="text-gray-600 text-sm">ประชากรรวม</div>
-                                <div class="text-2xl font-bold text-green-600">${totalPopulation.toLocaleString()}</div>
-                            </div>
-                        </div>
-
+                        `).join('')}
                     </div>
                 </div>
 
@@ -2753,24 +2774,29 @@
                             </svg>
                             สรุปข้อมูลประชากรกรุงเทพมหานคร
                         </h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                            <div class="bg-white rounded p-3 shadow-sm">
-                                <div class="text-gray-600">ประชากรรวม</div>
-                                <div class="text-xl font-bold text-blue-600">${totalPopulation.toLocaleString()} คน</div>
+                        ${years.map(year => `
+                            <div class="mb-6 last:mb-0">
+                                <h5 class="text-lg font-semibold text-gray-800 mb-3">ปี ${year}</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                    <div class="bg-white rounded p-3 shadow-sm">
+                                        <div class="text-gray-600">ประชากรรวม</div>
+                                        <div class="text-xl font-bold text-blue-600">${dataByYear[year].totalPopulation.toLocaleString()} คน</div>
+                                    </div>
+                                    <div class="bg-white rounded p-3 shadow-sm">
+                                        <div class="text-gray-600">ประชากรชาย</div>
+                                        <div class="text-xl font-bold text-green-600">${dataByYear[year].totalMale.toLocaleString()} คน</div>
+                                    </div>
+                                    <div class="bg-white rounded p-3 shadow-sm">
+                                        <div class="text-gray-600">ประชากรหญิง</div>
+                                        <div class="text-xl font-bold text-pink-600">${dataByYear[year].totalFemale.toLocaleString()} คน</div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 text-sm text-gray-600">
+                                    <p>• มีข้อมูลประชากรทั้งหมด <strong class="text-blue-600">${dataByYear[year].districtCount}</strong> เขต</p>
+                                    <p>• สัดส่วนชาย:หญิง = <strong class="text-green-600">${((dataByYear[year].totalMale/dataByYear[year].totalPopulation)*100).toFixed(1)}%</strong> : <strong class="text-pink-600">${((dataByYear[year].totalFemale/dataByYear[year].totalPopulation)*100).toFixed(1)}%</strong></p>
+                                </div>
                             </div>
-                            <div class="bg-white rounded p-3 shadow-sm">
-                                <div class="text-gray-600">ประชากรชาย</div>
-                                <div class="text-xl font-bold text-green-600">${totalMale.toLocaleString()} คน</div>
-                            </div>
-                            <div class="bg-white rounded p-3 shadow-sm">
-                                <div class="text-gray-600">ประชากรหญิง</div>
-                                <div class="text-xl font-bold text-pink-600">${totalFemale.toLocaleString()} คน</div>
-                            </div>
-                        </div>
-                        <div class="mt-3 text-sm text-gray-600">
-                            <p>• มีข้อมูลประชากรทั้งหมด <strong class="text-blue-600">${population.length}</strong> เขต</p>
-                            <p>• สัดส่วนชาย:หญิง = <strong class="text-green-600">${((totalMale/totalPopulation)*100).toFixed(1)}%</strong> : <strong class="text-pink-600">${((totalFemale/totalPopulation)*100).toFixed(1)}%</strong></p>
-                        </div>
+                        `).join('')}
                     </div>
                 ` : ''}
             `;
