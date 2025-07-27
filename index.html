@@ -2666,54 +2666,24 @@
             const population = await loadFromFirebase('population');
             const content = document.getElementById('masterDataDetailContent');
             
-            // Group data by year
-            const dataByYear = population.reduce((acc, pop) => {
-                const year = pop.year || 2568;
-                if (!acc[year]) {
-                    acc[year] = {
-                        districts: new Set(),
-                        totalPopulation: 0,
-                        totalMale: 0,
-                        totalFemale: 0
-                    };
-                }
-                acc[year].districts.add(pop.district);
-                acc[year].totalPopulation += parseInt(pop.totalPopulation || pop.malePopulation + pop.femalePopulation || 0);
-                acc[year].totalMale += parseInt(pop.malePopulation || 0);
-                acc[year].totalFemale += parseInt(pop.femalePopulation || 0);
-                return acc;
-            }, {});
-
-            // Sort years in descending order
-            const years = Object.keys(dataByYear).sort((a, b) => b - a);
+            // Calculate totals for summary
+            const totalPopulation = population.reduce((sum, pop) => sum + parseInt(pop.totalPopulation || pop.malePopulation + pop.femalePopulation || 0), 0);
+            const totalMale = population.reduce((sum, pop) => sum + parseInt(pop.malePopulation || 0), 0);
+            const totalFemale = population.reduce((sum, pop) => sum + parseInt(pop.femalePopulation || 0), 0);
             
             content.innerHTML = `
                 <div class="mb-6">
-                    <div class="flex flex-wrap gap-4">
-                        ${years.map(year => `
-                            <div class="bg-white rounded-lg shadow-sm p-4 flex-1 min-w-[250px]">
-                                <div class="text-lg font-bold text-gray-800 mb-2">ปี ${year}</div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3">
-                                        <div class="text-gray-600 text-sm">จำนวนเขต</div>
-                                        <div class="text-xl font-bold text-blue-600">${dataByYear[year].districts.size}</div>
-                                    </div>
-                                    <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3">
-                                        <div class="text-gray-600 text-sm">ประชากรรวม</div>
-                                        <div class="text-xl font-bold text-green-600">${dataByYear[year].totalPopulation.toLocaleString()}</div>
-                                    </div>
-                                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3">
-                                        <div class="text-gray-600 text-sm">ประชากรชาย</div>
-                                        <div class="text-xl font-bold text-blue-600">${dataByYear[year].totalMale.toLocaleString()}</div>
-                                    </div>
-                                    <div class="bg-gradient-to-r from-pink-50 to-red-50 rounded-lg p-3">
-                                        <div class="text-gray-600 text-sm">ประชากรหญิง</div>
-                                        <div class="text-xl font-bold text-pink-600">${dataByYear[year].totalFemale.toLocaleString()}</div>
-                                    </div>
-                                </div>
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3">
+                                <div class="text-gray-600 text-sm">จำนวนเขต</div>
+                                <div class="text-2xl font-bold text-blue-600">${population.length}</div>
                             </div>
-                        `).join('')}
-                    </div>
+                            <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3">
+                                <div class="text-gray-600 text-sm">ประชากรรวม</div>
+                                <div class="text-2xl font-bold text-green-600">${totalPopulation.toLocaleString()}</div>
+                            </div>
+                        </div>
 
                     </div>
                 </div>
