@@ -2789,26 +2789,30 @@
             const content = document.getElementById('masterDataDetailContent');
             
             content.innerHTML = `
-                <div class="mb-6 flex justify-between items-center">
-                    <button onclick="addNewMasterData('agePopulation')" class="btn-primary">
-                        <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
-                        </svg>
-                        เพิ่มข้อมูลใหม่
-                    </button>
-                    <div class="flex space-x-4">
-                        <button onclick="downloadAgePopulationExampleFile()" class="btn-secondary flex items-center">
-                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
-                            </svg>
-                            ดาวน์โหลดไฟล์ตัวอย่าง Excel
-                        </button>
-                        <button onclick="showImportAgePopulationModal()" class="btn-primary flex items-center">
-                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
-                            </svg>
-                            นำเข้าจาก Excel
-                        </button>
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <button onclick="addNewMasterData('agePopulation')" class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 shadow-lg flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                                </svg>
+                                เพิ่มข้อมูลประชากรตามอายุ
+                            </button>
+                        </div>
+                        <div class="flex space-x-4">
+                            <button onclick="downloadAgePopulationExampleFile()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                </svg>
+                                ดาวน์โหลดไฟล์ตัวอย่าง
+                            </button>
+                            <button onclick="showImportAgePopulationModal()" class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
+                                </svg>
+                                นำเข้าจาก Excel
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -7423,9 +7427,12 @@
             modalOverlay.id = 'importAgePopulationModal';
             
             modalOverlay.innerHTML = `
-                <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop">
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 class="text-2xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl transform transition-all max-w-2xl w-full p-6 animate-slideInFromTop">
+                    <div class="flex items-center justify-between mb-8">
+                        <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-800 to-purple-600 bg-clip-text text-transparent flex items-center">
+                            <svg class="w-8 h-8 mr-3 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586L7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"/>
+                            </svg>
                             นำเข้าข้อมูลประชากรตามอายุ
                         </h3>
                         <button onclick="closeImportAgePopulationModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -7435,7 +7442,7 @@
                         </button>
                     </div>
 
-                    <div class="space-y-6">
+                    <div class="space-y-8">
                         <div class="bg-blue-50 p-4 rounded-lg">
                             <h4 class="text-blue-800 font-semibold mb-2">วิธีการนำเข้าข้อมูล</h4>
                             <ol class="list-decimal list-inside text-sm text-blue-700 space-y-1">
@@ -7500,15 +7507,15 @@
                             </div>
                         </div>
 
-                        <div class="flex space-x-4">
-                            <button onclick="processAgePopulationImport()" class="flex-1 btn-primary" id="importAgePopulationButton" disabled>
-                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <div class="flex space-x-4 justify-end mt-8">
+                            <button onclick="closeImportAgePopulationModal()" class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold transition-all duration-200">
+                                ยกเลิก
+                            </button>
+                            <button onclick="processAgePopulationImport()" class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-purple-600 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none" id="importAgePopulationButton" disabled>
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
                                 </svg>
                                 นำเข้าข้อมูล
-                            </button>
-                            <button onclick="closeImportAgePopulationModal()" class="btn-secondary">
-                                ยกเลิก
                             </button>
                         </div>
                     </div>
