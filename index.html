@@ -2793,6 +2793,7 @@
                     <table class="w-full">
                         <thead class="table-header">
                             <tr>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ปี</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">กลุ่มอายุ</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">จำนวนประชากร</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">ชาย</th>
@@ -2802,9 +2803,28 @@
                         </thead>
                         <tbody>
                             ${agePopulation.length === 0 ? 
-                                '<tr><td colspan="5" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">👥</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลประชากรตามอายุ</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลประชากรแต่ละกลุ่มอายุ</p></td></tr>' :
+                                `<tr><td colspan="6" class="px-6 py-20 text-center text-gray-500">
+                                    <div class="text-6xl mb-4">👥</div>
+                                    <p class="font-semibold text-xl text-gray-700 mb-2">ยังไม่มีข้อมูลประชากรตามอายุ</p>
+                                    <p class="text-gray-500 mb-4">กรุณาเพิ่มข้อมูลประชากรแต่ละกลุ่มอายุ</p>
+                                    <div class="flex justify-center space-x-4">
+                                        <button onclick="showAgePopulationForm()" class="btn-primary text-sm">
+                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                                            </svg>
+                                            เพิ่มข้อมูลประชากร
+                                        </button>
+                                        <button onclick="showImportAgePopulationModal()" class="btn-secondary text-sm">
+                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
+                                            </svg>
+                                            นำเข้า Excel
+                                        </button>
+                                    </div>
+                                </td></tr>` :
                                 agePopulation.map((age, index) => `
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+                                        <td class="px-6 py-4 font-semibold text-gray-900">${age.year || 2568}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${age.ageGroup}</td>
                                         <td class="px-6 py-4 text-right font-semibold text-gray-900">${parseInt(age.total).toLocaleString()}</td>
                                         <td class="px-6 py-4 text-right text-blue-600">${parseInt(age.male).toLocaleString()}</td>
@@ -5210,6 +5230,18 @@
                     
                     <form id="agePopulationForm" onsubmit="saveAgePopulationData(event, ${editIndex})">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Year Input -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">
+                                    <svg class="w-4 h-4 inline mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                                    </svg>
+                                    ปี
+                                </label>
+                                <input type="number" id="agePopulationYear" name="year" min="2500" max="2600" step="1"
+                                    class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    placeholder="ปี พ.ศ." value="2568" required>
+                            </div>
                             <!-- Age Group -->
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-semibold text-gray-700 mb-3">
@@ -5380,17 +5412,288 @@
         }
 
         // Save age population data
+        // Show import age population modal
+        function showImportAgePopulationModal() {
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modalOverlay.id = 'importAgePopulationModal';
+            
+            modalOverlay.innerHTML = `
+                <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent">
+                            นำเข้าข้อมูลประชากรตามอายุ
+                        </h3>
+                        <button onclick="closeImportAgePopulationModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="text-blue-800 font-semibold mb-2">วิธีการนำเข้าข้อมูล</h4>
+                            <ol class="list-decimal list-inside text-sm text-blue-700 space-y-1">
+                                <li>ดาวน์โหลดไฟล์ตัวอย่างเพื่อดูรูปแบบข้อมูลที่ถูกต้อง</li>
+                                <li>เตรียมข้อมูลในไฟล์ Excel ตามรูปแบบที่กำหนด โดยมีคอลัมน์ดังนี้:
+                                    <ul class="list-disc list-inside ml-4 mt-2 text-blue-600">
+                                        <li>ปี (พ.ศ.)</li>
+                                        <li>กลุ่มอายุ</li>
+                                        <li>จำนวนประชากร</li>
+                                        <li>ชาย</li>
+                                        <li>หญิง</li>
+                                        <li>ร้อยละ</li>
+                                    </ul>
+                                </li>
+                                <li>เลือกไฟล์ Excel ที่ต้องการนำเข้า</li>
+                                <li>กดปุ่ม "นำเข้าข้อมูล" เพื่อเริ่มการนำเข้า</li>
+                            </ol>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="text-gray-700 font-semibold mb-4">ตัวอย่างรูปแบบข้อมูล</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-sm border border-gray-300 rounded">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">A</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">B</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">C</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">D</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">E</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">F</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        <tr class="bg-yellow-50">
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ปี</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">กลุ่มอายุ</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">จำนวนประชากร</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ชาย</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">หญิง</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ร้อยละ</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2 border border-gray-300">2568</td>
+                                            <td class="px-3 py-2 border border-gray-300">0-4 ปี</td>
+                                            <td class="px-3 py-2 border border-gray-300">125000</td>
+                                            <td class="px-3 py-2 border border-gray-300">64000</td>
+                                            <td class="px-3 py-2 border border-gray-300">61000</td>
+                                            <td class="px-3 py-2 border border-gray-300">5.2</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-4 flex justify-between items-center">
+                                <button onclick="downloadAgePopulationExampleFile()" class="btn-secondary text-sm">
+                                    <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
+                                    </svg>
+                                    ดาวน์โหลดไฟล์ตัวอย่าง
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-200 pt-6">
+                            <div class="mb-4">
+                                <input type="file" id="agePopulationExcelFile" accept=".xlsx,.xls" class="hidden">
+                                <button onclick="document.getElementById('agePopulationExcelFile').click()" class="btn-primary w-full text-center">
+                                    <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
+                                    </svg>
+                                    เลือกไฟล์ Excel
+                                </button>
+                            </div>
+                            <div class="flex items-center mb-4">
+                                <input type="checkbox" id="skipFirstRowAgePopulation" class="rounded border-gray-300 text-blue-600 mr-2">
+                                <label for="skipFirstRowAgePopulation" class="text-sm text-gray-600">ข้ามบรรทัดแรก (หัวตาราง)</label>
+                            </div>
+                            <button onclick="processAgePopulationImport()" class="btn-primary w-full" id="importAgePopulationButton" disabled>
+                                นำเข้าข้อมูล
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalOverlay);
+            
+            // Add file input change handler
+            document.getElementById('agePopulationExcelFile').addEventListener('change', function() {
+                document.getElementById('importAgePopulationButton').disabled = !this.files.length;
+            });
+        }
+
+        // Close import age population modal
+        function closeImportAgePopulationModal() {
+            const modal = document.getElementById('importAgePopulationModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Download age population example file
+        function downloadAgePopulationExampleFile() {
+            const data = [
+                ['ปี', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง', 'ร้อยละ'],
+                [2568, '0-4 ปี', 125000, 64000, 61000, 5.2],
+                [2568, '5-9 ปี', 135000, 69000, 66000, 5.6],
+                [2568, '10-14 ปี', 142000, 72000, 70000, 5.9],
+                [2568, '15-19 ปี', 158000, 79000, 79000, 6.6],
+                [2568, '20-24 ปี', 175000, 86000, 89000, 7.3]
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'ข้อมูลประชากรตามอายุ');
+            
+            // Auto-size columns
+            const colWidths = data[0].map((col, i) => {
+                return {wch: Math.max(...data.map(row => row[i].toString().length))};
+            });
+            ws['!cols'] = colWidths;
+            
+            XLSX.writeFile(wb, 'ตัวอย่างไฟล์นำเข้าข้อมูลประชากรตามอายุ.xlsx');
+        }
+
+        // Process age population import
+        async function processAgePopulationImport() {
+            const fileInput = document.getElementById('agePopulationExcelFile');
+            const skipFirstRow = document.getElementById('skipFirstRowAgePopulation').checked;
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
+                return;
+            }
+            
+            const importButton = document.getElementById('importAgePopulationButton');
+            const originalText = importButton.innerHTML;
+            importButton.innerHTML = `
+                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังนำเข้าข้อมูล...
+            `;
+            importButton.disabled = true;
+            
+            try {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = async function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                        
+                        let startRow = skipFirstRow ? 1 : 0;
+                        const processedData = [];
+                        const errors = [];
+                        const existingData = await loadFromFirebase('agePopulation');
+                        
+                        for (let i = startRow; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            const year = row[0] ? Number(row[0]) : NaN;
+                            const ageGroup = row[1] ? row[1].toString().trim() : '';
+                            const total = row[2] ? Number(row[2]) : NaN;
+                            const male = row[3] ? Number(row[3]) : NaN;
+                            const female = row[4] ? Number(row[4]) : NaN;
+                            const percentage = row[5] ? Number(row[5]) : NaN;
+                            
+                            if (!year || !ageGroup || isNaN(total) || isNaN(male) || isNaN(female) || isNaN(percentage) || 
+                                year < 2500 || year > 2600) {
+                                if (ageGroup || row[1] || row[2]) {
+                                    errors.push(`แถว ${i + 1}: ข้อมูลไม่ครบถ้วนหรือไม่ถูกต้อง`);
+                                }
+                                continue;
+                            }
+                            
+                            // Check for existing data
+                            const exists = existingData.some(d => 
+                                d.year === year && d.ageGroup.toLowerCase() === ageGroup.toLowerCase()
+                            );
+                            
+                            if (exists) {
+                                errors.push(`แถว ${i + 1}: กลุ่มอายุ ${ageGroup} ในปี ${year} มีข้อมูลอยู่แล้ว`);
+                                continue;
+                            }
+                            
+                            processedData.push({
+                                year,
+                                ageGroup,
+                                total,
+                                male,
+                                female,
+                                percentage
+                            });
+                        }
+                        
+                        if (errors.length > 0) {
+                            showNotification(`พบข้อผิดพลาด:\n${errors.join('\n')}`, 'error');
+                            importButton.innerHTML = originalText;
+                            importButton.disabled = false;
+                            return;
+                        }
+                        
+                        if (processedData.length === 0) {
+                            showNotification('ไม่พบข้อมูลที่สามารถนำเข้าได้', 'error');
+                            importButton.innerHTML = originalText;
+                            importButton.disabled = false;
+                            return;
+                        }
+                        
+                        // Save to Firebase
+                        const newData = [...existingData, ...processedData];
+                        await saveToFirebase('agePopulation', newData);
+                        
+                        showNotification(`นำเข้าข้อมูลสำเร็จ ${processedData.length} รายการ`, 'success');
+                        closeImportAgePopulationModal();
+                        loadAgePopulationTable();
+                        
+                    } catch (error) {
+                        console.error('Error processing Excel:', error);
+                        showNotification('เกิดข้อผิดพลาดในการประมวลผลไฟล์ Excel', 'error');
+                        importButton.innerHTML = originalText;
+                        importButton.disabled = false;
+                    }
+                };
+                
+                reader.onerror = function() {
+                    showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
+                    importButton.innerHTML = originalText;
+                    importButton.disabled = false;
+                };
+                
+                reader.readAsArrayBuffer(file);
+                
+            } catch (error) {
+                console.error('Error reading file:', error);
+                showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
+                importButton.innerHTML = originalText;
+                importButton.disabled = false;
+            }
+        }
+
         async function saveAgePopulationData(event, editIndex = null) {
             event.preventDefault();
             
+            const year = parseInt(document.getElementById('agePopulationYear').value);
             const ageGroup = document.getElementById('agePopulationGroup').value.trim();
             const male = parseInt(document.getElementById('agePopulationMale').value) || 0;
             const female = parseInt(document.getElementById('agePopulationFemale').value) || 0;
             const total = male + female;
             const percentage = parseFloat(document.getElementById('agePopulationPercentage').value) || 0;
             
-            if (!ageGroup || total <= 0 || percentage <= 0) {
+            if (!year || !ageGroup || total <= 0 || percentage <= 0) {
                 showNotification('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง', 'error');
+                return;
+            }
+            
+            if (year < 2500 || year > 2600) {
+                showNotification('กรุณากรอกปี พ.ศ. ที่ถูกต้อง (2500-2600)', 'error');
                 return;
             }
             
@@ -5409,7 +5712,17 @@
             try {
                 const agePopulation = await loadFromFirebase('agePopulation');
                 
-                // Check for duplicate age group (only if not editing the same record)
+                // Check for duplicate year and age group combination (only if not editing the same record)
+                const existingIndex = agePopulation.findIndex(a => 
+                    a.year === year && a.ageGroup.toLowerCase() === ageGroup.toLowerCase()
+                );
+                
+                if (existingIndex !== -1 && existingIndex !== editIndex) {
+                    showNotification(`กลุ่มอายุ ${ageGroup} ในปี ${year} มีข้อมูลอยู่แล้ว กรุณาแก้ไขข้อมูลเดิม`, 'error');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
                 const existingIndex = agePopulation.findIndex(a => a.ageGroup === ageGroup);
                 if (existingIndex !== -1 && existingIndex !== editIndex) {
                     showNotification('กลุ่มอายุนี้มีข้อมูลแล้ว กรุณาแก้ไขข้อมูลเดิมแทน', 'error');
