@@ -5443,6 +5443,7 @@
                                             <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">B</th>
                                             <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">C</th>
                                             <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">D</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">E</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white">
@@ -5566,14 +5567,23 @@
 
         // Download age population example file
         function downloadAgePopulationExampleFile() {
-            const data = [
-                ['ปี', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+            // กำหนดหัวตารางแบบ A, B, C, D, E
+            const headers = [
+                ['A', 'B', 'C', 'D', 'E'],
+                ['ปี', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง']
+            ];
+
+            // ข้อมูลตัวอย่าง
+            const sampleData = [
                 [2568, '0-4 ปี', 31500, 15000, 16500],
                 [2568, '5-9 ปี', 25000, 12000, 13000],
                 [2568, '10-14 ปี', 37500, 18000, 19500],
                 [2568, '15-19 ปี', 18800, 9000, 9800],
                 [2568, '20-24 ปี', 43500, 21000, 22500]
             ];
+
+            // รวมข้อมูลทั้งหมด
+            const data = [...headers, ...sampleData];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
             const wb = XLSX.utils.book_new();
