@@ -2790,9 +2790,15 @@
             
             content.innerHTML = `
                 <div class="mb-6">
-                    <div class="flex justify-between items-center">
-                        <button onclick="showImportAgePopulationModal()" class="btn-secondary text-sm">
-                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                    <div class="flex items-center space-x-4">
+                        <button onclick="selectTab('tabMasterData')" class="btn-secondary">
+                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"/>
+                            </svg>
+                            กลับ
+                        </button>
+                        <button onclick="showImportAgePopulationModal()" class="btn-secondary">
+                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.293a1 1 0 011.414 0L10 8.586V3a1 1 0 012 0v5.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
                             </svg>
                             นำเข้าข้อมูลจาก Excel
