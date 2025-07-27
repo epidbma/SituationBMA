@@ -2689,35 +2689,30 @@
             const years = Object.keys(dataByYear).sort((a, b) => b - a);
             
             content.innerHTML = `
-                <div class="mb-6">
-                    ${years.map(year => `
-                        <div class="mb-6 last:mb-0">
-                            <div class="flex items-center mb-3">
-                                <h3 class="text-lg font-bold text-gray-800">ปี ${year}</h3>
-                                <div class="ml-3 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                                    ${dataByYear[year].districtCount} เขต
-                                </div>
+                ${years.map(year => `
+                    <div class="mb-6">
+                        <h4 class="font-bold text-gray-900 mb-4 text-xl flex items-center">
+                            <span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">ปี ${year}</span>
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 shadow-sm">
+                                <div class="text-gray-600">ประชากรรวม</div>
+                                <div class="text-2xl font-bold text-blue-600">${dataByYear[year].totalPopulation.toLocaleString()} คน</div>
+                                <div class="text-sm text-gray-500 mt-1">จำนวน ${dataByYear[year].districtCount} เขต</div>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
-                                    <div class="text-gray-600 text-sm">ประชากรรวม</div>
-                                    <div class="text-2xl font-bold text-blue-600">${dataByYear[year].totalPopulation.toLocaleString()}</div>
-                                    <div class="text-sm text-gray-500 mt-1">คน</div>
-                                </div>
-                                <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4">
-                                    <div class="text-gray-600 text-sm">ประชากรชาย</div>
-                                    <div class="text-2xl font-bold text-green-600">${dataByYear[year].totalMale.toLocaleString()}</div>
-                                    <div class="text-sm text-gray-500 mt-1">${((dataByYear[year].totalMale/dataByYear[year].totalPopulation)*100).toFixed(1)}%</div>
-                                </div>
-                                <div class="bg-gradient-to-r from-pink-50 to-rose-50 rounded-lg p-4">
-                                    <div class="text-gray-600 text-sm">ประชากรหญิง</div>
-                                    <div class="text-2xl font-bold text-pink-600">${dataByYear[year].totalFemale.toLocaleString()}</div>
-                                    <div class="text-sm text-gray-500 mt-1">${((dataByYear[year].totalFemale/dataByYear[year].totalPopulation)*100).toFixed(1)}%</div>
-                                </div>
+                            <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 shadow-sm">
+                                <div class="text-gray-600">ประชากรชาย</div>
+                                <div class="text-2xl font-bold text-green-600">${dataByYear[year].totalMale.toLocaleString()} คน</div>
+                                <div class="text-sm text-gray-500 mt-1">${((dataByYear[year].totalMale/dataByYear[year].totalPopulation)*100).toFixed(1)}%</div>
+                            </div>
+                            <div class="bg-gradient-to-r from-pink-50 to-pink-100 rounded-lg p-4 shadow-sm">
+                                <div class="text-gray-600">ประชากรหญิง</div>
+                                <div class="text-2xl font-bold text-pink-600">${dataByYear[year].totalFemale.toLocaleString()} คน</div>
+                                <div class="text-sm text-gray-500 mt-1">${((dataByYear[year].totalFemale/dataByYear[year].totalPopulation)*100).toFixed(1)}%</div>
                             </div>
                         </div>
-                    `).join('')}
-                </div>
+                    </div>
+                `).join('')}
 
                 <div class="table-container">
                     <table class="w-full">
@@ -2776,7 +2771,14 @@
                     </table>
                 </div>
                 
-                ${population.length > 0 ? '' : ''
+                ${population.length > 0 ? `
+                    <div class="mt-6 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg">
+                        <div class="text-sm text-gray-600">
+                            <p>หมายเหตุ:</p>
+                            <p class="mt-1">• ข้อมูลประชากรแสดงตามปีที่มีการบันทึกข้อมูล</p>
+                            <p>• สามารถเพิ่มหรือแก้ไขข้อมูลได้โดยคลิกที่ปุ่ม "จัดการ" ในตาราง</p>
+                        </div>
+                    </div>
                     </div>
                 ` : ''}
             `;
