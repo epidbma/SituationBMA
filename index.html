@@ -2894,6 +2894,7 @@
                             <table class="min-w-full text-sm border border-gray-300 rounded">
                                 <thead class="bg-blue-50">
                                     <tr>
+                                        <th class="px-4 py-2 text-left text-blue-800 border-b font-semibold">ปี</th>
                                         <th class="px-4 py-2 text-left text-blue-800 border-b font-semibold">จังหวัด</th>
                                         <th class="px-4 py-2 text-left text-blue-800 border-b font-semibold">จำนวนประชากร</th>
                                         <th class="px-4 py-2 text-left text-blue-800 border-b font-semibold">ชาย</th>
@@ -2902,12 +2903,14 @@
                                 </thead>
                                 <tbody class="bg-white">
                                     <tr>
+                                        <td class="px-4 py-2 border-b">2568</td>
                                         <td class="px-4 py-2 border-b">กรุงเทพมหานคร</td>
                                         <td class="px-4 py-2 border-b">5666264</td>
                                         <td class="px-4 py-2 border-b">2694574</td>
                                         <td class="px-4 py-2 border-b">2971690</td>
                                     </tr>
                                     <tr>
+                                        <td class="px-4 py-2 border-b">2568</td>
                                         <td class="px-4 py-2 border-b">นนทบุรี</td>
                                         <td class="px-4 py-2 border-b">1276745</td>
                                         <td class="px-4 py-2 border-b">598741</td>
@@ -3003,11 +3006,11 @@
         // Download Thailand population example file
         function downloadThailandPopulationExampleFile() {
             const data = [
-                ['จังหวัด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
-                ['กรุงเทพมหานคร', 5666264, 2694574, 2971690],
-                ['นนทบุรี', 1276745, 598741, 678004],
-                ['ปทุมธานี', 1164897, 553874, 611023],
-                ['สมุทรปราการ', 1351479, 652147, 699332]
+                ['ปี', 'จังหวัด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                [2568, 'กรุงเทพมหานคร', 5666264, 2694574, 2971690],
+                [2568, 'นนทบุรี', 1276745, 598741, 678004],
+                [2568, 'ปทุมธานี', 1164897, 553874, 611023],
+                [2568, 'สมุทรปราการ', 1351479, 652147, 699332]
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -3071,10 +3074,11 @@
                         const row = jsonData[i];
                         if (row.length < 4) continue; // Skip incomplete rows
                         
-                        const province = row[0]?.toString().trim();
-                        const total = parseInt(row[1]);
-                        const male = parseInt(row[2]);
-                        const female = parseInt(row[3]);
+                        const year = parseInt(row[0]) || 2568;
+                        const province = row[1]?.toString().trim();
+                        const total = parseInt(row[2]);
+                        const male = parseInt(row[3]);
+                        const female = parseInt(row[4]);
                         
                         if (!province || isNaN(total) || isNaN(male) || isNaN(female)) {
                             errors.push(`แถวที่ ${i + 1}: ข้อมูลไม่ครบถ้วนหรือไม่ถูกต้อง`);
@@ -3082,6 +3086,7 @@
                         }
                         
                         newData.push({
+                            year,
                             province,
                             total,
                             male,
@@ -3143,6 +3148,7 @@
                     <table class="w-full">
                         <thead class="table-header">
                             <tr>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ปี</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">จังหวัด</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">จำนวนประชากร</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">ชาย</th>
@@ -3155,6 +3161,7 @@
                                 '<tr><td colspan="5" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">🇹🇭</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลประชากรประเทศไทย</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลประชากรแต่ละจังหวัด</p></td></tr>' :
                                 thailandPopulation.map((province, index) => `
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+                                        <td class="px-6 py-4 text-gray-900">${province.year || '2568'}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${province.province}</td>
                                         <td class="px-6 py-4 text-right font-semibold text-gray-900">${parseInt(province.total).toLocaleString()}</td>
                                         <td class="px-6 py-4 text-right text-blue-600">${parseInt(province.male).toLocaleString()}</td>
