@@ -916,6 +916,10 @@
                 const snapshot = await get(ref(database, path));
                 if (snapshot.exists()) {
                     const data = snapshot.val();
+                    // If data is null or undefined, return empty array
+                    if (!data) {
+                        return [];
+                    }
                     console.log(`✅ Loaded from Firebase: ${path} (${Array.isArray(data) ? data.length : 'object'} items)`);
                     
                     // ตรวจสอบว่าข้อมูลเป็น array หรือไม่
@@ -5745,12 +5749,12 @@
                     // Save to Firebase
                     await saveToFirebase('agePopulation', agePopulation);
                     
-                    showNotification('ลบข้อมูลสำเร็จ', 'success');
+                    // Save empty array if it's the last item
+                    if (agePopulation.length === 0) {
+                        await saveToFirebase('agePopulation', []);
+                    }
                     
                     // Refresh the table to show updated data
-                    await loadAgePopulationTable();
-                    
-                    // Refresh table
                     await loadAgePopulationTable();
                     
                     showNotification('ลบข้อมูลประชากรตามอายุสำเร็จ!', 'success');
