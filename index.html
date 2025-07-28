@@ -5523,11 +5523,55 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'ข้อมูลประชากรตามอายุ');
             
-            // Auto-size columns
-            const colWidths = data[0].map((col, i) => {
-                return {wch: Math.max(...data.map(row => row[i].toString().length))};
-            });
-            ws['!cols'] = colWidths;
+            // จัดรูปแบบตาราง
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            
+            // ตั้งค่าความกว้างคอลัมน์
+            ws['!cols'] = [
+                { wch: 10 },  // ปี
+                { wch: 15 },  // กลุ่มอายุ
+                { wch: 20 },  // จำนวนประชากร
+                { wch: 15 },  // ชาย
+                { wch: 15 }   // หญิง
+            ];
+
+            // จัดรูปแบบแต่ละเซลล์
+            for(let R = range.s.r; R <= range.e.r; R++) {
+                for(let C = range.s.c; C <= range.e.c; C++) {
+                    const cell_address = {c:C, r:R};
+                    const cell_ref = XLSX.utils.encode_cell(cell_address);
+                    
+                    if (!ws[cell_ref]) continue;
+                    
+                    // จัดรูปแบบตัวเลข
+                    if (R > 0 && (C >= 2 && C <= 4)) { // คอลัมน์ตัวเลข (จำนวนประชากร, ชาย, หญิง)
+                        ws[cell_ref].z = '#,##0';
+                    }
+                    
+                    // จัดรูปแบบหัวตาราง
+                    if (R === 0) {
+                        ws[cell_ref].s = {
+                            font: { bold: true, color: { rgb: "666666" } },
+                            fill: { fgColor: { rgb: "F3F4F6" } },
+                            alignment: { 
+                                horizontal: C >= 2 ? "right" : "left", 
+                                vertical: "center" 
+                            }
+                        };
+                    } else {
+                        // จัดรูปแบบข้อมูล
+                        ws[cell_ref].s = {
+                            alignment: {
+                                horizontal: C >= 2 ? "right" : "left",
+                                vertical: "center"
+                            },
+                            font: {
+                                color: { rgb: C === 1 ? "2563EB" : "000000" }  // กลุ่มอายุเป็นสีน้ำเงิน
+                            }
+                        };
+                    }
+                }
+            }
             
             XLSX.writeFile(wb, 'ตัวอย่างไฟล์นำเข้าข้อมูลประชากรตามอายุ.xlsx');
         }
