@@ -920,69 +920,51 @@
             try {
                 const { database, ref, get } = window.firebaseDB;
                 const snapshot = await get(ref(database, path));
-                let data;
-                
+                let data = null;
+
+                // Try to get data from Firebase first
                 if (snapshot.exists()) {
                     data = snapshot.val();
+                    console.log(`✅ Loaded from Firebase: ${path}`);
                 }
-                
+
                 // If no data in Firebase, try localStorage
                 if (!data) {
-                    const localData = localStorage.getItem(path.replace('/', '_'));
-                    if (localData) {
-                        data = JSON.parse(localData);
+                    console.log(`📭 No data found in Firebase: ${path}`);
+                    try {
+                        const localData = localStorage.getItem(path.replace('/', '_'));
+                        if (localData) {
+                            data = JSON.parse(localData);
+                            console.log(`✅ Loaded from localStorage: ${path}`);
+                        }
+                    } catch (localError) {
+                        console.error(`❌ Error loading from localStorage: ${path}`, localError);
                     }
                 }
-                
+
                 // If still no data, return empty array
                 if (!data) {
+                    console.log(`📭 No data found in both Firebase and localStorage: ${path}`);
                     return [];
                 }
-                
-                console.log(`✅ Loaded data for: ${path} (${Array.isArray(data) ? data.length : 'object'} items)`);
-                
-                // ตรวจสอบว่าข้อมูลเป็น array หรือไม่
-                    if (Array.isArray(data)) {
-                        return data;
-                    } else if (data && typeof data === 'object') {
-                        // หากข้อมูลเป็น object ให้แปลงเป็น array
-                        const arrayData = Object.values(data);
-                        console.log(`🔄 Converted object to array: ${arrayData.length} items`);
-                        return arrayData;
-                    } else {
-                        console.log(`⚠️ Data format unexpected for ${path}:`, typeof data);
-                        return [];
-                    }
-                } else {
-                    console.log(`📭 No data found in Firebase: ${path}`);
-                    // Try localStorage as fallback
-                    const localData = localStorage.getItem(path.replace('/', '_'));
-                    if (localData) {
-                        try {
-                            const parsedData = JSON.parse(localData);
-                            console.log(`✅ Loaded from localStorage: ${path} (${Array.isArray(parsedData) ? parsedData.length : 'object'} items)`);
-                            return Array.isArray(parsedData) ? parsedData : [];
-                        } catch (parseError) {
-                            console.error(`❌ Error parsing localStorage data for ${path}:`, parseError);
-                            return [];
-                        }
-                    }
-                    return [];
+
+                // Process the data
+                if (Array.isArray(data)) {
+                    console.log(`✅ Got array data (${data.length} items)`);
+                    return data;
                 }
+                
+                if (typeof data === 'object') {
+                    const arrayData = Object.values(data);
+                    console.log(`🔄 Converted object to array (${arrayData.length} items)`);
+                    return arrayData;
+                }
+
+                console.log(`⚠️ Unexpected data format: ${typeof data}`);
+                return [];
+
             } catch (error) {
-                console.error(`❌ Error loading from Firebase (${path}):`, error);
-                // Fallback to localStorage
-                const localData = localStorage.getItem(path.replace('/', '_'));
-                if (localData) {
-                    try {
-                        const parsedData = JSON.parse(localData);
-                        console.log(`✅ Fallback to localStorage: ${path} (${Array.isArray(parsedData) ? parsedData.length : 'object'} items)`);
-                        return Array.isArray(parsedData) ? parsedData : [];
-                    } catch (parseError) {
-                        console.error(`❌ Error parsing localStorage fallback for ${path}:`, parseError);
-                        return [];
-                    }
-                }
+                console.error(`❌ Error loading data: ${path}`, error);
                 return [];
             }
         }
