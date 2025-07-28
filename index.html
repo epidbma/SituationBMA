@@ -3005,7 +3005,6 @@
 
         // Download Thailand population example file
         function downloadThailandPopulationExampleFile() {
-            // Create sample data
             const data = [
                 ['ปี', 'จังหวัด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
                 [2568, 'กรุงเทพมหานคร', 5666264, 2694574, 2971690],
@@ -3014,76 +3013,57 @@
                 [2568, 'สมุทรปราการ', 1351479, 652147, 699332]
             ];
             
-            // Create workbook and worksheet
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(data);
-            
+            // Convert array to worksheet
+            const ws = XLSX.utils.aoa_to_sheet(sampleData);
+
             // Set column widths
             ws['!cols'] = [
-                { wch: 8 },    // ปี
-                { wch: 25 },   // จังหวัด
-                { wch: 15 },   // จำนวนประชากร
-                { wch: 12 },   // ชาย
-                { wch: 12 }    // หญิง
+                { wch: 8 },   // ปี
+                { wch: 20 },  // จังหวัด
+                { wch: 15 },  // จำนวนประชากร
+                { wch: 15 },  // ชาย
+                { wch: 15 }   // หญิง
             ];
 
             // Style the header row
             const headerStyle = {
                 font: { bold: true, color: { rgb: "000000" } },
-                fill: { fgColor: { rgb: "E3F2FD" } },  // Light blue background
+                fill: { fgColor: { rgb: "F0F9FF" } }, // bg-blue-50
                 alignment: { horizontal: "center", vertical: "center" }
             };
-            
-            // Style for number columns
-            const numberStyle = {
-                alignment: { horizontal: "right" },
-                numFmt: "#,##0"  // Add thousand separators
-            };
 
-            // Apply header styling
+            // Apply header styling to all header cells
             ['A1', 'B1', 'C1', 'D1', 'E1'].forEach(cell => {
                 if (ws[cell]) ws[cell].s = headerStyle;
             });
 
-            // Apply number formatting to data cells (columns C, D, E)
-            for (let row = 2; row <= data.length; row++) {
+            // Style for numeric columns
+            const numberStyle = {
+                alignment: { horizontal: "right" },
+                numFmt: "#,##0"
+            };
+
+            // Apply number formatting to population columns (columns C, D, E)
+            for (let row = 2; row <= sampleData.length; row++) {
                 ['C', 'D', 'E'].forEach(col => {
                     const cell = col + row;
-                    if (ws[cell]) {
-                        ws[cell].s = numberStyle;
-                    }
+                    if (ws[cell]) ws[cell].s = numberStyle;
                 });
             }
 
-            // Add year styling (column A)
-            for (let row = 2; row <= data.length; row++) {
-                const cell = 'A' + row;
-                if (ws[cell]) {
-                    ws[cell].s = {
-                        alignment: { horizontal: "center" },
-                        font: { color: { rgb: "666666" } }
-                    };
-                }
-            }
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "ประชากรประเทศไทย");
 
-            // Add province styling (column B)
-            for (let row = 2; row <= data.length; row++) {
-                const cell = 'B' + row;
-                if (ws[cell]) {
-                    ws[cell].s = {
-                        font: { bold: true, color: { rgb: "2563EB" } }  // Blue color for provinces
-                    };
-                }
-            }
-            XLSX.utils.book_append_sheet(wb, ws, 'ข้อมูลประชากรประเทศไทย');
+            // Generate filename with current date
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const filename = `ตัวอย่าง_ประชากรประเทศไทย_${dateStr}.xlsx`;
+
+            // Download the file
+            XLSX.writeFile(wb, filename);
             
-            // Auto-size columns
-            const colWidths = data[0].map((col, i) => {
-                return {wch: Math.max(...data.map(row => row[i].toString().length))};
-            });
-            ws['!cols'] = colWidths;
-            
-            XLSX.writeFile(wb, 'ตัวอย่างไฟล์นำเข้าข้อมูลประชากรประเทศไทย.xlsx');
+            showNotification('ดาวน์โหลดไฟล์ตัวอย่างสำเร็จ!', 'success');
         }
 
         // Process Thailand population import
@@ -8159,12 +8139,12 @@
         function downloadThailandPopulationExampleFile() {
             // Create sample data
             const sampleData = [
-                ['ชื่อจังหวัด', 'ประชากรชาย', 'ประชากรหญิง'],
-                ['กรุงเทพมหานคร', 2850000, 3150000],
-                ['เชียงใหม่', 850000, 920000],
-                ['นครราชสีมา', 1300000, 1380000],
-                ['ขอนแก่น', 890000, 940000],
-                ['สงขลา', 720000, 760000],
+                ['ปี', 'จังหวัด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                [2568, 'กรุงเทพมหานคร', 5666264, 2694574, 2971690],
+                [2568, 'นนทบุรี', 1276745, 598741, 678004], 
+                [2568, 'ปทุมธานี', 1164897, 553874, 611023],
+                [2568, 'สมุทรปราการ', 1351479, 652147, 699332],
+                [2568, 'เชียงใหม่', 1770000, 850000, 920000],
                 ['เชียงราย', 640000, 670000],
                 ['อุบลราชธานี', 950000, 1000000],
                 ['สุราษฎร์ธานี', 520000, 540000],
@@ -8215,19 +8195,17 @@
                 });
             }
 
-            // Add worksheet to workbook
-            XLSX.utils.book_append_sheet(wb, ws, "ข้อมูลประชากร");
+            XLSX.utils.book_append_sheet(wb, ws, "ประชากรประเทศไทย");
 
             // Generate filename with current date
             const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            const filename = `ตัวอย่าง_ข้อมูลประชากรประเทศไทย_${dateStr}.xlsx`;
+            const dateStr = now.toISOString().slice(0, 10);
+            const filename = `ตัวอย่าง_ประชากรประเทศไทย_${dateStr}.xlsx`;
 
             // Download the file
             XLSX.writeFile(wb, filename);
             
-            // Show success notification
-            showNotification('ดาวน์โหลดไฟล์ตัวอย่างเรียบร้อยแล้ว!', 'success');
+            showNotification('ดาวน์โหลดไฟล์ตัวอย่างสำเร็จ!', 'success');
         }
 
         // Download example Excel file for age population
