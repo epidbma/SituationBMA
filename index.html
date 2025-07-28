@@ -913,8 +913,7 @@
         async function loadFromFirebase(path) {
             try {
                 const { database, ref, get } = window.firebaseDB;
-                // Force refresh from server
-                const snapshot = await get(ref(database, path), { mode: 'no-cache' });
+                const snapshot = await get(ref(database, path));
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     console.log(`✅ Loaded from Firebase: ${path} (${Array.isArray(data) ? data.length : 'object'} items)`);
@@ -2832,9 +2831,9 @@
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
                                         <td class="px-6 py-4 font-semibold text-gray-900">${age.year}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${age.ageGroup}</td>
-                                        <td class="px-6 py-4 text-right font-semibold text-gray-900">${parseInt(age.total).toLocaleString()}</td>
-                                        <td class="px-6 py-4 text-right text-blue-600">${parseInt(age.male).toLocaleString()}</td>
-                                        <td class="px-6 py-4 text-right text-pink-600">${parseInt(age.female).toLocaleString()}</td>
+                                        <td class="px-6 py-4 text-right font-semibold text-gray-900">${age.total ? parseInt(age.total).toLocaleString() : ''}</td>
+                                        <td class="px-6 py-4 text-right text-blue-600">${age.male ? parseInt(age.male).toLocaleString() : ''}</td>
+                                        <td class="px-6 py-4 text-right text-pink-600">${age.female ? parseInt(age.female).toLocaleString() : ''}</td>
                                         <td class="px-6 py-4 text-center">
                                             <button onclick="editAgePopulation(${index})" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:from-blue-600 hover:to-blue-700 mr-2 transition-all transform hover:scale-105">แก้ไข</button>
                                             <button onclick="deleteAgePopulation(${index})" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg text-sm hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105">ลบ</button>
@@ -5688,10 +5687,10 @@
                 
                 const newAgePopulation = {
                     year: year.toString(),
-                    ageGroup: ageGroup.trim(),
-                    male: male,
-                    female: female,
-                    total: total
+                    ageGroup,
+                    male: male.toString(),
+                    female: female.toString(),
+                    total: total.toString()
                 };
                 
                 if (editIndex !== null) {
@@ -5743,30 +5742,13 @@
                     // Remove from array
                     agePopulation.splice(index, 1);
                     
-                    // Save empty array if no data left
-                    if (agePopulation.length === 0) {
-                        await saveToFirebase('agePopulation', []);
-                    } else {
-                        // Save remaining data
-                        await saveToFirebase('agePopulation', agePopulation);
-                    }
+                    // Save to Firebase
+                    await saveToFirebase('agePopulation', agePopulation);
                     
                     showNotification('ลบข้อมูลสำเร็จ', 'success');
                     
-                    // Force reload data and refresh table
-                    const freshData = await loadFromFirebase('agePopulation');
-                    if (freshData.length === 0) {
-                        // Clear the table completely if no data
-                        const content = document.getElementById('masterDataDetailContent');
-                        content.innerHTML = `
-                            <div class="text-center py-8">
-                                <p class="text-gray-500">ไม่มีข้อมูลประชากรตามอายุ</p>
-                            </div>
-                        `;
-                    } else {
-                        // Refresh table with new data
-                        await loadAgePopulationTable();
-                    }
+                    // Refresh the table to show updated data
+                    await loadAgePopulationTable();
                     
                     // Refresh table
                     await loadAgePopulationTable();
