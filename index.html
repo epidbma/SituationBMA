@@ -5523,55 +5523,11 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'ข้อมูลประชากรตามอายุ');
             
-            // จัดรูปแบบตาราง
-            const range = XLSX.utils.decode_range(ws['!ref']);
-            
-            // ตั้งค่าความกว้างคอลัมน์
-            ws['!cols'] = [
-                { wch: 10 },  // ปี
-                { wch: 15 },  // กลุ่มอายุ
-                { wch: 20 },  // จำนวนประชากร
-                { wch: 15 },  // ชาย
-                { wch: 15 }   // หญิง
-            ];
-
-            // จัดรูปแบบแต่ละเซลล์
-            for(let R = range.s.r; R <= range.e.r; R++) {
-                for(let C = range.s.c; C <= range.e.c; C++) {
-                    const cell_address = {c:C, r:R};
-                    const cell_ref = XLSX.utils.encode_cell(cell_address);
-                    
-                    if (!ws[cell_ref]) continue;
-                    
-                    // จัดรูปแบบตัวเลข
-                    if (R > 0 && (C >= 2 && C <= 4)) { // คอลัมน์ตัวเลข (จำนวนประชากร, ชาย, หญิง)
-                        ws[cell_ref].z = '#,##0';
-                    }
-                    
-                    // จัดรูปแบบหัวตาราง
-                    if (R === 0) {
-                        ws[cell_ref].s = {
-                            font: { bold: true, color: { rgb: "666666" } },
-                            fill: { fgColor: { rgb: "F3F4F6" } },
-                            alignment: { 
-                                horizontal: C >= 2 ? "right" : "left", 
-                                vertical: "center" 
-                            }
-                        };
-                    } else {
-                        // จัดรูปแบบข้อมูล
-                        ws[cell_ref].s = {
-                            alignment: {
-                                horizontal: C >= 2 ? "right" : "left",
-                                vertical: "center"
-                            },
-                            font: {
-                                color: { rgb: C === 1 ? "2563EB" : "000000" }  // กลุ่มอายุเป็นสีน้ำเงิน
-                            }
-                        };
-                    }
-                }
-            }
+            // Auto-size columns
+            const colWidths = data[0].map((col, i) => {
+                return {wch: Math.max(...data.map(row => row[i].toString().length))};
+            });
+            ws['!cols'] = colWidths;
             
             XLSX.writeFile(wb, 'ตัวอย่างไฟล์นำเข้าข้อมูลประชากรตามอายุ.xlsx');
         }
@@ -7918,72 +7874,61 @@
 
         // Download example Excel file for age population
         function downloadAgePopulationExampleFile() {
-            // Create sample data
-            const sampleData = [
-                ['ชื่อเขต', '0-14 ปี', '15-59 ปี', '60+ ปี'],
-                ['บางรัก', 8500, 35000, 8500],
-                ['วัฒนา', 14000, 58000, 15000],
-                ['ปทุมวัน', 12500, 52000, 14500],
-                ['สาทร', 11000, 47000, 14000],
-                ['คลองเตย', 18000, 71000, 18000],
-                ['บางคอแหลม', 16500, 65000, 17500],
-                ['ยานนาวา', 15000, 60000, 16000],
-                ['บางนา', 30000, 120000, 31000],
-                ['พระโขนง', 25000, 102000, 26000],
-                ['วังทองหลาง', 21000, 85000, 21000],
-                ['หนองจอก', 32000, 128000, 33000],
-                ['มีนบุรี', 29000, 118000, 32000],
-                ['ลาดกระบัง', 26000, 107000, 27000],
-                ['บางขุนเทียน', 42000, 170000, 43000],
-                ['ทุ่งครุ', 23000, 92000, 24000]
+            const data = [
+                ['ปี', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                [2568, '0-4 ปี', 25000, 12800, 12200],
+                [2568, '5-9 ปี', 28000, 14300, 13700],
+                [2568, '10-14 ปี', 30000, 15400, 14600],
+                [2568, '15-19 ปี', 32000, 16100, 15900],
+                [2568, '20-24 ปี', 35000, 17200, 17800],
+                [2568, '25-29 ปี', 38000, 18500, 19500],
             ];
-
+            
             // Create workbook and worksheet
             const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(sampleData);
+            const ws = XLSX.utils.aoa_to_sheet(data);
 
             // Set column widths
             ws['!cols'] = [
-                { wch: 18 },  // ชื่อเขต
-                { wch: 12 },  // 0-14 ปี
-                { wch: 12 },  // 15-59 ปี
-                { wch: 12 }   // 60+ ปี
+                { wch: 8 },   // ปี
+                { wch: 15 },  // กลุ่มอายุ
+                { wch: 15 },  // จำนวนประชากร
+                { wch: 12 },  // ชาย
+                { wch: 12 }   // หญิง
             ];
 
             // Style the header row
             const headerStyle = {
-                font: { bold: true, color: { rgb: "000000" } },
-                fill: { fgColor: { rgb: "4ECCA3" } },
+                font: { bold: true },
+                fill: { fgColor: { rgb: "FFEB9C" } },  // Light yellow background
                 alignment: { horizontal: "center", vertical: "center" }
             };
 
             // Apply header styling
-            ['A1', 'B1', 'C1', 'D1'].forEach(cell => {
+            ['A1', 'B1', 'C1', 'D1', 'E1'].forEach(cell => {
                 if (ws[cell]) ws[cell].s = headerStyle;
             });
 
-            // Add number formatting for population columns
+            // Add number formatting for numeric columns
             const numberStyle = {
                 numFmt: "#,##0"
             };
 
-            // Apply number formatting to all data cells (B2:D16)
-            for (let row = 2; row <= 16; row++) {
-                ['B', 'C', 'D'].forEach(col => {
+            // Apply number formatting to numeric columns (A2:E12)
+            for (let row = 2; row <= 12; row++) {
+                ['C', 'D', 'E'].forEach(col => {  // จำนวนประชากร, ชาย, หญิง
                     const cellRef = col + row;
-                    if (ws[cellRef]) ws[cellRef].s = numberStyle;
+                    if (ws[cellRef]) {
+                        ws[cellRef].s = {
+                            alignment: { horizontal: "right" },
+                            numFmt: "#,##0"  // Format numbers with thousands separator
+                        };
+                    }
                 });
             }
 
             XLSX.utils.book_append_sheet(wb, ws, "ข้อมูลประชากรตามอายุ");
-
-            // Generate filename with current date
-            const now = new Date();
-            const dateStr = now.toISOString().slice(0, 10);
-            const filename = `ตัวอย่าง_ประชากรจำแนกตามอายุ_${dateStr}.xlsx`;
-
-            // Download the file
-            XLSX.writeFile(wb, filename);
+            XLSX.writeFile(wb, 'ตัวอย่างไฟล์นำเข้าข้อมูลประชากรตามอายุ.xlsx');
             
             showNotification('ดาวน์โหลดไฟล์ตัวอย่างสำเร็จ!', 'success');
         }
