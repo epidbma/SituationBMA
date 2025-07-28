@@ -5738,7 +5738,7 @@
                 return;
             }
             
-            const confirmed = confirm(`คุณต้องการลบข้อมูลประชากรตามอายุนี้ใช่หรือไม่?\n\nกลุ่มอายุ: ${age.ageGroup}\nประชากรรวม: ${parseInt(age.total).toLocaleString()} คน\nสัดส่วน: ${parseFloat(age.percentage).toFixed(1)}%\n\nการดำเนินการนี้ไม่สามารถยกเลิกได้`);
+            const confirmed = confirm(`คุณต้องการลบข้อมูลประชากรตามอายุนี้ใช่หรือไม่?\n\nปี: ${age.year || 2568}\nกลุ่มอายุ: ${age.ageGroup}\nจำนวนประชากร: ${parseInt(age.total).toLocaleString()} คน\nชาย: ${parseInt(age.male).toLocaleString()} คน\nหญิง: ${parseInt(age.female).toLocaleString()} คน\n\nการดำเนินการนี้ไม่สามารถยกเลิกได้`);
             
             if (confirmed) {
                 try {
@@ -5747,6 +5747,8 @@
                     
                     // Save to Firebase
                     await saveToFirebase('agePopulation', agePopulation);
+                    
+                    showNotification('ลบข้อมูลสำเร็จ', 'success');
                     
                     // Refresh table
                     await loadAgePopulationTable();
