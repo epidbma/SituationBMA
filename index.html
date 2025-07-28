@@ -900,12 +900,18 @@
             try {
                 const { database, ref, set } = window.firebaseDB;
                 await set(ref(database, path), data);
+                // Clear localStorage after successful Firebase save
+                localStorage.removeItem(path.replace('/', '_'));
                 console.log(`✅ Saved to Firebase: ${path}`);
                 return true;
             } catch (error) {
                 console.error(`❌ Error saving to Firebase (${path}):`, error);
-                // Fallback to localStorage
-                localStorage.setItem(path.replace('/', '_'), JSON.stringify(data));
+                // Fallback to localStorage only if data is not empty
+                if (data && (!Array.isArray(data) || data.length > 0)) {
+                    localStorage.setItem(path.replace('/', '_'), JSON.stringify(data));
+                } else {
+                    localStorage.removeItem(path.replace('/', '_'));
+                }
                 return false;
             }
         }
@@ -914,15 +920,28 @@
             try {
                 const { database, ref, get } = window.firebaseDB;
                 const snapshot = await get(ref(database, path));
+                let data;
+                
                 if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    // If data is null or undefined, return empty array
-                    if (!data) {
-                        return [];
+                    data = snapshot.val();
+                }
+                
+                // If no data in Firebase, try localStorage
+                if (!data) {
+                    const localData = localStorage.getItem(path.replace('/', '_'));
+                    if (localData) {
+                        data = JSON.parse(localData);
                     }
-                    console.log(`✅ Loaded from Firebase: ${path} (${Array.isArray(data) ? data.length : 'object'} items)`);
-                    
-                    // ตรวจสอบว่าข้อมูลเป็น array หรือไม่
+                }
+                
+                // If still no data, return empty array
+                if (!data) {
+                    return [];
+                }
+                
+                console.log(`✅ Loaded data for: ${path} (${Array.isArray(data) ? data.length : 'object'} items)`);
+                
+                // ตรวจสอบว่าข้อมูลเป็น array หรือไม่
                     if (Array.isArray(data)) {
                         return data;
                     } else if (data && typeof data === 'object') {
