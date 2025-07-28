@@ -5402,16 +5402,17 @@
             try {
                 const agePopulation = await loadFromFirebase('agePopulation');
                 
-                // Check for duplicate age group (only if not editing the same record)
-                const existingIndex = agePopulation.findIndex(a => a.ageGroup === ageGroup);
-                if (existingIndex !== -1 && existingIndex !== editIndex) {
-                    showNotification('กลุ่มอายุนี้มีข้อมูลแล้ว กรุณาแก้ไขข้อมูลเดิมแทน', 'error');
+                // Check for duplicate year (only if not editing the same record)
+                const existingYearRecord = agePopulation.findIndex(a => a.year === year.toString());
+                if (existingYearRecord !== -1 && existingYearRecord !== editIndex) {
+                    showNotification('ปีนี้มีข้อมูลแล้ว กรุณาแก้ไขข้อมูลเดิมแทน', 'error');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                     return;
                 }
                 
                 const newAgePopulation = {
+                    year: year.toString(),
                     ageGroup,
                     male: male.toString(),
                     female: female.toString(),
