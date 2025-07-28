@@ -889,6 +889,7 @@
                         </button>
                     </div>
                 </div>
+                <div id="importContainer"></div>
                 <div id="masterDataDetailContent"></div>
             </div>
         </div>
@@ -2399,6 +2400,23 @@
             };
             
             document.getElementById('masterDataDetailTitle').textContent = titles[type];
+            
+            // Add import Excel button for Thailand Population
+            const importContainer = document.getElementById('importContainer');
+            if (type === 'thailandPopulation') {
+                importContainer.innerHTML = `
+                    <div class="flex justify-end mb-4">
+                        <button onclick="showImportThailandPopulationModal()" class="btn-primary mr-2">
+                            นำเข้าข้อมูล Excel
+                        </button>
+                        <button onclick="downloadThailandPopulationExampleFile()" class="btn-secondary">
+                            ดาวน์โหลดไฟล์ตัวอย่าง
+                        </button>
+                    </div>
+                `;
+            } else {
+                importContainer.innerHTML = '';
+            }
             
             // Set up add button
             const addButton = document.getElementById('addNewButton');
