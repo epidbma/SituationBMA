@@ -2786,8 +2786,23 @@
         }
 
         async function loadAgePopulationTable() {
-            const agePopulation = await loadFromFirebase('agePopulation');
-            const content = document.getElementById('masterDataDetailContent');
+            const { database, ref, get } = window.firebaseDB;
+            
+            try {
+                // ดึงข้อมูลล่าสุดจาก Firebase โดยไม่ใช้แคช
+                const snapshot = await get(ref(database, 'agePopulation'));
+                let agePopulation = [];
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    agePopulation = Array.isArray(data) ? data : Object.values(data);
+                }
+                
+                // ล้าง localStorage เพื่อป้องกันการใช้ข้อมูลเก่า
+                localStorage.removeItem('agePopulation');
+                localStorage.removeItem('_agePopulation');
+                
+                const content = document.getElementById('masterDataDetailContent');
             
             content.innerHTML = `
                 <div class="mb-6">
@@ -5728,45 +5743,88 @@
 
         // Delete age population function
         async function deleteAgePopulation(index) {
-            const agePopulation = await loadFromFirebase('agePopulation');
-            const age = agePopulation[index];
-            
-            if (!age) {
-                showNotification('ไม่พบข้อมูลประชากรตามอายุที่ต้องการลบ', 'error');
-                return;
-            }
-            
-            const confirmed = confirm(`คุณต้องการลบข้อมูลประชากรตามอายุนี้ใช่หรือไม่?\n\nปี: ${age.year || 2568}\nกลุ่มอายุ: ${age.ageGroup}\nจำนวนประชากร: ${parseInt(age.total).toLocaleString()} คน\nชาย: ${parseInt(age.male).toLocaleString()} คน\nหญิง: ${parseInt(age.female).toLocaleString()} คน\n\nการดำเนินการนี้ไม่สามารถยกเลิกได้`);
-            
-            if (confirmed) {
-                try {
-                    // Remove from array
+            try {
+                const { database, ref, get, set, remove } = window.firebaseDB;
+                
+                // ดึงข้อมูลล่าสุดจาก Firebase โดยไม่ใช้แคช
+                const snapshot = await get(ref(database, 'agePopulation'));
+                if (!snapshot.exists()) {
+                    showNotification('ไม่พบข้อมูลประชากรตามอายุ', 'error');
+                    return;
+                }
+                
+                let agePopulation = snapshot.val();
+                if (!Array.isArray(agePopulation)) {
+                    agePopulation = Object.values(agePopulation);
+                }
+                
+                const age = agePopulation[index];
+                if (!age) {
+                    showNotification('ไม่พบข้อมูลประชากรตามอายุที่ต้องการลบ', 'error');
+                    return;
+                }
+                
+                const confirmed = confirm(`คุณต้องการลบข้อมูลประชากรตามอายุนี้ใช่หรือไม่?\n\nปี: ${age.year || 2568}\nกลุ่มอายุ: ${age.ageGroup}\nจำนวนประชากร: ${parseInt(age.total).toLocaleString()} คน\nชาย: ${parseInt(age.male).toLocaleString()} คน\nหญิง: ${parseInt(age.female).toLocaleString()} คน\n\nการดำเนินการนี้ไม่สามารถยกเลิกได้`);
+                
+                if (confirmed) {
+                    // ลบข้อมูลออกจากอาร์เรย์
                     agePopulation.splice(index, 1);
                     
-                    // Save empty array if no data left
+                    // ถ้าไม่มีข้อมูลเหลือ ให้ลบ node ทิ้งเลย
                     if (agePopulation.length === 0) {
-                        await saveToFirebase('agePopulation', []);
+                        await remove(ref(database, 'agePopulation'));
                     } else {
-                        // Save remaining data
-                        await saveToFirebase('agePopulation', agePopulation);
+                        // บันทึกข้อมูลที่เหลือ
+                        await set(ref(database, 'agePopulation'), agePopulation);
                     }
+                    
+                    // ล้างข้อมูลใน localStorage ด้วย
+                    localStorage.removeItem('agePopulation');
+                    localStorage.removeItem('_agePopulation');
                     
                     showNotification('ลบข้อมูลสำเร็จ', 'success');
                     
-                    // Force reload data and refresh table
-                    const freshData = await loadFromFirebase('agePopulation');
-                    if (freshData.length === 0) {
-                        // Clear the table completely if no data
-                        const content = document.getElementById('masterDataDetailContent');
+                    // สร้างเนื้อหาใหม่
+                    const content = document.getElementById('masterDataDetailContent');
+                    if (agePopulation.length === 0) {
                         content.innerHTML = `
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3">
+                                            <div class="text-gray-600 text-sm">จำนวนกลุ่มอายุ</div>
+                                            <div class="text-2xl font-bold text-blue-600">0</div>
+                                        </div>
+                                        <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-3">
+                                            <div class="text-gray-600 text-sm">ประชากรรวม</div>
+                                            <div class="text-2xl font-bold text-green-600">0</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button onclick="showImportAgePopulationModal()" class="btn-secondary text-sm">
+                                            <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.293a1 1 0 011.414 0L10 8.586V3a1 1 0 012 0v5.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                                            </svg>
+                                            นำเข้าข้อมูล Excel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="text-center py-8">
-                                <p class="text-gray-500">ไม่มีข้อมูลประชากรตามอายุ</p>
+                                <div class="text-6xl mb-4">👥</div>
+                                <p class="font-semibold text-xl text-gray-700">ไม่มีข้อมูลประชากรตามอายุ</p>
+                                <p class="text-gray-500 mt-2">กรุณานำเข้าข้อมูลโดยคลิกที่ปุ่ม "นำเข้าข้อมูล Excel"</p>
                             </div>
                         `;
                     } else {
-                        // Refresh table with new data
+                        // โหลดข้อมูลและตารางใหม่
                         await loadAgePopulationTable();
                     }
+                }
+            } catch (error) {
+                console.error('Error deleting age population:', error);
+                showNotification('เกิดข้อผิดพลาดในการลบข้อมูล', 'error');
+            }
                     
                     // Refresh table
                     await loadAgePopulationTable();
