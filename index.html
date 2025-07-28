@@ -2831,7 +2831,7 @@
                         </thead>
                         <tbody>
                             ${agePopulation.length === 0 ? 
-                                '<tr><td colspan="6" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">👥</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลประชากรตามอายุ</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลประชากรแต่ละกลุ่มอายุ</p></td></tr>' :
+                                '<tr><td colspan="5" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">👥</div><p class="font-semibold text-xl text-gray-700">ไม่พบข้อมูล</p></td></tr>' :
                                 agePopulation.map((age, index) => `
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
                                         <td class="px-6 py-4 font-semibold text-gray-900">${age.year || 2568}</td>
@@ -5398,19 +5398,13 @@
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ชาย</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">หญิง</td>
                                         </tr>
-                                        <tr>
-                                            <td class="px-3 py-2 border border-gray-300">0-4 ปี</td>
-                                            <td class="px-3 py-2 border border-gray-300">25000</td>
-                                            <td class="px-3 py-2 border border-gray-300">12800</td>
-                                            <td class="px-3 py-2 border border-gray-300">12200</td>
-                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
                             <div class="mt-3 text-xs text-purple-700 space-y-1">
-                                <p>• <strong>แถวสีเหลือง:</strong> หัวตาราง (สามารถข้ามได้โดยเลือก "ข้ามแถวแรก")</p>
-                                <p>• <strong>จำนวนประชากร:</strong> ต้องเป็นตัวเลขเท่านั้น</p>
-                                <p>• <strong>กลุ่มอายุ:</strong> ต้องระบุช่วงอายุตามรูปแบบ เช่น "0-4 ปี", "5-9 ปี"</p>
+                                <p>• <strong>หัวตาราง:</strong> สามารถข้ามได้โดยเลือก "ข้ามแถวแรก"</p>
+                                <p>• <strong>ข้อมูลตัวเลข:</strong> ต้องเป็นตัวเลขเท่านั้น</p>
+                                <p>• <strong>กลุ่มอายุ:</strong> ต้องระบุช่วงอายุให้ถูกต้อง</p>
                             </div>
                         </div>
 
@@ -5508,12 +5502,7 @@
         // Download age population example file
         function downloadAgePopulationExampleFile() {
             const data = [
-                ['กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
-                ['0-4 ปี', 25000, 12800, 12200],
-                ['5-9 ปี', 28000, 14300, 13700],
-                ['10-14 ปี', 30000, 15400, 14600],
-                ['15-19 ปี', 32000, 16100, 15900],
-                ['20-24 ปี', 35000, 17200, 17800]
+                ['กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง']
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
