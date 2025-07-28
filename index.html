@@ -5578,19 +5578,21 @@
                     
                     for (let i = startRow; i < jsonData.length; i++) {
                         const row = jsonData[i];
-                        if (row.length < 4) continue; // Skip incomplete rows
+                        if (row.length < 5) continue; // Skip incomplete rows - now checking for 5 columns
                         
-                        const ageGroup = row[0]?.toString().trim();
-                        const total = parseInt(row[1]);
-                        const male = parseInt(row[2]);
-                        const female = parseInt(row[3]);
+                        const year = parseInt(row[0]);
+                        const ageGroup = row[1]?.toString().trim();
+                        const total = parseInt(row[2]);
+                        const male = parseInt(row[3]);
+                        const female = parseInt(row[4]);
                         
-                        if (!ageGroup || isNaN(total) || isNaN(male) || isNaN(female)) {
+                        if (!year || !ageGroup || isNaN(total) || isNaN(male) || isNaN(female)) {
                             errors.push(`แถวที่ ${i + 1}: ข้อมูลไม่ครบถ้วนหรือไม่ถูกต้อง`);
                             continue;
                         }
                         
                         newData.push({
+                            year: year.toString(),
                             ageGroup,
                             total,
                             male,
@@ -5611,6 +5613,7 @@
                         // Update existing data with new data
                         for (const newItem of newData) {
                             const existingIndex = existingData.findIndex(item => 
+                                item.year === newItem.year && 
                                 item.ageGroup.toLowerCase() === newItem.ageGroup.toLowerCase()
                             );
                             
