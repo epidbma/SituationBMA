@@ -2413,7 +2413,7 @@
                 existingImportBtn.remove();
             }
             
-            if (type === 'diseases' || type === 'responsible' || type === 'population') {
+            if (type === 'diseases' || type === 'responsible' || type === 'population' || type === 'thailandPopulation') {
                 const importButton = document.createElement('button');
                 importButton.id = 'importExcelButton';
                 importButton.className = 'btn-secondary text-sm flex items-center ml-2';
@@ -2850,6 +2850,226 @@
                     </table>
                 </div>
             `;
+        }
+
+        // Show import Thailand population modal
+        function showImportThailandPopulationModal() {
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modalOverlay.id = 'importThailandPopulationModal';
+            
+            modalOverlay.innerHTML = `
+                <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900">นำเข้าข้อมูลประชากรประเทศไทย</h2>
+                        <button onclick="closeImportThailandPopulationModal()" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">เลือกไฟล์ Excel (.xls, .xlsx)</label>
+                            <input type="file" id="thailandPopulationExcelFile" accept=".xls,.xlsx" 
+                                onchange="handleThailandPopulationFileSelect(this)" class="w-full">
+                            <div id="thailandPopulationFileInfo" class="text-sm mt-2"></div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="skipFirstRowThailand" class="rounded text-blue-600">
+                            <label for="skipFirstRowThailand" class="text-sm text-gray-700">ข้ามบรรทัดแรก (หัวตาราง)</label>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="replaceExistingThailand" class="rounded text-blue-600">
+                            <label for="replaceExistingThailand" class="text-sm text-gray-700">แทนที่ข้อมูลเดิมทั้งหมด</label>
+                        </div>
+                        <div class="flex justify-between mt-8">
+                            <button onclick="closeImportThailandPopulationModal()" class="btn-secondary">ยกเลิก</button>
+                            <button onclick="processThailandPopulationImport()" class="btn-primary" id="importThailandPopulationButton" disabled>
+                                นำเข้าข้อมูล
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-sm text-gray-500">📥 ดาวน์โหลด <a href="#" onclick="downloadThailandPopulationExampleFile()" class="text-blue-600 hover:text-blue-700">ไฟล์ตัวอย่าง</a></p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalOverlay);
+        }
+
+        // Close import Thailand population modal
+        function closeImportThailandPopulationModal() {
+            const modal = document.getElementById('importThailandPopulationModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Handle Thailand population file select
+        function handleThailandPopulationFileSelect(input) {
+            const fileInfo = document.getElementById('thailandPopulationFileInfo');
+            const importButton = document.getElementById('importThailandPopulationButton');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const fileName = file.name;
+                const fileSize = (file.size / 1024).toFixed(2);
+                
+                if (!fileName.match(/\.(xls|xlsx)$/)) {
+                    showNotification('กรุณาเลือกไฟล์ Excel (.xls, .xlsx) เท่านั้น', 'error');
+                    fileInfo.innerHTML = '';
+                    importButton.disabled = true;
+                    return;
+                }
+                
+                fileInfo.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="font-medium text-gray-700">${fileName}</span>
+                        <span class="text-gray-500">(${fileSize} KB)</span>
+                    </div>
+                `;
+                importButton.disabled = false;
+                
+            } else {
+                fileInfo.innerHTML = '';
+                importButton.disabled = true;
+            }
+        }
+
+        // Download Thailand population example file
+        function downloadThailandPopulationExampleFile() {
+            const data = [
+                ['จังหวัด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                ['กรุงเทพมหานคร', 5666264, 2694574, 2971690],
+                ['นนทบุรี', 1276745, 598741, 678004],
+                ['ปทุมธานี', 1164897, 553874, 611023],
+                ['สมุทรปราการ', 1351479, 652147, 699332]
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'ข้อมูลประชากรประเทศไทย');
+            
+            // Auto-size columns
+            const colWidths = data[0].map((col, i) => {
+                return {wch: Math.max(...data.map(row => row[i].toString().length))};
+            });
+            ws['!cols'] = colWidths;
+            
+            XLSX.writeFile(wb, 'ตัวอย่างไฟล์นำเข้าข้อมูลประชากรประเทศไทย.xlsx');
+        }
+
+        // Process Thailand population import
+        async function processThailandPopulationImport() {
+            const fileInput = document.getElementById('thailandPopulationExcelFile');
+            const skipFirstRow = document.getElementById('skipFirstRowThailand').checked;
+            const replaceExisting = document.getElementById('replaceExistingThailand').checked;
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
+                return;
+            }
+            
+            const importButton = document.getElementById('importThailandPopulationButton');
+            const originalText = importButton.innerHTML;
+            importButton.innerHTML = `
+                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังนำเข้าข้อมูล...
+            `;
+            importButton.disabled = true;
+            
+            try {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = async function(e) {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                    
+                    if (jsonData.length < 2) {
+                        showNotification('ไฟล์ Excel ไม่มีข้อมูล', 'error');
+                        importButton.innerHTML = originalText;
+                        importButton.disabled = false;
+                        return;
+                    }
+                    
+                    // Start processing from row 1 if skipFirstRow is true
+                    const startRow = skipFirstRow ? 1 : 0;
+                    let newData = [];
+                    let errors = [];
+                    
+                    for (let i = startRow; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (row.length < 4) continue; // Skip incomplete rows
+                        
+                        const province = row[0]?.toString().trim();
+                        const total = parseInt(row[1]);
+                        const male = parseInt(row[2]);
+                        const female = parseInt(row[3]);
+                        
+                        if (!province || isNaN(total) || isNaN(male) || isNaN(female)) {
+                            errors.push(`แถวที่ ${i + 1}: ข้อมูลไม่ครบถ้วนหรือไม่ถูกต้อง`);
+                            continue;
+                        }
+                        
+                        newData.push({
+                            province,
+                            total,
+                            male,
+                            female
+                        });
+                    }
+                    
+                    if (errors.length > 0) {
+                        showNotification(`พบข้อผิดพลาด:\n${errors.join('\n')}`, 'error');
+                        importButton.innerHTML = originalText;
+                        importButton.disabled = false;
+                        return;
+                    }
+                    
+                    try {
+                        let existingData = replaceExisting ? [] : await loadFromFirebase('thailandPopulation');
+                        
+                        // Update existing data with new data
+                        for (const newItem of newData) {
+                            const existingIndex = existingData.findIndex(item => 
+                                item.province.toLowerCase() === newItem.province.toLowerCase()
+                            );
+                            
+                            if (existingIndex !== -1) {
+                                existingData[existingIndex] = newItem;
+                            } else {
+                                existingData.push(newItem);
+                            }
+                        }
+                        
+                        await saveToFirebase('thailandPopulation', existingData);
+                        await loadThailandPopulationTable();
+                        
+                        showNotification('นำเข้าข้อมูลสำเร็จ', 'success');
+                        closeImportThailandPopulationModal();
+                        
+                    } catch (error) {
+                        console.error('Error saving data:', error);
+                        showNotification('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+                    }
+                };
+                
+                reader.readAsArrayBuffer(file);
+                
+            } catch (error) {
+                console.error('Error reading file:', error);
+                showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
+                importButton.innerHTML = originalText;
+                importButton.disabled = false;
+            }
         }
 
         async function loadThailandPopulationTable() {
