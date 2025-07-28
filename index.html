@@ -2830,7 +2830,7 @@
                                 '<tr><td colspan="6" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">👥</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลประชากรตามอายุ</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลประชากรแต่ละกลุ่มอายุ</p></td></tr>' :
                                 agePopulation.map((age, index) => `
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-                                        <td class="px-6 py-4 font-semibold text-gray-900">${age.year || 2568}</td>
+                                        <td class="px-6 py-4 font-semibold text-gray-900">${age.year}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${age.ageGroup}</td>
                                         <td class="px-6 py-4 text-right font-semibold text-gray-900">${parseInt(age.total).toLocaleString()}</td>
                                         <td class="px-6 py-4 text-right text-blue-600">${parseInt(age.male).toLocaleString()}</td>
@@ -5688,10 +5688,10 @@
                 
                 const newAgePopulation = {
                     year: year.toString(),
-                    ageGroup,
-                    male: male.toString(),
-                    female: female.toString(),
-                    total: total.toString()
+                    ageGroup: ageGroup.trim(),
+                    male: male,
+                    female: female,
+                    total: total
                 };
                 
                 if (editIndex !== null) {
