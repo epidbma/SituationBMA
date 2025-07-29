@@ -2413,7 +2413,7 @@
                 existingImportBtn.remove();
             }
             
-            if (type === 'diseases' || type === 'responsible' || type === 'population' || type === 'thailandPopulation' || type === 'bangkokDistricts') {
+            if (type === 'diseases' || type === 'responsible' || type === 'population' || type === 'thailandPopulation' || type === 'bangkokDistricts' || type === 'epidemicWeeks') {
                 const importButton = document.createElement('button');
                 importButton.id = 'importExcelButton';
                 importButton.className = 'btn-secondary text-sm flex items-center ml-2';
@@ -2433,6 +2433,9 @@
                             break;
                         case 'bangkokDistricts':
                             showImportBangkokDistrictsModal();
+                            break;
+                        case 'epidemicWeeks':
+                            showImportEpidemicWeeksModal();
                             break;
                     }
                 };
