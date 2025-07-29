@@ -3105,6 +3105,71 @@
         }
 
         // Show import Thailand population modal
+        // Show import Bangkok Districts modal
+        function showImportBangkokDistrictsModal() {
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modalOverlay.id = 'importBangkokDistrictsModal';
+            
+            modalOverlay.innerHTML = `
+                <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">นำเข้าข้อมูลเขตในกรุงเทพมหานคร</h2>
+                        <button onclick="closeImportBangkokDistrictsModal()" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-center w-full">
+                            <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-8 h-8 mb-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">คลิกเพื่อเลือกไฟล์</span></p>
+                                    <p class="text-xs text-gray-500">Excel เท่านั้น (.xlsx, .xls)</p>
+                                </div>
+                                <input type="file" id="bangkokDistrictsFile" class="hidden" accept=".xlsx, .xls" 
+                                    onchange="handleBangkokDistrictsFileSelect(this)"/>
+                            </label>
+                        </div>
+                        
+                        <div id="bangkokDistrictsFileInfo" class="text-sm text-gray-600"></div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="skipFirstRowBangkokDistricts" class="form-checkbox" checked />
+                            <label for="skipFirstRowBangkokDistricts" class="text-sm text-gray-700">ข้ามบรรทัดแรก (หัวตาราง)</label>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="replaceExistingBangkokDistricts" class="form-checkbox" />
+                            <label for="replaceExistingBangkokDistricts" class="text-sm text-gray-700">แทนที่ข้อมูลเดิมทั้งหมด</label>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-6">
+                            <button onclick="downloadBangkokDistrictsExample()" class="text-blue-600 hover:text-blue-800 text-sm">
+                                ⬇️ ดาวน์โหลดไฟล์ตัวอย่าง
+                            </button>
+                            <div class="space-x-2">
+                                <button onclick="closeImportBangkokDistrictsModal()" class="btn-secondary">
+                                    ยกเลิก
+                                </button>
+                                <button onclick="importBangkokDistricts()" id="importBangkokDistrictsButton" class="btn-primary" disabled>
+                                    นำเข้าข้อมูล
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalOverlay);
+        }
+
+        // Show import Thailand population modal
         function showImportThailandPopulationModal() {
             const modalOverlay = document.createElement('div');
             modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
@@ -3214,6 +3279,177 @@
         }
 
         // Close import Thailand population modal
+        function closeImportBangkokDistrictsModal() {
+            const modal = document.getElementById('importBangkokDistrictsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Handle Bangkok districts file selection
+        function handleBangkokDistrictsFileSelect(input) {
+            const fileInfo = document.getElementById('bangkokDistrictsFileInfo');
+            const importButton = document.getElementById('importBangkokDistrictsButton');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (!file.name.match(/\.(xls|xlsx)$/)) {
+                    fileInfo.innerHTML = '<span class="text-red-500">❌ กรุณาเลือกไฟล์ Excel (.xls, .xlsx) เท่านั้น</span>';
+                    importButton.disabled = true;
+                    return;
+                }
+                
+                const fileSize = (file.size / 1024).toFixed(2);
+                fileInfo.innerHTML = `
+                    <div class="text-green-600">✅ ${file.name}</div>
+                    <div class="text-gray-500">ขนาด: ${fileSize} KB</div>
+                `;
+                importButton.disabled = false;
+            }
+        }
+
+        // Download Bangkok districts example file
+        function downloadBangkokDistrictsExample() {
+            const data = [
+                ['แขวง', 'เขต', 'จังหวัด'],
+                ['พระบรมมหาราชวัง', 'พระนคร', 'กรุงเทพมหานคร'],
+                ['วังบูรพาภิรมย์', 'พระนคร', 'กรุงเทพมหานคร'],
+                ['วัดราชบพิธ', 'พระนคร', 'กรุงเทพมหานคร'],
+                ['สำราญราษฎร์', 'พระนคร', 'กรุงเทพมหานคร']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // Set column widths
+            ws['!cols'] = [
+                {wch: 25},  // แขวง
+                {wch: 25},  // เขต
+                {wch: 25}   // จังหวัด
+            ];
+            
+            // Style header row
+            const headerStyle = {
+                font: { bold: true },
+                fill: { fgColor: { rgb: "E5E7EB" } },
+                alignment: { horizontal: "center" }
+            };
+            
+            ['A1', 'B1', 'C1'].forEach(cell => {
+                if (!ws[cell]) ws[cell] = {};
+                ws[cell].s = headerStyle;
+            });
+            
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "เขตในกรุงเทพมหานคร");
+            
+            const filename = `ตัวอย่าง_เขตในกรุงเทพมหานคร_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, filename);
+            
+            showNotification('ดาวน์โหลดไฟล์ตัวอย่างสำเร็จ', 'success');
+        }
+
+        // Import Bangkok districts from Excel
+        async function importBangkokDistricts() {
+            const fileInput = document.getElementById('bangkokDistrictsFile');
+            const skipFirstRow = document.getElementById('skipFirstRowBangkokDistricts').checked;
+            const replaceExisting = document.getElementById('replaceExistingBangkokDistricts').checked;
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
+                return;
+            }
+            
+            const importButton = document.getElementById('importBangkokDistrictsButton');
+            const originalButtonText = importButton.innerHTML;
+            importButton.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังนำเข้าข้อมูล...
+            `;
+            importButton.disabled = true;
+            
+            try {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                        
+                        if (jsonData.length < 2) {
+                            throw new Error('ไฟล์ Excel ไม่มีข้อมูล');
+                        }
+                        
+                        const startRow = skipFirstRow ? 1 : 0;
+                        let newData = [];
+                        let errors = [];
+                        
+                        for (let i = startRow; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (!row || row.length === 0) continue;
+                            
+                            const subdistrict = row[0]?.toString().trim();
+                            const district = row[1]?.toString().trim();
+                            const province = row[2]?.toString().trim() || 'กรุงเทพมหานคร';
+                            
+                            if (!subdistrict || !district) {
+                                errors.push(`แถวที่ ${i + 1}: ข้อมูลเขตหรือแขวงไม่ถูกต้อง`);
+                                continue;
+                            }
+                            
+                            newData.push({
+                                subdistrict,
+                                district,
+                                province
+                            });
+                        }
+                        
+                        if (errors.length > 0) {
+                            throw new Error('พบข้อผิดพลาด:\n' + errors.join('\n'));
+                        }
+                        
+                        let existingData = replaceExisting ? [] : await loadFromFirebase('bangkokDistricts');
+                        
+                        for (const item of newData) {
+                            const index = existingData.findIndex(existing => 
+                                existing.district.toLowerCase() === item.district.toLowerCase() &&
+                                existing.subdistrict.toLowerCase() === item.subdistrict.toLowerCase()
+                            );
+                            
+                            if (index !== -1) {
+                                existingData[index] = item;
+                            } else {
+                                existingData.push(item);
+                            }
+                        }
+                        
+                        await saveToFirebase('bangkokDistricts', existingData);
+                        await loadBangkokDistrictsTable();
+                        
+                        showNotification('นำเข้าข้อมูลสำเร็จ', 'success');
+                        closeImportBangkokDistrictsModal();
+                        
+                    } catch (error) {
+                        console.error('Error processing file:', error);
+                        showNotification(error.message || 'เกิดข้อผิดพลาดในการประมวลผลไฟล์', 'error');
+                        importButton.innerHTML = originalButtonText;
+                        importButton.disabled = false;
+                    }
+                };
+                
+                reader.readAsArrayBuffer(fileInput.files[0]);
+                
+            } catch (error) {
+                console.error('Error reading file:', error);
+                showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
+                importButton.innerHTML = originalButtonText;
+                importButton.disabled = false;
+            }
+        }
+
         function closeImportThailandPopulationModal() {
             const modal = document.getElementById('importThailandPopulationModal');
             if (modal) {
