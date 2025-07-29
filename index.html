@@ -3775,7 +3775,29 @@
             const bangkokDistricts = await loadFromFirebase('bangkokDistricts');
             const content = document.getElementById('masterDataDetailContent');
             
+            // คำนวณข้อมูลสรุป
+            const totalDistricts = new Set(bangkokDistricts.map(d => d.district)).size;
+            const totalSubdistricts = bangkokDistricts.length;
+            const avgSubdistrictsPerDistrict = totalDistricts ? (totalSubdistricts / totalDistricts).toFixed(1) : 0;
+
             content.innerHTML = `
+                ${bangkokDistricts.length > 0 ? `
+                    <div class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="glass-card p-6">
+                            <div class="text-4xl font-bold text-blue-600 mb-2">${totalDistricts}</div>
+                            <div class="text-gray-600">เขตทั้งหมด</div>
+                        </div>
+                        <div class="glass-card p-6">
+                            <div class="text-4xl font-bold text-green-600 mb-2">${totalSubdistricts}</div>
+                            <div class="text-gray-600">แขวงทั้งหมด</div>
+                        </div>
+                        <div class="glass-card p-6">
+                            <div class="text-4xl font-bold text-purple-600 mb-2">${avgSubdistrictsPerDistrict}</div>
+                            <div class="text-gray-600">แขวงต่อเขต (เฉลี่ย)</div>
+                        </div>
+                    </div>
+                ` : ''}
+
                 <div class="table-container">
                     <table class="w-full">
                         <thead class="table-header">
