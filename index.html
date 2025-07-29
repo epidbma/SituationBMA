@@ -3729,21 +3729,26 @@
 
         // Download epidemic weeks example file
         function downloadEpidemicWeeksExample() {
+            const currentDate = new Date();
+            const currentYear = currentDate.getFullYear() + 543; // แปลงเป็นพ.ศ.
+            
             const data = [
-                ['เลขสัปดาห์', 'วันที่เริ่มต้น', 'วันที่สิ้นสุด'],
-                ['1', '01/01/2567', '07/01/2567'],
-                ['2', '08/01/2567', '14/01/2567'],
-                ['3', '15/01/2567', '21/01/2567'],
-                ['4', '22/01/2567', '28/01/2567']
+                ['ปี', 'สัปดาห์ที่', 'วันที่เริ่มต้น', 'วันที่สิ้นสุด', 'หมายเหตุ'],
+                [currentYear, '1', '01/01/2567', '07/01/2567', 'สัปดาห์แรกของปี'],
+                [currentYear, '2', '08/01/2567', '14/01/2567', ''],
+                [currentYear, '3', '15/01/2567', '21/01/2567', ''],
+                [currentYear, '4', '22/01/2567', '28/01/2567', 'ตัวอย่างการใส่หมายเหตุ']
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
             
             // Set column widths
             ws['!cols'] = [
-                {wch: 15},  // เลขสัปดาห์
+                {wch: 10},  // ปี
+                {wch: 12},  // สัปดาห์ที่
                 {wch: 15},  // วันที่เริ่มต้น
-                {wch: 15}   // วันที่สิ้นสุด
+                {wch: 15},  // วันที่สิ้นสุด
+                {wch: 30}   // หมายเหตุ
             ];
             
             // Style header row
@@ -3810,12 +3815,20 @@
                             const row = jsonData[i];
                             if (!row || row.length === 0) continue;
                             
-                            const weekNumber = parseInt(row[0]);
-                            const startDate = row[1]?.toString().trim();
-                            const endDate = row[2]?.toString().trim();
+                            const year = parseInt(row[0]);
+                            const weekNumber = parseInt(row[1]);
+                            const startDate = row[2]?.toString().trim();
+                            const endDate = row[3]?.toString().trim();
+                            const note = row[4]?.toString().trim() || '';
                             
-                            if (!weekNumber || !startDate || !endDate) {
-                                errors.push(`แถวที่ ${i + 1}: ข้อมูลไม่ครบถ้วน`);
+                            if (!year || !weekNumber || !startDate || !endDate) {
+                                errors.push(`แถวที่ ${i + 1}: ข้อมูลไม่ครบถ้วน (ต้องมีปี, สัปดาห์ที่, วันที่เริ่มต้น และวันที่สิ้นสุด)`);
+                                continue;
+                            }
+                            
+                            // ตรวจสอบปี พ.ศ.
+                            if (year < 2500 || year > 2600) {
+                                errors.push(`แถวที่ ${i + 1}: ปีต้องอยู่ในช่วง พ.ศ. 2500-2600`);
                                 continue;
                             }
                             
@@ -3827,9 +3840,11 @@
                             }
                             
                             newData.push({
+                                year,
                                 weekNumber,
                                 startDate,
-                                endDate
+                                endDate,
+                                note
                             });
                         }
                         
