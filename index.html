@@ -9011,13 +9011,14 @@
         // Download example Excel file for Thailand population
         function downloadThailandPopulationExampleFile() {
             // Create sample data
+            const currentYear = new Date().getFullYear(); // Get current year in CE
             const sampleData = [
-                ['ปี', 'จังหวัด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
-                [2568, 'กรุงเทพมหานคร', 5666264, 2694574, 2971690],
-                [2568, 'นนทบุรี', 1276745, 598741, 678004],
-                [2568, 'เชียงใหม่', 1770000, 850000, 920000],
-                [2568, 'ขอนแก่น', 1830000, 890000, 940000],
-                [2568, 'สงขลา', 1480000, 720000, 760000]
+                ['ปี (ค.ศ.)', 'จังหวัด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                [currentYear, 'กรุงเทพมหานคร', 5666264, 2694574, 2971690],
+                [currentYear, 'นนทบุรี', 1276745, 598741, 678004],
+                [currentYear, 'เชียงใหม่', 1770000, 850000, 920000],
+                [currentYear, 'ขอนแก่น', 1830000, 890000, 940000],
+                [currentYear, 'สงขลา', 1480000, 720000, 760000]
             ];
 
             // Create workbook and worksheet
