@@ -3112,7 +3112,7 @@
             modalOverlay.id = 'importBangkokDistrictsModal';
             
             modalOverlay.innerHTML = `
-                <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop">
+                <div class="glass-card p-8 max-w-4xl w-full mx-4 animate-slideInFromTop">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-2xl font-bold">นำเข้าข้อมูลเขตในกรุงเทพมหานคร</h2>
                         <button onclick="closeImportBangkokDistrictsModal()" class="text-gray-500 hover:text-gray-700">
@@ -3120,6 +3120,44 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </button>
+                    </div>
+                    
+                    <!-- ส่วนแสดงตัวอย่างตาราง -->
+                    <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                        <h3 class="text-blue-800 font-semibold mb-3">📝 ตัวอย่างรูปแบบตาราง</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                                <thead class="bg-blue-100">
+                                    <tr>
+                                        <th class="px-4 py-2 text-blue-800 font-semibold text-left">แขวง</th>
+                                        <th class="px-4 py-2 text-blue-800 font-semibold text-left">เขต</th>
+                                        <th class="px-4 py-2 text-blue-800 font-semibold text-left">จังหวัด</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-blue-100">
+                                    <tr class="hover:bg-blue-50">
+                                        <td class="px-4 py-2 text-gray-700">พระบรมมหาราชวัง</td>
+                                        <td class="px-4 py-2 text-gray-700">พระนคร</td>
+                                        <td class="px-4 py-2 text-gray-700">กรุงเทพมหานคร</td>
+                                    </tr>
+                                    <tr class="hover:bg-blue-50">
+                                        <td class="px-4 py-2 text-gray-700">วังบูรพาภิรมย์</td>
+                                        <td class="px-4 py-2 text-gray-700">พระนคร</td>
+                                        <td class="px-4 py-2 text-gray-700">กรุงเทพมหานคร</td>
+                                    </tr>
+                                    <tr class="hover:bg-blue-50">
+                                        <td class="px-4 py-2 text-gray-700">ป้อมปราบ</td>
+                                        <td class="px-4 py-2 text-gray-700">ป้อมปราบศัตรูพ่าย</td>
+                                        <td class="px-4 py-2 text-gray-700">กรุงเทพมหานคร</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-2 text-sm text-blue-600">
+                            <p>• ไฟล์ Excel ควรมีคอลัมน์ตามตัวอย่างด้านบน</p>
+                            <p>• คอลัมน์ "จังหวัด" จะใส่หรือไม่ใส่ก็ได้ (ค่าเริ่มต้นคือ "กรุงเทพมหานคร")</p>
+                            <p>• สามารถดาวน์โหลดไฟล์ตัวอย่างได้จากปุ่มด้านล่าง</p>
+                        </div>
                     </div>
                     
                     <div class="space-y-4">
