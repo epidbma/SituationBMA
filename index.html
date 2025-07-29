@@ -2155,13 +2155,41 @@
             }, 5000);
         }
 
-        // Convert Excel date serial number to Thai date format
-        function convertExcelDateToThai(excelDate) {
+        // Utility functions for date conversion
+        function convertThaiYearToChristian(thaiYear) {
+            if (!thaiYear) return '';
+            const year = parseInt(thaiYear);
+            return year > 2400 ? year - 543 : year;
+        }
+
+        function convertChristianYearToThai(christianYear) {
+            if (!christianYear) return '';
+            const year = parseInt(christianYear);
+            return year < 2400 ? year + 543 : year;
+        }
+
+        function formatDateTH(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return dateStr;
+            
+            const day = parts[0];
+            const month = parts[1];
+            let year = parts[2];
+            
+            // Convert Thai year to Christian year if needed
+            year = convertThaiYearToChristian(year);
+            
+            return `${day}/${month}/${year}`;
+        }
+
+        // Convert Excel date serial number to Christian date format
+        function convertExcelDateToChristian(excelDate) {
             if (!excelDate || excelDate === '') return '';
             
-            // If it's already a date string, return as is
+            // If it's already a date string, convert Thai year to Christian year
             if (typeof excelDate === 'string' && excelDate.includes('/')) {
-                return excelDate;
+                return formatDateTH(excelDate);
             }
             
             // Convert Excel serial number to JavaScript Date
@@ -2172,7 +2200,7 @@
             const excelEpoch = new Date(1900, 0, 1);
             const jsDate = new Date(excelEpoch.getTime() + (serialNumber - 2) * 24 * 60 * 60 * 1000);
             
-            // Format as DD/MM/YYYY
+            // Format as DD/MM/YYYY (Christian year)
             const day = jsDate.getDate().toString().padStart(2, '0');
             const month = (jsDate.getMonth() + 1).toString().padStart(2, '0');
             const year = jsDate.getFullYear();
@@ -3732,12 +3760,13 @@
             const currentDate = new Date();
             const currentYear = currentDate.getFullYear() + 543; // แปลงเป็นพ.ศ.
             
+            const currentYearCE = currentYear - 543; // แปลงเป็น ค.ศ.
             const data = [
                 ['ปี', 'สัปดาห์ที่', 'วันที่เริ่มต้น', 'วันที่สิ้นสุด', 'หมายเหตุ'],
-                [currentYear, '1', '01/01/2567', '07/01/2567', 'สัปดาห์แรกของปี'],
-                [currentYear, '2', '08/01/2567', '14/01/2567', ''],
-                [currentYear, '3', '15/01/2567', '21/01/2567', ''],
-                [currentYear, '4', '22/01/2567', '28/01/2567', 'ตัวอย่างการใส่หมายเหตุ']
+                [currentYearCE, '1', '01/01/2024', '07/01/2024', 'สัปดาห์แรกของปี'],
+                [currentYearCE, '2', '08/01/2024', '14/01/2024', ''],
+                [currentYearCE, '3', '15/01/2024', '21/01/2024', ''],
+                [currentYearCE, '4', '22/01/2024', '28/01/2024', 'ตัวอย่างการใส่หมายเหตุ']
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -3826,9 +3855,9 @@
                                 continue;
                             }
                             
-                            // ตรวจสอบปี พ.ศ.
-                            if (year < 2500 || year > 2600) {
-                                errors.push(`แถวที่ ${i + 1}: ปีต้องอยู่ในช่วง พ.ศ. 2500-2600`);
+                            // ตรวจสอบปี ค.ศ.
+                            if (year < 1957 || year > 2057) { // 1957-2057 = 2500-2600
+                                errors.push(`แถวที่ ${i + 1}: ปีต้องอยู่ในช่วง ค.ศ. 1957-2057`);
                                 continue;
                             }
                             
@@ -4237,8 +4266,8 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${index + 1}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${week.year}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${week.weekNumber}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(week.startDate)}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(week.endDate)}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDateTH(week.startDate)}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDateTH(week.endDate)}</td>
                                         <td class="px-6 py-4 text-sm text-gray-900">${week.note || '-'}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <div class="flex space-x-2">
