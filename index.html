@@ -2858,7 +2858,7 @@
                     <table class="w-full">
                         <thead class="table-header">
                             <tr>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ปี</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ปี (ค.ศ.)</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">กลุ่มอายุ</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">จำนวนประชากร</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">ชาย</th>
@@ -6082,6 +6082,7 @@
                             <ol class="list-decimal list-inside text-sm text-blue-700 space-y-1">
                                 <li>ดาวน์โหลดไฟล์ตัวอย่างเพื่อดูรูปแบบข้อมูลที่ถูกต้อง</li>
                                 <li>เตรียมข้อมูลในไฟล์ Excel ตามรูปแบบที่กำหนด</li>
+                                <li>ข้อมูลปีต้องเป็นปี ค.ศ. เท่านั้น (เช่น 2024)</li>
                                 <li>เลือกไฟล์ Excel ที่ต้องการนำเข้า</li>
                                 <li>กดปุ่ม "นำเข้าข้อมูล" เพื่อเริ่มการนำเข้า</li>
                             </ol>
@@ -6109,7 +6110,7 @@
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">หญิง</td>
                                         </tr>
                                         <tr>
-                                            <td class="px-3 py-2 border border-gray-300">2566</td>
+                                            <td class="px-3 py-2 border border-gray-300">2023</td>
                                             <td class="px-3 py-2 border border-gray-300">พระนคร</td>
                                             <td class="px-3 py-2 border border-gray-300">31500</td>
                                             <td class="px-3 py-2 border border-gray-300">15000</td>
@@ -6741,13 +6742,14 @@
 
         // Download age population example file
         function downloadAgePopulationExampleFile() {
+            const currentYear = new Date().getFullYear();
             const data = [
-                ['ปี', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
-                [2025, '0-4 ปี', 25000, 12800, 12200],
-                [2025, '5-9 ปี', 28000, 14300, 13700],
-                [2025, '10-14 ปี', 30000, 15400, 14600],
-                [2025, '15-19 ปี', 32000, 16100, 15900],
-                [2025, '20-24 ปี', 35000, 17200, 17800]
+                ['ปี (ค.ศ.)', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                [currentYear, '0-4 ปี', 25000, 12800, 12200],
+                [currentYear, '5-9 ปี', 28000, 14300, 13700],
+                [currentYear, '10-14 ปี', 30000, 15400, 14600],
+                [currentYear, '15-19 ปี', 32000, 16100, 15900],
+                [currentYear, '20-24 ปี', 35000, 17200, 17800]
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -6811,9 +6813,7 @@
                         const row = jsonData[i];
                         if (row.length < 5) continue; // Skip incomplete rows - now checking for 5 columns
                         
-                        const importedYear = parseInt(row[0]);
-                        // Convert BE to CE during import
-                        const year = importedYear - 543;
+                        const year = parseInt(row[0]);
                         const ageGroup = row[1]?.toString().trim();
                         const total = parseInt(row[2]);
                         const male = parseInt(row[3]);
@@ -6825,7 +6825,7 @@
                         }
                         
                         if (year < 1900 || year > 2100) {
-                            errors.push(`แถวที่ ${i + 1}: ปี ค.ศ. ต้องอยู่ระหว่าง 1900-2100`);
+                            errors.push(`แถวที่ ${i + 1}: ปี ค.ศ. ต้องอยู่ระหว่าง 1900-2100 (ต้องเป็นปี ค.ศ. เท่านั้น ห้ามใช้ พ.ศ.)`);
                             continue;
                         }
                         
@@ -6900,8 +6900,9 @@
                 return;
             }
             
-            if (year < 1900 || year > 2100) {
-                showNotification('กรุณากรอกปี พ.ศ. ที่ถูกต้อง (2500-2600)', 'error');
+            const currentYear = new Date().getFullYear();
+            if (year < 1900 || year > currentYear + 10) {
+                showNotification(`กรุณากรอกปี ค.ศ. ที่ถูกต้อง (1900-${currentYear + 10})`, 'error');
                 return;
             }
             
