@@ -2439,6 +2439,12 @@
             
             document.getElementById('masterDataDetailTitle').textContent = titles[type];
             
+            // Show back button for disease history
+            const backButton = document.getElementById('backButton');
+            if (backButton) {
+                backButton.style.display = type === 'diseaseHistory' ? 'block' : 'none';
+            }
+            
             // Set up add button
             const addButton = document.getElementById('addNewButton');
             addButton.onclick = () => addNewMasterData(type);
