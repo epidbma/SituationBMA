@@ -2529,24 +2529,16 @@
             const content = document.getElementById('masterDataDetailContent');
             
             content.innerHTML = `
-                <div class="flex justify-between items-center mb-6">
-                    <div class="flex items-center space-x-4">
-                        <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-3">
-                            <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm2 1h10v8H5V6z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-800">ข้อมูลโรคย้อนหลัง</h3>
-                            <p class="text-sm text-gray-600">ข้อมูลผู้ป่วยและเสียชีวิตรายปี</p>
-                        </div>
-                    </div>
-                    <button onclick="addNewDiseaseHistory()" class="btn-primary text-sm flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                <div class="flex items-center space-x-4 mb-6">
+                    <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-3">
+                        <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm2 1h10v8H5V6z"/>
                         </svg>
-                        เพิ่มข้อมูลใหม่
-                    </button>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">ข้อมูลโรคย้อนหลัง</h3>
+                        <p class="text-sm text-gray-600">ข้อมูลผู้ป่วยและเสียชีวิตรายปี</p>
+                    </div>
                 </div>
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-4">
@@ -5061,8 +5053,6 @@
                 showBangkokDistrictForm();
             } else if (type === 'epidemicWeeks') {
                 showEpidemicWeekForm();
-            } else if (type === 'diseaseHistory') {
-                showDiseaseHistoryForm();
             } else {
                 alert(`ฟีเจอร์เพิ่มข้อมูล ${type} จะพัฒนาในเวอร์ชั่นต่อไป พร้อมฟอร์มที่สวยงามและใช้งานง่าย`);
             }
