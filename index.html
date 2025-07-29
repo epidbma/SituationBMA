@@ -4091,7 +4091,8 @@
                         // Update existing data with new data
                         for (const newItem of newData) {
                             const existingIndex = existingData.findIndex(item => 
-                                item.province.toLowerCase() === newItem.province.toLowerCase()
+                                item.province.toLowerCase() === newItem.province.toLowerCase() &&
+                                item.year === newItem.year
                             );
                             
                             if (existingIndex !== -1) {
@@ -4124,7 +4125,16 @@
         }
 
         async function loadThailandPopulationTable() {
-            const thailandPopulation = await loadFromFirebase('thailandPopulation');
+            let thailandPopulation = await loadFromFirebase('thailandPopulation');
+            
+            // เรียงข้อมูลตามปีและจังหวัด
+            thailandPopulation.sort((a, b) => {
+                if (a.year !== b.year) {
+                    return a.year - b.year;
+                }
+                return a.province.localeCompare(b.province);
+            });
+            
             const content = document.getElementById('masterDataDetailContent');
             
             content.innerHTML = `
