@@ -6365,7 +6365,7 @@
                                     </svg>
                                     ปี
                                 </label>
-                                <input type="number" id="agePopulationYear" name="year" min="2500" max="2600" step="1"
+                                <input type="number" id="agePopulationYear" name="year" min="1900" max="2100" step="1"
                                     class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                     placeholder="ปี พ.ศ." value="2568" required>
                             </div>
@@ -6674,11 +6674,11 @@
         function downloadAgePopulationExampleFile() {
             const data = [
                 ['ปี', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
-                [2568, '0-4 ปี', 25000, 12800, 12200],
-                [2568, '5-9 ปี', 28000, 14300, 13700],
-                [2568, '10-14 ปี', 30000, 15400, 14600],
-                [2568, '15-19 ปี', 32000, 16100, 15900],
-                [2568, '20-24 ปี', 35000, 17200, 17800]
+                [2025, '0-4 ปี', 25000, 12800, 12200],
+                [2025, '5-9 ปี', 28000, 14300, 13700],
+                [2025, '10-14 ปี', 30000, 15400, 14600],
+                [2025, '15-19 ปี', 32000, 16100, 15900],
+                [2025, '20-24 ปี', 35000, 17200, 17800]
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -6742,14 +6742,21 @@
                         const row = jsonData[i];
                         if (row.length < 5) continue; // Skip incomplete rows - now checking for 5 columns
                         
-                        const year = parseInt(row[0]);
+                        const importedYear = parseInt(row[0]);
+                        // Convert BE to CE during import
+                        const year = importedYear - 543;
                         const ageGroup = row[1]?.toString().trim();
                         const total = parseInt(row[2]);
                         const male = parseInt(row[3]);
                         const female = parseInt(row[4]);
                         
-                        if (!year || !ageGroup || isNaN(total) || isNaN(male) || isNaN(female)) {
+                        if (!importedYear || !ageGroup || isNaN(total) || isNaN(male) || isNaN(female)) {
                             errors.push(`แถวที่ ${i + 1}: ข้อมูลไม่ครบถ้วนหรือไม่ถูกต้อง`);
+                            continue;
+                        }
+                        
+                        if (year < 1900 || year > 2100) {
+                            errors.push(`แถวที่ ${i + 1}: ปี ค.ศ. ต้องอยู่ระหว่าง 1900-2100`);
                             continue;
                         }
                         
@@ -6824,7 +6831,7 @@
                 return;
             }
             
-            if (year < 2500 || year > 2600) {
+            if (year < 1900 || year > 2100) {
                 showNotification('กรุณากรอกปี พ.ศ. ที่ถูกต้อง (2500-2600)', 'error');
                 return;
             }
@@ -7524,7 +7531,7 @@
                     <form id="epidemicWeekForm" onsubmit="saveEpidemicWeekData(event, ${editIndex})">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="epidemicYear" class="block text-sm font-medium text-gray-700 mb-2">ปี</label>
+                                <label for="epidemicYear" class="block text-sm font-medium text-gray-700 mb-2">ปี (ค.ศ.)</label>
                                 <input type="number" id="epidemicYear" min="2020" max="2030" value="${new Date().getFullYear()}"
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                                     placeholder="เช่น 2024" onchange="calculateWeekDates()" required>
@@ -7766,7 +7773,7 @@
                     parseInt(w.weekNumber) === weekNumber
                 );
                 if (existingIndex !== -1 && existingIndex !== editIndex) {
-                    showNotification(`ข้อมูลสัปดาห์ที่ ${weekNumber} ปี ${year} มีอยู่แล้ว กรุณาแก้ไขข้อมูลเดิมแทน`, 'error');
+                    showNotification(`ข้อมูลสัปดาห์ที่ ${weekNumber} ปี ค.ศ. ${year} มีอยู่แล้ว กรุณาแก้ไขข้อมูลเดิมแทน`, 'error');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                     return;
@@ -8141,9 +8148,9 @@
                             </div>
                             <div class="mt-3 text-xs text-emerald-700 space-y-1">
                                 <p>• <strong>แถวสีเหลือง:</strong> หัวตาราง (สามารถข้ามได้โดยเลือก "ข้ามแถวแรก")</p>
-                                <p>• <strong>ปี:</strong> ระบุปี พ.ศ. เป็นตัวเลข เช่น 2566</p>
+                                <p>• <strong>ปี:</strong> ระบุปี ค.ศ. เป็นตัวเลข เช่น 2023</p>
                                 <p>• <strong>สัปดาห์ที่:</strong> ลำดับสัปดาห์ในปี (1-53)</p>
-                                <p>• <strong>วันที่:</strong> รูปแบบ YYYY-MM-DD เช่น 2566-01-01</p>
+                                <p>• <strong>วันที่:</strong> รูปแบบ YYYY-MM-DD เช่น 2023-01-01</p>
                                 <p>• <strong>หมายเหตุ:</strong> ข้อความเพิ่มเติม (ไม่บังคับ)</p>
                             </div>
                             <div class="mt-4 flex justify-center">
@@ -8880,10 +8887,10 @@
 
         // Download example Excel file for Epidemic Weeks
         function downloadEpidemicWeeksExampleFile() {
-            // Create sample data
-            const currentYear = new Date().getFullYear();
+            // Create sample data with CE year
+            const currentYear = new Date().getFullYear(); // Already in CE format
             const sampleData = [
-                ['ปี', 'สัปดาห์ที่', 'วันที่เริ่มต้น', 'วันที่สิ้นสุด', 'หมายเหตุ'],
+                ['ปี (ค.ศ.)', 'สัปดาห์ที่', 'วันที่เริ่มต้น', 'วันที่สิ้นสุด', 'หมายเหตุ'],
                 [currentYear, 1, `${currentYear}-01-01`, `${currentYear}-01-07`, 'สัปดาห์แรกของปี'],
                 [currentYear, 2, `${currentYear}-01-08`, `${currentYear}-01-14`, ''],
                 [currentYear, 3, `${currentYear}-01-15`, `${currentYear}-01-21`, ''],
