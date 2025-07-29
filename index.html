@@ -776,84 +776,6 @@
             </div>
         </div>
 
-        <!-- Old Data Page -->
-        <div id="oldDataPage" class="hidden">
-            <div class="glass-card p-8 slide-in">
-                <div class="flex items-center justify-between mb-8">
-                    <div>
-                        <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-3">
-                            ข้อมูลเก่า
-                        </h2>
-                        <p class="text-gray-600 text-lg">แสดงข้อมูลจำนวนผู้ป่วยและเสียชีวิตของแต่ละโรคแยกตามปี</p>
-                    </div>
-                    <button onclick="showPage('masterData')" class="btn-secondary">
-                        <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"/>
-                        </svg>
-                        กลับ
-                    </button>
-                </div>
-
-                <!-- Table Container -->
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white rounded-lg overflow-hidden shadow-lg">
-                        <thead class="bg-gray-100">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">ปี (ค.ศ.)</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">รหัสโรค</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">ชื่อโรค</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">มกราคม</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">กุมภาพันธ์</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">มีนาคม</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">เมษายน</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">พฤษภาคม</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">มิถุนายน</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">กรกฎาคม</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">สิงหาคม</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">กันยายน</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">ตุลาคม</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">พฤศจิกายน</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">ธันวาคม</th>
-                                <th class="px-4 py-3 text-center text-sm font-semibold text-gray-600" colspan="2">รวม</th>
-                            </tr>
-                            <tr>
-                                <th class="px-4 py-2" colspan="3"></th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ป่วย</th>
-                                <th class="px-2 py-2 text-center text-xs font-medium text-gray-500">ตาย</th>
-                            </tr>
-                        </thead>
-                        <tbody id="oldDataTableBody">
-                            <!-- Table rows will be populated by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
         <!-- Master Data Page -->
         <div id="masterDataPage" class="hidden">
             <div class="glass-card p-8 slide-in">
@@ -864,15 +786,8 @@
                         </h2>
                         <p class="text-gray-600 text-lg">จัดการข้อมูลหลักที่ใช้ในการสร้างรายงาน</p>
                     </div>
-                    <div class="flex space-x-4">
-                        <button id="oldDataButton" onclick="showOldDataTable()" class="btn-primary">
-                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z"/>
-                            </svg>
-                            ข้อมูลเก่า
-                        </button>
-                        <button onclick="showPage('summary')" class="btn-secondary">
-                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                    <button onclick="showPage('summary')" class="btn-secondary">
+                        <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"/>
                         </svg>
                         กลับหน้าหลัก
@@ -941,6 +856,16 @@
                         <p class="text-gray-600">ข้อมูลแขวง เขต และจังหวัด</p>
                     </div>
 
+                    <div class="master-data-card" onclick="showMasterDataDetail('diseaseHistory')">
+                        <div class="w-16 h-16 icon-gradient-purple rounded-2xl mx-auto mb-6 flex items-center justify-center">
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm2 1h10v8H5V6z"/>
+                            </svg>
+                        </div>
+                        <h3 class="font-bold text-gray-900 mb-3 text-lg">ข้อมูลโรคย้อนหลัง</h3>
+                        <p class="text-gray-600">ประวัติผู้ป่วยและเสียชีวิตรายปี</p>
+                    </div>
+
                     <div class="master-data-card" onclick="showMasterDataDetail('epidemicWeeks')">
                         <div class="w-16 h-16 icon-gradient-green rounded-2xl mx-auto mb-6 flex items-center justify-center">
                             <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
@@ -981,86 +906,6 @@
 
     <script>
         // Firebase data management functions
-        // Function to show old data table page
-        function showOldDataTable() {
-            // Hide all pages
-            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
-            document.querySelectorAll('.tab-active').forEach(tab => tab.classList.replace('tab-active', 'tab-inactive'));
-            
-            // Show old data page
-            document.getElementById('oldDataPage').classList.remove('hidden');
-            
-            // Load old data
-            loadOldDataTable();
-        }
-
-        // Function to load and display old data
-        async function loadOldDataTable() {
-            try {
-                // Get all patient data
-                const patients = await loadFromFirebase('patients');
-                // Get diseases data for mapping
-                const diseases = await loadFromFirebase('diseases');
-
-                // Create a disease lookup map
-                const diseaseMap = new Map(diseases.map(d => [d.diseaseCode, d.diseaseName]));
-
-                // Process data to group by year and disease
-                const dataByYearDisease = new Map();
-
-                patients.forEach(patient => {
-                    const year = new Date(patient.reportDate).getFullYear();
-                    const diseaseCode = patient.diseaseCode;
-                    const month = new Date(patient.reportDate).getMonth();
-                    const isDeath = patient.status === 'death';
-
-                    const key = `${year}_${diseaseCode}`;
-                    if (!dataByYearDisease.has(key)) {
-                        dataByYearDisease.set(key, {
-                            year,
-                            diseaseCode,
-                            diseaseName: diseaseMap.get(diseaseCode) || 'ไม่ระบุ',
-                            months: Array(12).fill().map(() => ({ patients: 0, deaths: 0 })),
-                            total: { patients: 0, deaths: 0 }
-                        });
-                    }
-
-                    const data = dataByYearDisease.get(key);
-                    if (isDeath) {
-                        data.months[month].deaths++;
-                        data.total.deaths++;
-                    } else {
-                        data.months[month].patients++;
-                        data.total.patients++;
-                    }
-                });
-
-                // Convert to array and sort by year and disease code
-                const sortedData = Array.from(dataByYearDisease.values())
-                    .sort((a, b) => b.year - a.year || a.diseaseCode.localeCompare(b.diseaseCode));
-
-                // Generate table HTML
-                const tableBody = document.getElementById('oldDataTableBody');
-                tableBody.innerHTML = sortedData.map(data => `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-2 border-t">${data.year}</td>
-                        <td class="px-4 py-2 border-t">${data.diseaseCode}</td>
-                        <td class="px-4 py-2 border-t">${data.diseaseName}</td>
-                        ${data.months.map(month => `
-                            <td class="px-2 py-2 text-center border-t">${month.patients}</td>
-                            <td class="px-2 py-2 text-center border-t">${month.deaths}</td>
-                        `).join('')}
-                        <td class="px-2 py-2 text-center border-t font-semibold">${data.total.patients}</td>
-                        <td class="px-2 py-2 text-center border-t font-semibold">${data.total.deaths}</td>
-                    </tr>
-                `).join('');
-
-            } catch (error) {
-                console.error('Error loading old data:', error);
-                showNotification('เกิดข้อผิดพลาดในการโหลดข้อมูล', 'error');
-            }
-        }
-
         async function saveToFirebase(path, data) {
             try {
                 const { database, ref, set } = window.firebaseDB;
@@ -2588,7 +2433,8 @@
                 'agePopulation': 'ประชากรกรุงเทพมหานครจำแนกตามอายุ',
                 'thailandPopulation': 'ประชากรประเทศไทย',
                 'bangkokDistricts': 'เขตในกรุงเทพมหานคร',
-                'epidemicWeeks': 'สัปดาห์การระบาด'
+                'epidemicWeeks': 'สัปดาห์การระบาด',
+                'diseaseHistory': 'ข้อมูลโรคย้อนหลัง'
             };
             
             document.getElementById('masterDataDetailTitle').textContent = titles[type];
@@ -2670,7 +2516,349 @@
                 case 'epidemicWeeks':
                     loadEpidemicWeeksTable();
                     break;
+                case 'diseaseHistory':
+                    loadDiseaseHistoryTable();
+                    break;
             }
+        }
+
+        // Load disease history table
+        async function loadDiseaseHistoryTable() {
+            const diseases = await loadFromFirebase('diseases');
+            const diseaseHistory = await loadFromFirebase('diseaseHistory') || [];
+            const content = document.getElementById('masterDataDetailContent');
+            
+            content.innerHTML = `
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-3">
+                                <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm2 1h10v8H5V6z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800">ข้อมูลโรคย้อนหลัง</h3>
+                                <p class="text-sm text-gray-600">ข้อมูลผู้ป่วยและเสียชีวิตรายปี</p>
+                            </div>
+                        </div>
+                        <button onclick="addNewDiseaseHistory()" class="btn-primary">
+                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                            </svg>
+                            เพิ่มข้อมูลใหม่
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto bg-white rounded-lg shadow">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gradient-to-r from-purple-50 to-blue-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ลำดับ</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ปี (ค.ศ.)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">รหัสโรค</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ชื่อโรค</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">ม.ค.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">ก.พ.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">มี.ค.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">เม.ย.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">พ.ค.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">มิ.ย.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">ก.ค.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">ส.ค.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">ก.ย.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">ต.ค.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">พ.ย.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">ธ.ค.</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">รวม</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            ${diseaseHistory.length === 0 ? `
+                                <tr>
+                                    <td colspan="18" class="px-6 py-4 text-center text-gray-500">ไม่พบข้อมูล</td>
+                                </tr>
+                            ` : diseaseHistory.map((record, index) => {
+                                const disease = diseases.find(d => d.code === record.diseaseCode);
+                                const totalPatients = Object.values(record.months).reduce((sum, month) => sum + (month.patients || 0), 0);
+                                const totalDeaths = Object.values(record.months).reduce((sum, month) => sum + (month.deaths || 0), 0);
+                                return `
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 text-sm text-gray-900">${index + 1}</td>
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900">${record.year}</td>
+                                        <td class="px-6 py-4 text-sm font-medium text-blue-600">${record.diseaseCode}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">${disease ? disease.name : '-'}</td>
+                                        ${['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(month => `
+                                            <td class="px-6 py-4 text-sm text-center">
+                                                <div class="text-blue-600">${record.months[month]?.patients || 0}</div>
+                                                <div class="text-red-600">${record.months[month]?.deaths || 0}</div>
+                                            </td>
+                                        `).join('')}
+                                        <td class="px-6 py-4 text-sm text-center font-medium">
+                                            <div class="text-blue-600">${totalPatients}</div>
+                                            <div class="text-red-600">${totalDeaths}</div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-center">
+                                            <div class="flex justify-center space-x-2">
+                                                <button onclick="editDiseaseHistory(${index})" class="text-blue-600 hover:text-blue-900 transition-colors">
+                                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                                                    </svg>
+                                                </button>
+                                                <button onclick="deleteDiseaseHistory(${index})" class="text-red-600 hover:text-red-900 transition-colors">
+                                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Function to show the form for adding/editing disease history
+        function showDiseaseHistoryForm(editIndex = null) {
+            const isEdit = editIndex !== null;
+            const title = isEdit ? 'แก้ไขข้อมูลโรคย้อนหลัง' : 'เพิ่มข้อมูลโรคย้อนหลัง';
+            
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modalOverlay.id = 'diseaseHistoryModal';
+            
+            modalOverlay.innerHTML = `
+                <div class="glass-card p-8 max-w-6xl w-full mx-4 animate-slideInFromTop max-h-[90vh] overflow-y-auto">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-800 to-blue-600 bg-clip-text text-transparent">
+                            📊 ${title}
+                        </h3>
+                        <button onclick="closeDiseaseHistoryModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <form id="diseaseHistoryForm" onsubmit="saveDiseaseHistoryData(event, ${editIndex})">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">ปี (ค.ศ.)</label>
+                                <input type="number" id="historyYear" required min="1900" max="2100"
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">รหัสโรค</label>
+                                <select id="historyDiseaseCode" required
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                    <option value="">เลือกรหัสโรค</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+                            <h4 class="text-lg font-semibold mb-4">ข้อมูลรายเดือน</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                ${['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(month => `
+                                    <div class="p-4 border rounded-lg">
+                                        <h5 class="font-medium mb-2">${getThaiMonth(month)}</h5>
+                                        <div class="space-y-2">
+                                            <div>
+                                                <label class="block text-sm text-gray-600 mb-1">จำนวนผู้ป่วย</label>
+                                                <input type="number" id="patients_${month}" min="0"
+                                                    class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm text-gray-600 mb-1">จำนวนผู้เสียชีวิต</label>
+                                                <input type="number" id="deaths_${month}" min="0"
+                                                    class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-4">
+                            <button type="submit" class="flex-1 btn-primary bg-gradient-to-r from-purple-600 to-blue-600">
+                                <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                                </svg>
+                                ${isEdit ? 'บันทึกการแก้ไข' : 'เพิ่มข้อมูล'}
+                            </button>
+                            <button type="button" onclick="closeDiseaseHistoryModal()" class="flex-1 btn-secondary">
+                                <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                                </svg>
+                                ยกเลิก
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modalOverlay);
+            loadDiseaseOptionsForHistory();
+            
+            if (isEdit) {
+                populateDiseaseHistoryForm(editIndex);
+            }
+        }
+
+        // Helper function to get Thai month name
+        function getThaiMonth(monthNumber) {
+            const months = {
+                '01': 'มกราคม',
+                '02': 'กุมภาพันธ์',
+                '03': 'มีนาคม',
+                '04': 'เมษายน',
+                '05': 'พฤษภาคม',
+                '06': 'มิถุนายน',
+                '07': 'กรกฎาคม',
+                '08': 'สิงหาคม',
+                '09': 'กันยายน',
+                '10': 'ตุลาคม',
+                '11': 'พฤศจิกายน',
+                '12': 'ธันวาคม'
+            };
+            return months[monthNumber];
+        }
+
+        // Load disease options for the history form
+        async function loadDiseaseOptionsForHistory() {
+            const diseases = await loadFromFirebase('diseases');
+            const select = document.getElementById('historyDiseaseCode');
+            
+            if (select) {
+                select.innerHTML = '<option value="">เลือกรหัสโรค</option>';
+                diseases.forEach(disease => {
+                    const option = document.createElement('option');
+                    option.value = disease.code;
+                    option.textContent = `${disease.code} - ${disease.name}`;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        // Close disease history modal
+        function closeDiseaseHistoryModal() {
+            const modal = document.getElementById('diseaseHistoryModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Add new disease history entry
+        function addNewDiseaseHistory() {
+            showDiseaseHistoryForm();
+        }
+
+        // Populate form with existing data for editing
+        async function populateDiseaseHistoryForm(index) {
+            const diseaseHistory = await loadFromFirebase('diseaseHistory');
+            const record = diseaseHistory[index];
+            
+            if (record) {
+                document.getElementById('historyYear').value = record.year;
+                document.getElementById('historyDiseaseCode').value = record.diseaseCode;
+                
+                // Populate monthly data
+                Object.entries(record.months).forEach(([month, data]) => {
+                    if (data.patients) document.getElementById(`patients_${month}`).value = data.patients;
+                    if (data.deaths) document.getElementById(`deaths_${month}`).value = data.deaths;
+                });
+            }
+        }
+
+        // Save disease history data
+        async function saveDiseaseHistoryData(event, editIndex = null) {
+            event.preventDefault();
+            
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = `
+                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังบันทึก...
+            `;
+            submitBtn.disabled = true;
+            
+            try {
+                const diseaseHistory = await loadFromFirebase('diseaseHistory') || [];
+                const year = document.getElementById('historyYear').value;
+                const diseaseCode = document.getElementById('historyDiseaseCode').value;
+                
+                const months = {};
+                ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].forEach(month => {
+                    const patients = parseInt(document.getElementById(`patients_${month}`).value) || 0;
+                    const deaths = parseInt(document.getElementById(`deaths_${month}`).value) || 0;
+                    if (patients > 0 || deaths > 0) {
+                        months[month] = { patients, deaths };
+                    }
+                });
+                
+                const newRecord = {
+                    year,
+                    diseaseCode,
+                    months
+                };
+                
+                if (editIndex !== null) {
+                    diseaseHistory[editIndex] = newRecord;
+                    showNotification('แก้ไขข้อมูลโรคย้อนหลังสำเร็จ!', 'success');
+                } else {
+                    diseaseHistory.push(newRecord);
+                    showNotification('เพิ่มข้อมูลโรคย้อนหลังสำเร็จ!', 'success');
+                }
+                
+                await saveToFirebase('diseaseHistory', diseaseHistory);
+                closeDiseaseHistoryModal();
+                await loadDiseaseHistoryTable();
+                
+            } catch (error) {
+                console.error('Error saving disease history:', error);
+                showNotification('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Delete disease history entry
+        async function deleteDiseaseHistory(index) {
+            const diseaseHistory = await loadFromFirebase('diseaseHistory');
+            const record = diseaseHistory[index];
+            
+            if (!record) {
+                showNotification('ไม่พบข้อมูลที่ต้องการลบ', 'error');
+                return;
+            }
+            
+            const disease = (await loadFromFirebase('diseases')).find(d => d.code === record.diseaseCode);
+            const confirmed = confirm(`คุณต้องการลบข้อมูลนี้ใช่หรือไม่?\n\nปี: ${record.year}\nโรค: ${disease ? disease.name : record.diseaseCode}\n\nการดำเนินการนี้ไม่สามารถยกเลิกได้`);
+            
+            if (confirmed) {
+                try {
+                    diseaseHistory.splice(index, 1);
+                    await saveToFirebase('diseaseHistory', diseaseHistory);
+                    await loadDiseaseHistoryTable();
+                    showNotification('ลบข้อมูลสำเร็จ', 'success');
+                } catch (error) {
+                    console.error('Error deleting disease history:', error);
+                    showNotification('เกิดข้อผิดพลาดในการลบข้อมูล', 'error');
+                }
+            }
+        }
+
+        // Edit disease history entry
+        function editDiseaseHistory(index) {
+            showDiseaseHistoryForm(index);
         }
 
         // Enhanced table loading functions with better styling
