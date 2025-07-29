@@ -6819,7 +6819,7 @@
                         const male = parseInt(row[3]);
                         const female = parseInt(row[4]);
                         
-                        if (!importedYear || !ageGroup || isNaN(total) || isNaN(male) || isNaN(female)) {
+                        if (!year || !ageGroup || isNaN(total) || isNaN(male) || isNaN(female)) {
                             errors.push(`แถวที่ ${i + 1}: ข้อมูลไม่ครบถ้วนหรือไม่ถูกต้อง`);
                             continue;
                         }
