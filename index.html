@@ -2912,9 +2912,6 @@
             `;
             
             document.body.appendChild(modalOverlay);
-            
-            // อัพเดทข้อมูลสรุปเมื่อเปิด modal
-            updateImportModalSummary();
         }
 
         // Close import Bangkok districts modal
@@ -3125,32 +3122,6 @@
                         </button>
                     </div>
                     
-                    <!-- สรุปข้อมูล -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-lg font-semibold text-gray-800">สรุปข้อมูลทั้งหมด</h3>
-                                <span class="text-xs text-gray-500">อัพเดทล่าสุด: <span id="lastUpdateTime"></span></span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div class="bg-blue-50 p-3 rounded-lg">
-                                    <div class="text-sm text-blue-600">แขวงทั้งหมด</div>
-                                    <div class="text-2xl font-bold text-blue-700" id="totalSubdistricts">-</div>
-                                </div>
-                                <div class="bg-green-50 p-3 rounded-lg">
-                                    <div class="text-sm text-green-600">เขตทั้งหมด</div>
-                                    <div class="text-2xl font-bold text-green-700" id="totalDistricts">-</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-2">สรุปตามเขต</h3>
-                            <div id="districtSummary" class="text-sm text-gray-600 space-y-1 max-h-32 overflow-y-auto pr-2">
-                                <!-- จะถูกเติมด้วย JavaScript -->
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- ส่วนแสดงตัวอย่างตาราง -->
                     <div class="bg-blue-50 p-4 rounded-lg mb-6">
                         <h3 class="text-blue-800 font-semibold mb-3">📝 ตัวอย่างรูปแบบตาราง</h3>
@@ -3416,43 +3387,6 @@
         }
 
         // Import Bangkok districts from Excel
-        // อัพเดทข้อมูลสรุปในหน้าต่างนำเข้า
-        async function updateImportModalSummary() {
-            try {
-                const data = await loadFromFirebase('bangkokDistricts');
-                if (!data) return;
-
-                // อัพเดทจำนวนแขวงและเขต
-                const districts = new Set(data.map(item => item.district));
-                const subdistricts = new Set(data.map(item => item.subdistrict));
-                
-                document.getElementById('totalDistricts').textContent = districts.size;
-                document.getElementById('totalSubdistricts').textContent = subdistricts.size;
-                
-                // อัพเดทเวลา
-                const now = new Date();
-                document.getElementById('lastUpdateTime').textContent = now.toLocaleTimeString('th-TH');
-                
-                // สร้างสรุปตามเขต
-                const districtSummary = Array.from(districts).map(district => {
-                    const count = data.filter(item => item.district === district).length;
-                    return { district, count };
-                }).sort((a, b) => b.count - a.count);
-                
-                const summaryHTML = districtSummary.map(item => `
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-700">${item.district}</span>
-                        <span class="text-gray-500">${item.count} แขวง</span>
-                    </div>
-                `).join('');
-                
-                document.getElementById('districtSummary').innerHTML = summaryHTML;
-                
-            } catch (error) {
-                console.error('Error updating summary:', error);
-            }
-        }
-
         async function importBangkokDistricts() {
             const fileInput = document.getElementById('bangkokDistrictsFile');
             const skipFirstRow = document.getElementById('skipFirstRowBangkokDistricts').checked;
@@ -3653,6 +3587,293 @@
             XLSX.writeFile(wb, filename);
             
             showNotification('ดาวน์โหลดไฟล์ตัวอย่างสำเร็จ!', 'success');
+        }
+
+        // Show import epidemic weeks modal
+        function showImportEpidemicWeeksModal() {
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modalOverlay.id = 'importEpidemicWeeksModal';
+            
+            modalOverlay.innerHTML = `
+                <div class="glass-card p-8 max-w-4xl w-full mx-4 animate-slideInFromTop">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">นำเข้าข้อมูลสัปดาห์การระบาด</h2>
+                        <button onclick="closeImportEpidemicWeeksModal()" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- ส่วนแสดงตัวอย่างตาราง -->
+                    <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                        <h3 class="text-blue-800 font-semibold mb-3">📝 ตัวอย่างรูปแบบตาราง</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                                <thead class="bg-blue-100">
+                                    <tr>
+                                        <th class="px-4 py-2 text-blue-800 font-semibold text-left">เลขสัปดาห์</th>
+                                        <th class="px-4 py-2 text-blue-800 font-semibold text-left">วันที่เริ่มต้น</th>
+                                        <th class="px-4 py-2 text-blue-800 font-semibold text-left">วันที่สิ้นสุด</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-blue-100">
+                                    <tr class="hover:bg-blue-50">
+                                        <td class="px-4 py-2 text-gray-700">1</td>
+                                        <td class="px-4 py-2 text-gray-700">01/01/2567</td>
+                                        <td class="px-4 py-2 text-gray-700">07/01/2567</td>
+                                    </tr>
+                                    <tr class="hover:bg-blue-50">
+                                        <td class="px-4 py-2 text-gray-700">2</td>
+                                        <td class="px-4 py-2 text-gray-700">08/01/2567</td>
+                                        <td class="px-4 py-2 text-gray-700">14/01/2567</td>
+                                    </tr>
+                                    <tr class="hover:bg-blue-50">
+                                        <td class="px-4 py-2 text-gray-700">3</td>
+                                        <td class="px-4 py-2 text-gray-700">15/01/2567</td>
+                                        <td class="px-4 py-2 text-gray-700">21/01/2567</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-2 text-sm text-blue-600">
+                            <p>• ไฟล์ Excel ควรมีคอลัมน์ตามตัวอย่างด้านบน</p>
+                            <p>• วันที่ควรอยู่ในรูปแบบ DD/MM/YYYY</p>
+                            <p>• สามารถดาวน์โหลดไฟล์ตัวอย่างได้จากปุ่มด้านล่าง</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-center w-full">
+                            <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-8 h-8 mb-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">คลิกเพื่อเลือกไฟล์</span></p>
+                                    <p class="text-xs text-gray-500">Excel เท่านั้น (.xlsx, .xls)</p>
+                                </div>
+                                <input type="file" id="epidemicWeeksFile" class="hidden" accept=".xlsx, .xls" 
+                                    onchange="handleEpidemicWeeksFileSelect(this)"/>
+                            </label>
+                        </div>
+                        
+                        <div id="epidemicWeeksFileInfo" class="text-sm text-gray-600"></div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="skipFirstRowEpidemicWeeks" class="form-checkbox" checked />
+                            <label for="skipFirstRowEpidemicWeeks" class="text-sm text-gray-700">ข้ามบรรทัดแรก (หัวตาราง)</label>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="replaceExistingEpidemicWeeks" class="form-checkbox" />
+                            <label for="replaceExistingEpidemicWeeks" class="text-sm text-gray-700">แทนที่ข้อมูลเดิมทั้งหมด</label>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mt-6">
+                            <button onclick="downloadEpidemicWeeksExample()" class="text-blue-600 hover:text-blue-800 text-sm">
+                                ⬇️ ดาวน์โหลดไฟล์ตัวอย่าง
+                            </button>
+                            <div class="space-x-2">
+                                <button onclick="closeImportEpidemicWeeksModal()" class="btn-secondary">
+                                    ยกเลิก
+                                </button>
+                                <button onclick="importEpidemicWeeks()" id="importEpidemicWeeksButton" class="btn-primary" disabled>
+                                    นำเข้าข้อมูล
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalOverlay);
+        }
+
+        // Close import epidemic weeks modal
+        function closeImportEpidemicWeeksModal() {
+            const modal = document.getElementById('importEpidemicWeeksModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Handle epidemic weeks file select
+        function handleEpidemicWeeksFileSelect(input) {
+            const fileInfo = document.getElementById('epidemicWeeksFileInfo');
+            const importButton = document.getElementById('importEpidemicWeeksButton');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (!file.name.match(/\.(xls|xlsx)$/)) {
+                    fileInfo.innerHTML = '<span class="text-red-500">❌ กรุณาเลือกไฟล์ Excel (.xls, .xlsx) เท่านั้น</span>';
+                    importButton.disabled = true;
+                    return;
+                }
+                
+                const fileSize = (file.size / 1024).toFixed(2);
+                fileInfo.innerHTML = `
+                    <div class="text-green-600">✅ ${file.name}</div>
+                    <div class="text-gray-500">ขนาด: ${fileSize} KB</div>
+                `;
+                importButton.disabled = false;
+            } else {
+                fileInfo.innerHTML = '';
+                importButton.disabled = true;
+            }
+        }
+
+        // Download epidemic weeks example file
+        function downloadEpidemicWeeksExample() {
+            const data = [
+                ['เลขสัปดาห์', 'วันที่เริ่มต้น', 'วันที่สิ้นสุด'],
+                ['1', '01/01/2567', '07/01/2567'],
+                ['2', '08/01/2567', '14/01/2567'],
+                ['3', '15/01/2567', '21/01/2567'],
+                ['4', '22/01/2567', '28/01/2567']
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // Set column widths
+            ws['!cols'] = [
+                {wch: 15},  // เลขสัปดาห์
+                {wch: 15},  // วันที่เริ่มต้น
+                {wch: 15}   // วันที่สิ้นสุด
+            ];
+            
+            // Style header row
+            const headerStyle = {
+                font: { bold: true },
+                fill: { fgColor: { rgb: "E5E7EB" } },
+                alignment: { horizontal: "center" }
+            };
+            
+            ['A1', 'B1', 'C1'].forEach(cell => {
+                if (!ws[cell]) ws[cell] = {};
+                ws[cell].s = headerStyle;
+            });
+            
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "สัปดาห์การระบาด");
+            
+            const filename = `ตัวอย่าง_สัปดาห์การระบาด_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, filename);
+            
+            showNotification('ดาวน์โหลดไฟล์ตัวอย่างสำเร็จ', 'success');
+        }
+
+        // Import epidemic weeks from Excel
+        async function importEpidemicWeeks() {
+            const fileInput = document.getElementById('epidemicWeeksFile');
+            const skipFirstRow = document.getElementById('skipFirstRowEpidemicWeeks').checked;
+            const replaceExisting = document.getElementById('replaceExistingEpidemicWeeks').checked;
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
+                return;
+            }
+            
+            const importButton = document.getElementById('importEpidemicWeeksButton');
+            const originalText = importButton.innerHTML;
+            importButton.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังนำเข้าข้อมูล...
+            `;
+            importButton.disabled = true;
+            
+            try {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: 'array'});
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                        
+                        if (jsonData.length < 2) {
+                            throw new Error('ไฟล์ Excel ไม่มีข้อมูล');
+                        }
+                        
+                        const startRow = skipFirstRow ? 1 : 0;
+                        let newData = [];
+                        let errors = [];
+                        
+                        for (let i = startRow; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (!row || row.length === 0) continue;
+                            
+                            const weekNumber = parseInt(row[0]);
+                            const startDate = row[1]?.toString().trim();
+                            const endDate = row[2]?.toString().trim();
+                            
+                            if (!weekNumber || !startDate || !endDate) {
+                                errors.push(`แถวที่ ${i + 1}: ข้อมูลไม่ครบถ้วน`);
+                                continue;
+                            }
+                            
+                            // ตรวจสอบรูปแบบวันที่
+                            const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+                            if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+                                errors.push(`แถวที่ ${i + 1}: รูปแบบวันที่ไม่ถูกต้อง (ต้องเป็น DD/MM/YYYY)`);
+                                continue;
+                            }
+                            
+                            newData.push({
+                                weekNumber,
+                                startDate,
+                                endDate
+                            });
+                        }
+                        
+                        if (errors.length > 0) {
+                            throw new Error('พบข้อผิดพลาด:\n' + errors.join('\n'));
+                        }
+                        
+                        let existingData = replaceExisting ? [] : await loadFromFirebase('epidemicWeeks');
+                        
+                        // จัดการข้อมูลซ้ำ
+                        for (const item of newData) {
+                            const index = existingData.findIndex(existing => 
+                                existing.weekNumber === item.weekNumber
+                            );
+                            
+                            if (index !== -1) {
+                                existingData[index] = item;
+                            } else {
+                                existingData.push(item);
+                            }
+                        }
+                        
+                        // เรียงลำดับตามเลขสัปดาห์
+                        existingData.sort((a, b) => a.weekNumber - b.weekNumber);
+                        
+                        await saveToFirebase('epidemicWeeks', existingData);
+                        await loadEpidemicWeeksTable();
+                        
+                        showNotification('นำเข้าข้อมูลสำเร็จ', 'success');
+                        closeImportEpidemicWeeksModal();
+                        
+                    } catch (error) {
+                        console.error('Error processing file:', error);
+                        showNotification(error.message || 'เกิดข้อผิดพลาดในการประมวลผลไฟล์', 'error');
+                        importButton.innerHTML = originalText;
+                        importButton.disabled = false;
+                    }
+                };
+                
+                reader.readAsArrayBuffer(fileInput.files[0]);
+                
+            } catch (error) {
+                console.error('Error reading file:', error);
+                showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
+                importButton.innerHTML = originalText;
+                importButton.disabled = false;
+            }
         }
 
         // Process Thailand population import
