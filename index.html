@@ -6217,12 +6217,12 @@
         // Download population example file
         function downloadPopulationExampleFile() {
             const data = [
-                ['ปี', 'เขต', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                ['ปี (ค.ศ.)', 'เขต', 'จำนวนประชากร', 'ชาย', 'หญิง'],
                 [2025, 'พระนคร', 31500, 15000, 16500],
-                [2568, 'ดุสิต', 25000, 12000, 13000],
-                [2568, 'หนองจอก', 37500, 18000, 19500],
-                [2568, 'บางรัก', 18800, 9000, 9800],
-                [2568, 'บางเขน', 43500, 21000, 22500]
+                [2025, 'ดุสิต', 25000, 12000, 13000],
+                [2025, 'หนองจอก', 37500, 18000, 19500],
+                [2025, 'บางรัก', 18800, 9000, 9800],
+                [2025, 'บางเขน', 43500, 21000, 22500]
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -6626,7 +6626,7 @@
                                     </thead>
                                     <tbody class="bg-white">
                                         <tr class="bg-yellow-50">
-                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ปี (พ.ศ.)</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ปี</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">กลุ่มอายุ</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">จำนวนประชากร</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ชาย</td>
@@ -6742,9 +6742,9 @@
 
         // Download age population example file
         function downloadAgePopulationExampleFile() {
-            const currentYear = new Date().getFullYear() + 543;
+            const currentYear = new Date().getFullYear();
             const data = [
-                ['ปี (พ.ศ.)', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                ['ปี (ค.ศ.)', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
                 [currentYear, '0-4 ปี', 25000, 12800, 12200],
                 [currentYear, '5-9 ปี', 28000, 14300, 13700],
                 [currentYear, '10-14 ปี', 30000, 15400, 14600],
@@ -6813,9 +6813,7 @@
                         const row = jsonData[i];
                         if (row.length < 5) continue; // Skip incomplete rows - now checking for 5 columns
                         
-                        const importedYear = parseInt(row[0]);
-                        // Convert พ.ศ. to ค.ศ.
-                        const year = importedYear - 543;
+                        const year = parseInt(row[0]);
                         const ageGroup = row[1]?.toString().trim();
                         const total = parseInt(row[2]);
                         const male = parseInt(row[3]);
@@ -6826,8 +6824,8 @@
                             continue;
                         }
                         
-                        if (importedYear < 2443 || importedYear > 2643) {
-                            errors.push(`แถวที่ ${i + 1}: ปี พ.ศ. ต้องอยู่ระหว่าง 2443-2643`);
+                        if (year < 1900 || year > 2100) {
+                            errors.push(`แถวที่ ${i + 1}: ปี ค.ศ. ต้องอยู่ระหว่าง 1900-2100 (ต้องเป็นปี ค.ศ. เท่านั้น ห้ามใช้ พ.ศ.)`);
                             continue;
                         }
                         
@@ -6982,7 +6980,7 @@
                 return;
             }
             
-            const confirmed = confirm(`คุณต้องการลบข้อมูลประชากรตามอายุนี้ใช่หรือไม่?\n\nปี: ${age.year || 2568}\nกลุ่มอายุ: ${age.ageGroup}\nจำนวนประชากร: ${parseInt(age.total).toLocaleString()} คน\nชาย: ${parseInt(age.male).toLocaleString()} คน\nหญิง: ${parseInt(age.female).toLocaleString()} คน\n\nการดำเนินการนี้ไม่สามารถยกเลิกได้`);
+            const confirmed = confirm(`คุณต้องการลบข้อมูลประชากรตามอายุนี้ใช่หรือไม่?\n\nปี: ${age.year || 2025}\nกลุ่มอายุ: ${age.ageGroup}\nจำนวนประชากร: ${parseInt(age.total).toLocaleString()} คน\nชาย: ${parseInt(age.male).toLocaleString()} คน\nหญิง: ${parseInt(age.female).toLocaleString()} คน\n\nการดำเนินการนี้ไม่สามารถยกเลิกได้`);
             
             if (confirmed) {
                 try {
@@ -9134,11 +9132,11 @@
         function downloadAgePopulationExampleFile() {
             const data = [
                 ['ปี', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
-                [2568, '0-4 ปี', 25000, 12800, 12200],
-                [2568, '5-9 ปี', 28000, 14300, 13700],
-                [2568, '10-14 ปี', 30000, 15400, 14600],
-                [2568, '15-19 ปี', 32000, 16100, 15900],
-                [2568, '20-24 ปี', 35000, 17200, 17800],
+                [2025, '0-4 ปี', 25000, 12800, 12200],
+                [2025, '5-9 ปี', 28000, 14300, 13700],
+                [2025, '10-14 ปี', 30000, 15400, 14600],
+                [2025, '15-19 ปี', 32000, 16100, 15900],
+                [2025, '20-24 ปี', 35000, 17200, 17800],
                 [2568, '25-29 ปี', 38000, 18500, 19500],
             ];
             
