@@ -2476,6 +2476,9 @@
                         case 'epidemicWeeks':
                             showImportEpidemicWeeksModal();
                             break;
+                        case 'diseaseHistory':
+                            showDiseaseHistoryForm();
+                            break;
                     }
                 };
                 importButton.innerHTML = `
@@ -2529,17 +2532,6 @@
             const content = document.getElementById('masterDataDetailContent');
             
             content.innerHTML = `
-                <div class="flex items-center space-x-4 mb-6">
-                    <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-3">
-                        <svg class="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M3 5a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5zm2 1h10v8H5V6z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-800">ข้อมูลโรคย้อนหลัง</h3>
-                        <p class="text-sm text-gray-600">ข้อมูลผู้ป่วยและเสียชีวิตรายปี</p>
-                    </div>
-                </div>
                 <div class="mb-6">
                     <div class="flex justify-between items-center mb-4">
                         <div class="flex items-center space-x-4">
@@ -2760,6 +2752,11 @@
             if (modal) {
                 modal.remove();
             }
+        }
+
+        // Add new disease history entry
+        function addNewDiseaseHistory() {
+            showDiseaseHistoryForm();
         }
 
         // Populate form with existing data for editing
