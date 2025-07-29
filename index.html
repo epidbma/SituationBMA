@@ -2762,11 +2762,6 @@
             }
         }
 
-        // Add new disease history entry
-        function addNewDiseaseHistory() {
-            showDiseaseHistoryForm();
-        }
-
         // Populate form with existing data for editing
         async function populateDiseaseHistoryForm(index) {
             const diseaseHistory = await loadFromFirebase('diseaseHistory');
