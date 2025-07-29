@@ -3561,10 +3561,10 @@
         function downloadThailandPopulationExampleFile() {
             const data = [
                 ['ปี', 'จังหวัด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
-                [2568, 'กรุงเทพมหานคร', 5666264, 2694574, 2971690],
-                [2568, 'นนทบุรี', 1276745, 598741, 678004],
-                [2568, 'ปทุมธานี', 1164897, 553874, 611023],
-                [2568, 'สมุทรปราการ', 1351479, 652147, 699332]
+                [2025, 'กรุงเทพมหานคร', 5666264, 2694574, 2971690],
+                [2025, 'นนทบุรี', 1276745, 598741, 678004],
+                [2025, 'ปทุมธานี', 1164897, 553874, 611023],
+                [2025, 'สมุทรปราการ', 1351479, 652147, 699332]
             ];
             
             // Convert array to worksheet
@@ -4039,7 +4039,9 @@
                         const row = jsonData[i];
                         if (row.length < 4) continue; // Skip incomplete rows
                         
-                        const year = parseInt(row[0]) || 2568;
+                        const importedYear = parseInt(row[0]) || 2568;
+                        // Convert BE to CE during import
+                        const year = importedYear - 543;
                         const province = row[1]?.toString().trim();
                         const total = parseInt(row[2]);
                         const male = parseInt(row[3]);
@@ -4126,7 +4128,7 @@
                                 '<tr><td colspan="5" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">🇹🇭</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลประชากรประเทศไทย</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลประชากรแต่ละจังหวัด</p></td></tr>' :
                                 thailandPopulation.map((province, index) => `
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-                                        <td class="px-6 py-4 text-gray-900">${province.year || '2568'}</td>
+                                        <td class="px-6 py-4 text-gray-900">${province.year || '2025'}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${province.province}</td>
                                         <td class="px-6 py-4 text-right font-semibold text-gray-900">${parseInt(province.total).toLocaleString()}</td>
                                         <td class="px-6 py-4 text-right text-blue-600">${parseInt(province.male).toLocaleString()}</td>
@@ -6953,6 +6955,16 @@
                     
                     <form id="thailandPopulationForm" onsubmit="saveThailandPopulationData(event, ${editIndex})">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Year -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">
+                                    <svg class="w-4 h-4 inline mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
+                                    </svg>
+                                    ปี (คริสต์ศักราช)
+                                </label>
+                                <input type="number" id="thailandYear" class="w-full input-field" placeholder="เช่น 2025" min="1900" max="2100" required>
+                            </div>
                             <!-- Province Name -->
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-3">
@@ -7076,6 +7088,7 @@
             const province = thailandPopulation[index];
             
             if (province) {
+                document.getElementById('thailandYear').value = province.year;
                 document.getElementById('thailandProvince').value = province.province;
                 document.getElementById('thailandMale').value = province.male;
                 document.getElementById('thailandFemale').value = province.female;
@@ -7095,10 +7108,16 @@
         async function saveThailandPopulationData(event, editIndex = null) {
             event.preventDefault();
             
+            const year = parseInt(document.getElementById('thailandYear').value);
             const province = document.getElementById('thailandProvince').value.trim();
             const male = parseInt(document.getElementById('thailandMale').value) || 0;
             const female = parseInt(document.getElementById('thailandFemale').value) || 0;
             const total = male + female;
+            
+            if (!year || year < 1900 || year > 2100) {
+                showNotification('กรุณากรอกปี พ.ศ. ให้ถูกต้อง', 'error');
+                return;
+            }
             
             if (!province || total <= 0) {
                 showNotification('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง', 'error');
@@ -7130,6 +7149,7 @@
                 }
                 
                 const newThailandPopulation = {
+                    year,
                     province,
                     male: male.toString(),
                     female: female.toString(),
