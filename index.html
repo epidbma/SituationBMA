@@ -4134,10 +4134,52 @@
                 }
                 return a.province.localeCompare(b.province);
             });
+
+            // คำนวณสรุปข้อมูลตามปี
+            const yearSummary = thailandPopulation.reduce((acc, curr) => {
+                if (!acc[curr.year]) {
+                    acc[curr.year] = {
+                        totalPopulation: 0,
+                        totalMale: 0,
+                        totalFemale: 0,
+                        provinceCount: 0
+                    };
+                }
+                acc[curr.year].totalPopulation += parseInt(curr.total) || 0;
+                acc[curr.year].totalMale += parseInt(curr.male) || 0;
+                acc[curr.year].totalFemale += parseInt(curr.female) || 0;
+                acc[curr.year].provinceCount++;
+                return acc;
+            }, {});
             
             const content = document.getElementById('masterDataDetailContent');
             
             content.innerHTML = `
+                ${Object.keys(yearSummary).length > 0 ? `
+                <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${Object.entries(yearSummary).map(([year, data]) => `
+                        <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-semibold text-gray-800">ปี ค.ศ. ${year}</h3>
+                                <span class="text-sm text-gray-500">${data.provinceCount} จังหวัด</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">ประชากรรวม:</span>
+                                    <span class="font-semibold text-blue-600">${data.totalPopulation.toLocaleString()}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">ชาย:</span>
+                                    <span class="font-medium text-blue-500">${data.totalMale.toLocaleString()}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600">หญิง:</span>
+                                    <span class="font-medium text-pink-500">${data.totalFemale.toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>` : ''}
                 <div class="table-container">
                     <table class="w-full">
                         <thead class="table-header">
