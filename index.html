@@ -2912,6 +2912,9 @@
             `;
             
             document.body.appendChild(modalOverlay);
+            
+            // อัพเดทข้อมูลสรุปเมื่อเปิด modal
+            updateImportModalSummary();
         }
 
         // Close import Bangkok districts modal
@@ -3122,6 +3125,32 @@
                         </button>
                     </div>
                     
+                    <!-- สรุปข้อมูล -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-semibold text-gray-800">สรุปข้อมูลทั้งหมด</h3>
+                                <span class="text-xs text-gray-500">อัพเดทล่าสุด: <span id="lastUpdateTime"></span></span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-blue-50 p-3 rounded-lg">
+                                    <div class="text-sm text-blue-600">แขวงทั้งหมด</div>
+                                    <div class="text-2xl font-bold text-blue-700" id="totalSubdistricts">-</div>
+                                </div>
+                                <div class="bg-green-50 p-3 rounded-lg">
+                                    <div class="text-sm text-green-600">เขตทั้งหมด</div>
+                                    <div class="text-2xl font-bold text-green-700" id="totalDistricts">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">สรุปตามเขต</h3>
+                            <div id="districtSummary" class="text-sm text-gray-600 space-y-1 max-h-32 overflow-y-auto pr-2">
+                                <!-- จะถูกเติมด้วย JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- ส่วนแสดงตัวอย่างตาราง -->
                     <div class="bg-blue-50 p-4 rounded-lg mb-6">
                         <h3 class="text-blue-800 font-semibold mb-3">📝 ตัวอย่างรูปแบบตาราง</h3>
@@ -3387,6 +3416,43 @@
         }
 
         // Import Bangkok districts from Excel
+        // อัพเดทข้อมูลสรุปในหน้าต่างนำเข้า
+        async function updateImportModalSummary() {
+            try {
+                const data = await loadFromFirebase('bangkokDistricts');
+                if (!data) return;
+
+                // อัพเดทจำนวนแขวงและเขต
+                const districts = new Set(data.map(item => item.district));
+                const subdistricts = new Set(data.map(item => item.subdistrict));
+                
+                document.getElementById('totalDistricts').textContent = districts.size;
+                document.getElementById('totalSubdistricts').textContent = subdistricts.size;
+                
+                // อัพเดทเวลา
+                const now = new Date();
+                document.getElementById('lastUpdateTime').textContent = now.toLocaleTimeString('th-TH');
+                
+                // สร้างสรุปตามเขต
+                const districtSummary = Array.from(districts).map(district => {
+                    const count = data.filter(item => item.district === district).length;
+                    return { district, count };
+                }).sort((a, b) => b.count - a.count);
+                
+                const summaryHTML = districtSummary.map(item => `
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700">${item.district}</span>
+                        <span class="text-gray-500">${item.count} แขวง</span>
+                    </div>
+                `).join('');
+                
+                document.getElementById('districtSummary').innerHTML = summaryHTML;
+                
+            } catch (error) {
+                console.error('Error updating summary:', error);
+            }
+        }
+
         async function importBangkokDistricts() {
             const fileInput = document.getElementById('bangkokDistrictsFile');
             const skipFirstRow = document.getElementById('skipFirstRowBangkokDistricts').checked;
@@ -3775,29 +3841,7 @@
             const bangkokDistricts = await loadFromFirebase('bangkokDistricts');
             const content = document.getElementById('masterDataDetailContent');
             
-            // คำนวณข้อมูลสรุป
-            const totalDistricts = new Set(bangkokDistricts.map(d => d.district)).size;
-            const totalSubdistricts = bangkokDistricts.length;
-            const avgSubdistrictsPerDistrict = totalDistricts ? (totalSubdistricts / totalDistricts).toFixed(1) : 0;
-
             content.innerHTML = `
-                ${bangkokDistricts.length > 0 ? `
-                    <div class="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="glass-card p-6">
-                            <div class="text-4xl font-bold text-blue-600 mb-2">${totalDistricts}</div>
-                            <div class="text-gray-600">เขตทั้งหมด</div>
-                        </div>
-                        <div class="glass-card p-6">
-                            <div class="text-4xl font-bold text-green-600 mb-2">${totalSubdistricts}</div>
-                            <div class="text-gray-600">แขวงทั้งหมด</div>
-                        </div>
-                        <div class="glass-card p-6">
-                            <div class="text-4xl font-bold text-purple-600 mb-2">${avgSubdistrictsPerDistrict}</div>
-                            <div class="text-gray-600">แขวงต่อเขต (เฉลี่ย)</div>
-                        </div>
-                    </div>
-                ` : ''}
-
                 <div class="table-container">
                     <table class="w-full">
                         <thead class="table-header">
