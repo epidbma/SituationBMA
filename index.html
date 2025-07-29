@@ -4053,9 +4053,12 @@
                         const row = jsonData[i];
                         if (row.length < 4) continue; // Skip incomplete rows
                         
-                        const importedYear = parseInt(row[0]) || 2568;
-                        // Convert BE to CE during import
-                        const year = importedYear - 543;
+                        const year = parseInt(row[0]) || new Date().getFullYear();
+                        // Validate that the year is in CE format
+                        if (year > (new Date().getFullYear() + 10) || year < 1900) {
+                            errors.push(`แถวที่ ${i + 1}: ปีต้องเป็น ค.ศ. (1900-${new Date().getFullYear() + 10})`);
+                            continue;
+                        }
                         const province = row[1]?.toString().trim();
                         const total = parseInt(row[2]);
                         const male = parseInt(row[3]);
@@ -4129,7 +4132,7 @@
                     <table class="w-full">
                         <thead class="table-header">
                             <tr>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ปี</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ปี (ค.ศ.)</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">จังหวัด</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">จำนวนประชากร</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">ชาย</th>
@@ -4142,7 +4145,7 @@
                                 '<tr><td colspan="5" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">🇹🇭</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลประชากรประเทศไทย</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลประชากรแต่ละจังหวัด</p></td></tr>' :
                                 thailandPopulation.map((province, index) => `
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-                                        <td class="px-6 py-4 text-gray-900">${province.year || '2025'}</td>
+                                        <td class="px-6 py-4 text-gray-900">${province.year || new Date().getFullYear()}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${province.province}</td>
                                         <td class="px-6 py-4 text-right font-semibold text-gray-900">${parseInt(province.total).toLocaleString()}</td>
                                         <td class="px-6 py-4 text-right text-blue-600">${parseInt(province.male).toLocaleString()}</td>
