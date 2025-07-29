@@ -2439,12 +2439,6 @@
             
             document.getElementById('masterDataDetailTitle').textContent = titles[type];
             
-            // Show back button for disease history
-            const backButton = document.getElementById('backButton');
-            if (backButton) {
-                backButton.style.display = type === 'diseaseHistory' ? 'block' : 'none';
-            }
-            
             // Set up add button
             const addButton = document.getElementById('addNewButton');
             addButton.onclick = () => addNewMasterData(type);
@@ -2539,6 +2533,23 @@
             
             content.innerHTML = `
                 <div class="mb-6">
+                    <div class="flex items-center space-x-2 mb-6">
+                        <button onclick="showMasterDataPage()" class="btn-secondary text-sm flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"/>
+                            </svg>
+                            กลับหน้าหลัก
+                        </button>
+                        <button onclick="showImportDiseaseHistoryModal()" class="btn-secondary text-sm flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                            </svg>
+                            นำเข้า Excel
+                        </button>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-3">
                     <div class="flex justify-between items-center mb-4">
                         <div class="flex items-center space-x-4">
                             <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-3">
@@ -2550,20 +2561,6 @@
                                 <h3 class="text-lg font-bold text-gray-800">ข้อมูลโรคย้อนหลัง</h3>
                                 <p class="text-sm text-gray-600">ข้อมูลผู้ป่วยและเสียชีวิตรายปี</p>
                             </div>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button onclick="showDiseaseHistoryForm()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                                </svg>
-                                <span>เพิ่มข้อมูล</span>
-                            </button>
-                            <button onclick="showDiseaseHistoryImport()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                                </svg>
-                                <span>นำเข้า Excel</span>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -2874,6 +2871,222 @@
         // Edit disease history entry
         function editDiseaseHistory(index) {
             showDiseaseHistoryForm(index);
+        }
+
+        // Show import disease history modal
+        function showImportDiseaseHistoryModal() {
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modalOverlay.id = 'importDiseaseHistoryModal';
+            
+            modalOverlay.innerHTML = `
+                <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-800 to-blue-600 bg-clip-text text-transparent">
+                            นำเข้าข้อมูลโรคย้อนหลัง
+                        </h3>
+                        <button onclick="closeImportDiseaseHistoryModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="text-blue-800 font-semibold mb-2">วิธีการนำเข้าข้อมูล</h4>
+                            <ol class="text-sm text-blue-700 space-y-2">
+                                <li>1. ดาวน์โหลดไฟล์ตัวอย่าง Excel</li>
+                                <li>2. กรอกข้อมูลตามรูปแบบในไฟล์ตัวอย่าง</li>
+                                <li>3. อัปโหลดไฟล์เพื่อนำเข้าข้อมูล</li>
+                            </ol>
+                        </div>
+
+                        <div class="space-y-4">
+                            <input type="file" id="diseaseHistoryExcelFile" class="hidden" accept=".xlsx" onchange="handleDiseaseHistoryFileSelect(this)">
+                            <button onclick="document.getElementById('diseaseHistoryExcelFile').click()" class="w-full btn-secondary text-sm flex items-center justify-center">
+                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                                </svg>
+                                เลือกไฟล์ Excel
+                            </button>
+                            <div id="diseaseHistoryFileInfo" class="text-sm text-gray-600"></div>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="skipFirstRowDiseaseHistory" class="form-checkbox" checked />
+                            <label for="skipFirstRowDiseaseHistory" class="text-sm text-gray-700">ข้ามบรรทัดแรก (หัวตาราง)</label>
+                        </div>
+
+                        <div class="flex justify-between items-center mt-6">
+                            <button onclick="downloadDiseaseHistoryExample()" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                </svg>
+                                ดาวน์โหลดไฟล์ตัวอย่าง
+                            </button>
+                            <div class="space-x-2">
+                                <button onclick="closeImportDiseaseHistoryModal()" class="btn-secondary">
+                                    ยกเลิก
+                                </button>
+                                <button onclick="processDiseaseHistoryImport()" id="importDiseaseHistoryButton" class="btn-primary" disabled>
+                                    นำเข้าข้อมูล
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalOverlay);
+        }
+
+        // Close import disease history modal
+        function closeImportDiseaseHistoryModal() {
+            const modal = document.getElementById('importDiseaseHistoryModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Handle disease history file select
+        function handleDiseaseHistoryFileSelect(input) {
+            const fileInfo = document.getElementById('diseaseHistoryFileInfo');
+            const importButton = document.getElementById('importDiseaseHistoryButton');
+            
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.name.endsWith('.xlsx')) {
+                    fileInfo.innerHTML = `
+                        <div class="flex items-center text-green-600">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                            </svg>
+                            ไฟล์ที่เลือก: ${file.name}
+                        </div>
+                    `;
+                    importButton.disabled = false;
+                } else {
+                    fileInfo.innerHTML = `
+                        <div class="flex items-center text-red-600">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                            </svg>
+                            กรุณาเลือกไฟล์ Excel (.xlsx) เท่านั้น
+                        </div>
+                    `;
+                    importButton.disabled = true;
+                }
+            } else {
+                fileInfo.innerHTML = '';
+                importButton.disabled = true;
+            }
+        }
+
+        // Download disease history example file
+        function downloadDiseaseHistoryExample() {
+            const wb = XLSX.utils.book_new();
+            const headers = ['ปี (ค.ศ.)', 'รหัสโรค', 'ม.ค. (ผู้ป่วย)', 'ม.ค. (เสียชีวิต)', 'ก.พ. (ผู้ป่วย)', 'ก.พ. (เสียชีวิต)', 
+                           'มี.ค. (ผู้ป่วย)', 'มี.ค. (เสียชีวิต)', 'เม.ย. (ผู้ป่วย)', 'เม.ย. (เสียชีวิต)', 'พ.ค. (ผู้ป่วย)', 'พ.ค. (เสียชีวิต)',
+                           'มิ.ย. (ผู้ป่วย)', 'มิ.ย. (เสียชีวิต)', 'ก.ค. (ผู้ป่วย)', 'ก.ค. (เสียชีวิต)', 'ส.ค. (ผู้ป่วย)', 'ส.ค. (เสียชีวิต)',
+                           'ก.ย. (ผู้ป่วย)', 'ก.ย. (เสียชีวิต)', 'ต.ค. (ผู้ป่วย)', 'ต.ค. (เสียชีวิต)', 'พ.ย. (ผู้ป่วย)', 'พ.ย. (เสียชีวิต)',
+                           'ธ.ค. (ผู้ป่วย)', 'ธ.ค. (เสียชีวิต)'];
+            const exampleData = [
+                ['2024', 'D01', 10, 1, 15, 2, 20, 1, 25, 2, 30, 3, 35, 2, 40, 3, 45, 4, 50, 3, 45, 2, 40, 2, 35, 1],
+                ['2024', 'D02', 5, 0, 8, 1, 12, 1, 15, 1, 18, 2, 20, 1, 22, 2, 25, 2, 28, 1, 25, 1, 20, 1, 15, 0]
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...exampleData]);
+            const colWidths = headers.map(() => ({ wch: 15 }));
+            ws['!cols'] = colWidths;
+            
+            XLSX.utils.book_append_sheet(wb, ws, 'ตัวอย่าง');
+            XLSX.writeFile(wb, 'ตัวอย่างไฟล์นำเข้าข้อมูลโรคย้อนหลัง.xlsx');
+            
+            showNotification('ดาวน์โหลดไฟล์ตัวอย่างสำเร็จ!', 'success');
+        }
+
+        // Process disease history import
+        async function processDiseaseHistoryImport() {
+            const fileInput = document.getElementById('diseaseHistoryExcelFile');
+            const skipFirstRow = document.getElementById('skipFirstRowDiseaseHistory').checked;
+            const importButton = document.getElementById('importDiseaseHistoryButton');
+            const originalText = importButton.innerHTML;
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
+                return;
+            }
+            
+            importButton.innerHTML = `
+                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังนำเข้า...
+            `;
+            importButton.disabled = true;
+            
+            try {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                        
+                        const startRow = skipFirstRow ? 1 : 0;
+                        const newRecords = [];
+                        
+                        for (let i = startRow; i < jsonData.length; i++) {
+                            const row = jsonData[i];
+                            if (row.length < 26) continue; // Skip incomplete rows
+                            
+                            const record = {
+                                year: row[0].toString(),
+                                diseaseCode: row[1].toString(),
+                                months: {}
+                            };
+                            
+                            // Process monthly data
+                            const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+                            for (let j = 0; j < 12; j++) {
+                                const patients = parseInt(row[j * 2 + 2]) || 0;
+                                const deaths = parseInt(row[j * 2 + 3]) || 0;
+                                if (patients > 0 || deaths > 0) {
+                                    record.months[months[j]] = { patients, deaths };
+                                }
+                            }
+                            
+                            newRecords.push(record);
+                        }
+                        
+                        // Save to Firebase
+                        const existingRecords = await loadFromFirebase('diseaseHistory') || [];
+                        const updatedRecords = [...existingRecords, ...newRecords];
+                        await saveToFirebase('diseaseHistory', updatedRecords);
+                        
+                        showNotification('นำเข้าข้อมูลสำเร็จ!', 'success');
+                        closeImportDiseaseHistoryModal();
+                        await loadDiseaseHistoryTable();
+                        
+                    } catch (error) {
+                        console.error('Error processing Excel file:', error);
+                        showNotification('เกิดข้อผิดพลาดในการประมวลผลไฟล์ Excel', 'error');
+                        importButton.innerHTML = originalText;
+                        importButton.disabled = false;
+                    }
+                };
+                
+                reader.readAsArrayBuffer(fileInput.files[0]);
+                
+            } catch (error) {
+                console.error('Error reading file:', error);
+                showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
+                importButton.innerHTML = originalText;
+                importButton.disabled = false;
+            }
         }
 
         // Enhanced table loading functions with better styling
@@ -7818,233 +8031,6 @@
                 updatePreview();
             }
         });
-
-        // Function to show import disease history modal
-        function showImportDiseaseHistoryModal() {
-            const modalOverlay = document.createElement('div');
-            modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            modalOverlay.id = 'importDiseaseHistoryModal';
-            
-            modalOverlay.innerHTML = `
-                <div class="glass-card p-8 max-w-2xl w-full mx-4 animate-slideInFromTop">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-2xl font-bold bg-gradient-to-r from-purple-800 to-blue-600 bg-clip-text text-transparent">
-                            นำเข้าข้อมูลโรคย้อนหลัง
-                        </h3>
-                        <button onclick="closeImportDiseaseHistoryModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <h4 class="text-blue-800 font-semibold mb-2">วิธีการนำเข้าข้อมูล</h4>
-                            <ol class="list-decimal list-inside space-y-2 text-sm text-gray-600">
-                                <li>ดาวน์โหลดไฟล์ตัวอย่าง Excel</li>
-                                <li>กรอกข้อมูลตามรูปแบบที่กำหนด</li>
-                                <li>นำเข้าไฟล์ Excel ที่กรอกข้อมูลแล้ว</li>
-                            </ol>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                เลือกไฟล์ Excel
-                            </label>
-                            <input type="file" id="diseaseHistoryExcelFile" accept=".xlsx,.xls"
-                                class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                onchange="handleDiseaseHistoryFileSelect(this)">
-                        </div>
-
-                        <div id="diseaseHistoryFileInfo" class="text-sm text-gray-600"></div>
-                        
-                        <div class="flex items-center space-x-2">
-                            <input type="checkbox" id="skipFirstRow" class="form-checkbox text-purple-600">
-                            <label for="skipFirstRow" class="text-sm text-gray-700">ข้ามบรรทัดแรก (หัวตาราง)</label>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2">
-                            <input type="checkbox" id="replaceExisting" class="form-checkbox text-purple-600">
-                            <label for="replaceExisting" class="text-sm text-gray-700">แทนที่ข้อมูลเดิมทั้งหมด</label>
-                        </div>
-                        
-                        <div class="flex justify-between items-center">
-                            <button onclick="downloadDiseaseHistoryExample()" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
-                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
-                                </svg>
-                                ดาวน์โหลดไฟล์ตัวอย่าง
-                            </button>
-                            <div class="space-x-2">
-                                <button onclick="closeImportDiseaseHistoryModal()" class="btn-secondary">
-                                    ยกเลิก
-                                </button>
-                                <button onclick="processDiseaseHistoryImport()" id="importDiseaseHistoryButton" class="btn-primary" disabled>
-                                    นำเข้าข้อมูล
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modalOverlay);
-        }
-
-        // Function to close import disease history modal
-        function closeImportDiseaseHistoryModal() {
-            const modal = document.getElementById('importDiseaseHistoryModal');
-            if (modal) {
-                modal.remove();
-            }
-        }
-
-        // Function to handle disease history file select
-        function handleDiseaseHistoryFileSelect(input) {
-            const fileInfo = document.getElementById('diseaseHistoryFileInfo');
-            const importButton = document.getElementById('importDiseaseHistoryButton');
-            
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                fileInfo.textContent = `ไฟล์ที่เลือก: ${file.name}`;
-                importButton.disabled = false;
-            } else {
-                fileInfo.textContent = '';
-                importButton.disabled = true;
-            }
-        }
-
-        // Function to download disease history example file
-        function downloadDiseaseHistoryExample() {
-            const wb = XLSX.utils.book_new();
-            const wsData = [
-                ['year', 'diseaseCode', 'month', 'patients', 'deaths'],
-                ['2023', 'A01', '01', '10', '1'],
-                ['2023', 'A01', '02', '15', '2'],
-                ['2023', 'A01', '03', '20', '1']
-            ];
-            
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-            XLSX.utils.book_append_sheet(wb, ws, 'Example');
-            
-            // Set column widths
-            const colWidths = [
-                { wch: 10 }, // year
-                { wch: 15 }, // diseaseCode
-                { wch: 10 }, // month
-                { wch: 12 }, // patients
-                { wch: 12 }  // deaths
-            ];
-            ws['!cols'] = colWidths;
-            
-            XLSX.writeFile(wb, 'ตัวอย่างไฟล์นำเข้าข้อมูลโรคย้อนหลัง.xlsx');
-            showNotification('ดาวน์โหลดไฟล์ตัวอย่างสำเร็จ!', 'success');
-        }
-
-        // Function to process disease history import
-        async function processDiseaseHistoryImport() {
-            const fileInput = document.getElementById('diseaseHistoryExcelFile');
-            const skipFirstRow = document.getElementById('skipFirstRow').checked;
-            const replaceExisting = document.getElementById('replaceExisting').checked;
-            
-            if (!fileInput.files || !fileInput.files[0]) {
-                showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
-                return;
-            }
-            
-            const importButton = document.getElementById('importDiseaseHistoryButton');
-            const originalText = importButton.innerHTML;
-            importButton.innerHTML = `
-                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                กำลังนำเข้า...
-            `;
-            importButton.disabled = true;
-            
-            try {
-                const file = fileInput.files[0];
-                const reader = new FileReader();
-                
-                reader.onload = async function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const firstSheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[firstSheetName];
-                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                        
-                        // Process data
-                        const startRow = skipFirstRow ? 1 : 0;
-                        const processedData = {};
-                        
-                        for (let i = startRow; i < jsonData.length; i++) {
-                            const row = jsonData[i];
-                            const year = row[0]?.toString();
-                            const diseaseCode = row[1]?.toString();
-                            const month = row[2]?.toString().padStart(2, '0');
-                            const patients = parseInt(row[3]) || 0;
-                            const deaths = parseInt(row[4]) || 0;
-                            
-                            if (!year || !diseaseCode || !month) continue;
-                            
-                            const key = `${year}-${diseaseCode}`;
-                            if (!processedData[key]) {
-                                processedData[key] = {
-                                    year,
-                                    diseaseCode,
-                                    months: {}
-                                };
-                            }
-                            
-                            processedData[key].months[month] = {
-                                patients,
-                                deaths
-                            };
-                        }
-                        
-                        // Save to Firebase
-                        let diseaseHistory = replaceExisting ? [] : (await loadFromFirebase('diseaseHistory') || []);
-                        
-                        // Add new data
-                        Object.values(processedData).forEach(record => {
-                            const existingIndex = diseaseHistory.findIndex(
-                                item => item.year === record.year && item.diseaseCode === record.diseaseCode
-                            );
-                            
-                            if (existingIndex !== -1) {
-                                diseaseHistory[existingIndex] = record;
-                            } else {
-                                diseaseHistory.push(record);
-                            }
-                        });
-                        
-                        await saveToFirebase('diseaseHistory', diseaseHistory);
-                        
-                        // Close modal and refresh table
-                        closeImportDiseaseHistoryModal();
-                        await loadDiseaseHistoryTable();
-                        showNotification('นำเข้าข้อมูลสำเร็จ!', 'success');
-                        
-                    } catch (error) {
-                        console.error('Error processing Excel file:', error);
-                        showNotification('เกิดข้อผิดพลาดในการประมวลผลไฟล์ Excel', 'error');
-                        importButton.innerHTML = originalText;
-                        importButton.disabled = false;
-                    }
-                };
-                
-                reader.readAsArrayBuffer(file);
-                
-            } catch (error) {
-                console.error('Error importing disease history:', error);
-                showNotification('เกิดข้อผิดพลาดในการนำเข้าข้อมูล', 'error');
-                importButton.innerHTML = originalText;
-                importButton.disabled = false;
-            }
-        }
 
         // Populate form for editing
         async function populateBangkokDistrictForm(index) {
