@@ -3560,11 +3560,11 @@
         // Download Thailand population example file
         function downloadThailandPopulationExampleFile() {
             const data = [
-                ['ปี', 'จังหวัด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
-                [2025, 'กรุงเทพมหานคร', 5666264, 2694574, 2971690],
-                [2025, 'นนทบุรี', 1276745, 598741, 678004],
-                [2025, 'ปทุมธานี', 1164897, 553874, 611023],
-                [2025, 'สมุทรปราการ', 1351479, 652147, 699332]
+                ['ปี (ค.ศ.)', 'จังหวัด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                [2024, 'กรุงเทพมหานคร', 5666264, 2694574, 2971690],
+                [2024, 'นนทบุรี', 1276745, 598741, 678004],
+                [2024, 'ปทุมธานี', 1164897, 553874, 611023],
+                [2024, 'สมุทรปราการ', 1351479, 652147, 699332]
             ];
             
             // Convert array to worksheet
@@ -3670,7 +3670,8 @@
                         </div>
                         <div class="mt-2 text-sm text-blue-600">
                             <p>• ไฟล์ Excel ควรมีคอลัมน์ตามตัวอย่างด้านบน</p>
-                            <p>• วันที่ควรอยู่ในรูปแบบ DD/MM/YYYY</p>
+                            <p>• ปีต้องเป็นปี ค.ศ. เท่านั้น (เช่น 2024)</p>
+                            <p>• จำนวนประชากรต้องเป็นตัวเลขเท่านั้น</p>
                             <p>• สามารถดาวน์โหลดไฟล์ตัวอย่างได้จากปุ่มด้านล่าง</p>
                         </div>
                     </div>
@@ -3989,6 +3990,18 @@
                 importButton.innerHTML = originalText;
                 importButton.disabled = false;
             }
+        }
+
+        // Validate CE year for Thailand population
+        function validateThailandPopulationYear(year) {
+            const currentYear = new Date().getFullYear();
+            const yearNum = parseInt(year);
+            
+            // ตรวจสอบว่าเป็นปี ค.ศ. (ไม่เกินปีปัจจุบัน + 10 ปี และไม่น้อยกว่า 1900)
+            if (isNaN(yearNum) || yearNum > currentYear + 10 || yearNum < 1900) {
+                return false;
+            }
+            return true;
         }
 
         // Process Thailand population import
