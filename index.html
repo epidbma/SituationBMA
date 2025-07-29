@@ -3801,6 +3801,55 @@
             showNotification('ดาวน์โหลดไฟล์ตัวอย่างสำเร็จ', 'success');
         }
 
+        // Function to parse and format date from various formats
+        function parseDateFormat(dateStr) {
+            if (!dateStr) return '';
+            
+            // Remove any whitespace
+            dateStr = dateStr.toString().trim();
+            
+            // If it's already in DD/MM/YYYY format
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+                return dateStr;
+            }
+            
+            try {
+                // Handle Excel serial number
+                if (!isNaN(dateStr) && parseInt(dateStr) > 0) {
+                    const excelEpoch = new Date(1900, 0, 1);
+                    const jsDate = new Date(excelEpoch.getTime() + (parseInt(dateStr) - 2) * 24 * 60 * 60 * 1000);
+                    return `${jsDate.getDate().toString().padStart(2, '0')}/${(jsDate.getMonth() + 1).toString().padStart(2, '0')}/${jsDate.getFullYear()}`;
+                }
+
+                // Handle YYYY-MM-DD format
+                if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(dateStr)) {
+                    const [year, month, day] = dateStr.split('-');
+                    return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+                }
+                
+                // Handle DD-MM-YYYY format
+                if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(dateStr)) {
+                    return dateStr.replace(/-/g, '/');
+                }
+                
+                // Handle DD.MM.YYYY format
+                if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(dateStr)) {
+                    return dateStr.replace(/\./g, '/');
+                }
+
+                // Try parsing as a JavaScript Date
+                const date = new Date(dateStr);
+                if (!isNaN(date.getTime())) {
+                    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                }
+
+                return '';
+            } catch (error) {
+                console.error('Error parsing date:', error);
+                return '';
+            }
+        }
+
         // Import epidemic weeks from Excel
         async function importEpidemicWeeks() {
             const fileInput = document.getElementById('epidemicWeeksFile');
@@ -3844,14 +3893,33 @@
                             const row = jsonData[i];
                             if (!row || row.length === 0) continue;
                             
-                            const year = parseInt(row[0]);
+                            let year = row[0];
                             const weekNumber = parseInt(row[1]);
-                            const startDate = row[2]?.toString().trim();
-                            const endDate = row[3]?.toString().trim();
+                            let startDate = row[2];
+                            let endDate = row[3];
                             const note = row[4]?.toString().trim() || '';
                             
-                            if (!year || !weekNumber || !startDate || !endDate) {
-                                errors.push(`แถวที่ ${i + 1}: ข้อมูลไม่ครบถ้วน (ต้องมีปี, สัปดาห์ที่, วันที่เริ่มต้น และวันที่สิ้นสุด)`);
+                            // แปลงวันที่ให้เป็นรูปแบบที่ถูกต้อง
+                            startDate = parseDateFormat(startDate);
+                            endDate = parseDateFormat(endDate);
+
+                            // ถ้าไม่สามารถแปลงวันที่ได้
+                            if (!startDate || !endDate) {
+                                errors.push(`แถวที่ ${i + 1}: รูปแบบวันที่ไม่ถูกต้อง`);
+                                continue;
+                            }
+
+                            // ถ้าไม่มีปี ให้ใช้ปีจากวันที่เริ่มต้น
+                            if (!year) {
+                                const startDateParts = startDate.split('/');
+                                year = parseInt(startDateParts[2]);
+                            }
+                            
+                            // แปลงปีให้เป็นตัวเลข
+                            year = parseInt(year);
+                            
+                            if (!year || !weekNumber) {
+                                errors.push(`แถวที่ ${i + 1}: ข้อมูลไม่ครบถ้วน (ต้องมีปี และสัปดาห์ที่)`);
                                 continue;
                             }
                             
