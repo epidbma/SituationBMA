@@ -693,85 +693,16 @@
                             <div class="relative">
                                 <input type="text" id="searchInput" placeholder="ค้นหาข้อมูลผู้ป่วย..." 
                                        class="w-full input-field pl-10 pr-10" 
-                                       onkeyup="if(event.key==='Enter') searchPatients()" 
-                                       oninput="if(this.value==='') clearSearch()">
+>
                                 <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                 </svg>
-                                <button onclick="clearSearch()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                </button>
                             </div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-4">
-                            <div class="flex items-center space-x-2">
-                                <label class="text-sm font-medium text-gray-700">แสดง:</label>
-                                <select onchange="changeRecordsPerPage(this.value)" class="input-field py-2 px-3 text-sm">
-                                    <option value="25">25</option>
-                                    <option value="50" selected>50</option>
-                                    <option value="100">100</option>
-                                    <option value="200">200</option>
-                                </select>
-                                <span class="text-sm text-gray-600">รายการ</span>
-                            </div>
-                            
-                            <button onclick="searchPatients()" class="btn-primary py-2 px-4 text-sm">
-                                <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                </svg>
-                                ค้นหา
-                            </button>
                         </div>
                     </div>
                 </div>
-
-                <div class="table-container">
-                    <table class="w-full">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">โรค</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">รหัสโรค</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">เพศ</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุปี</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุเดือน</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุวัน</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">แขวง</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">เขต</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">จังหวัด</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">วันที่เริ่มป่วย</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">สภาพผู้ป่วย</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">วันที่เสียชีวิต</th>
-                            </tr>
-                        </thead>
-                        <tbody id="patientsTableBody">
-                            <tr>
-                                <td colspan="12" class="px-6 py-20 text-center text-gray-500">
-                                    <div class="text-6xl mb-4">📋</div>
-                                    <p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลผู้ป่วย</p>
-                                    <p class="text-gray-500 mt-2">กรุณานำเข้าข้อมูลจากไฟล์ Excel</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination Controls -->
-                <div class="glass-card p-4 mt-6">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-                        <div class="text-sm text-gray-700">
-                            <span id="paginationInfo">แสดง 0 - 0 จาก 0 รายการ</span>
-                        </div>
-                        
-                        <div class="flex items-center justify-center">
-                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" id="paginationControls">
-                                <!-- Pagination buttons will be inserted here -->
-                            </nav>
-                        </div>
-                    </div>
-                </div>
+                
+                <!-- Content after data import will be displayed here -->
             </div>
         </div>
 
@@ -942,13 +873,13 @@
                     console.log(`✅ Loaded from Firebase: ${path}, Data:`, data);
                 }
 
-                // If data is an object, convert to array with Firebase keys
+                // If data is an object with numeric keys, convert to array
                 if (data && typeof data === 'object' && !Array.isArray(data)) {
-                    data = Object.entries(data).map(([key, value]) => ({
-                        ...value,
-                        _id: key // Add Firebase key as _id
-                    }));
-                    console.log(`🔄 Converted object to array for ${path}, Length:`, data.length);
+                    const keys = Object.keys(data);
+                    if (keys.every(key => !isNaN(key))) {
+                        data = Object.values(data);
+                        console.log(`🔄 Converted object to array for ${path}, Length:`, data.length);
+                    }
                 }
 
                 // If no data in Firebase, try localStorage
@@ -1585,7 +1516,7 @@
                                     if (saved) {
                                         successCount++;
                                         window.allPatients.unshift(cleanRecord);
-                                        addRecordToTable(cleanRecord, successCount);
+                                        // Table functionality removed
                                     }
                                 } else {
                                     errorCount++;
@@ -1660,7 +1591,7 @@
                             window.allPatients.unshift(newRow);
                             
                             // Add to table display (limit to 100 records)
-                            addRecordToTable(newRow, savedRecords);
+                            // Table functionality removed
                         }
                         
                         // Update batch progress display
@@ -2033,11 +1964,6 @@
             let successCount = 0;
             const totalRecords = jsonData.length;
             
-            // Initialize allPatients array if not exists
-            if (!window.allPatients) {
-                window.allPatients = [];
-            }
-
             // Process records one by one
             for (let i = 0; i < totalRecords; i++) {
                 const record = jsonData[i];
@@ -2062,9 +1988,6 @@
                     const saved = await saveRecordToDatabase(record);
                     if (saved) {
                         successCount++;
-                        // Add to global allPatients array
-                        window.allPatients.unshift(record);
-                        addRecordToTable(record, successCount);
                     }
                 } catch (error) {
                     console.error('Error saving record:', error);
@@ -2088,9 +2011,6 @@
                 </div>
             `;
             
-            // Refresh the table to show all records
-            await loadPatientsTable();
-            
             // Remove status after delay
             setTimeout(() => {
                 statusDiv.style.opacity = '0';
@@ -2098,29 +2018,7 @@
             }, 5000);
         }
         
-        // Add record to table with animation
-        function addRecordToTable(record, recordNumber) {
-            const tbody = document.getElementById('patientsTableBody');
-            if (!tbody) {
-                console.error('❌ Table body not found');
-                return;
-            }
-            
-            // Remove empty state if exists
-            const emptyState = tbody.querySelector('td[colspan="12"]');
-            if (emptyState) {
-                tbody.innerHTML = '';
-            }
-            
-            // Limit display to 100 records to prevent performance issues
-            const existingRows = tbody.querySelectorAll('tr');
-            if (existingRows.length >= 100) {
-                // Remove the last row with fade out animation
-                const lastRow = existingRows[existingRows.length - 1];
-                lastRow.style.transition = 'opacity 0.3s';
-                lastRow.style.opacity = '0';
-                setTimeout(() => lastRow.remove(), 300);
-            }
+        // Placeholder for future record processing
             
             // Create new row with fade in animation
             const newRow = document.createElement('tr');
@@ -2613,217 +2511,6 @@
         // Import control variables
         let importCancelled = false;
         let currentImportProcess = null;
-
-        // Load patients table with pagination
-        async function loadPatientsTable(searchTerm = '') {
-            console.log('🔄 Loading patients table...');
-            
-            // Use global variables if available (for real-time import)
-            if (window.allPatients && Array.isArray(window.allPatients) && window.allPatients.length > 0) {
-                allPatients = window.allPatients;
-                console.log(`📊 Using cached patients data: ${allPatients.length}`);
-            } else {
-                // ลองโหลดจาก Firebase ก่อน
-                const firebaseData = await loadFromFirebase('patients');
-                if (Array.isArray(firebaseData)) {
-                    allPatients = firebaseData;
-                    console.log(`📊 Total patients loaded from Firebase: ${allPatients.length}`);
-                } else {
-                    console.error('❌ Firebase data is not an array:', firebaseData);
-                    allPatients = [];
-                }
-                
-                // หากไม่มีข้อมูลใน Firebase ลองโหลดจาก localStorage
-                if (allPatients.length === 0) {
-                    console.log('🔍 No data from Firebase, checking localStorage...');
-                    const localData = localStorage.getItem('patients');
-                    if (localData) {
-                        try {
-                            const parsedData = JSON.parse(localData);
-                            if (Array.isArray(parsedData) && parsedData.length > 0) {
-                                allPatients = parsedData;
-                                console.log(`✅ Loaded ${allPatients.length} patients from localStorage`);
-                            }
-                        } catch (error) {
-                            console.error('❌ Error parsing localStorage patients data:', error);
-                        }
-                    }
-                }
-            }
-            
-            // Sort patients by latest first
-            allPatients = allPatients.sort((a, b) => {
-                const dateA = a.วันที่รับแจ้ง ? new Date(a.วันที่รับแจ้ง) : new Date(0);
-                const dateB = b.วันที่รับแจ้ง ? new Date(b.วันที่รับแจ้ง) : new Date(0);
-                return dateB - dateA;
-            });
-
-            // Filter patients based on search term
-            if (searchTerm) {
-                filteredPatients = allPatients.filter(patient => {
-                    const searchFields = [
-                        patient.โรค || patient['โรค'] || '',
-                        patient.รหัสโรค || patient['รหัสโรค'] || '',
-                        patient.เพศ || patient['เพศ'] || '',
-                        patient.แขวง || patient['แขวง'] || '',
-                        patient.เขต || patient['เขต'] || '',
-                        patient.จังหวัด || patient['จังหวัด'] || ''
-                    ];
-                    return searchFields.some(field => 
-                        field.toLowerCase().includes(searchTerm.toLowerCase())
-                    );
-                });
-            } else {
-                filteredPatients = [...allPatients];
-            }
-
-            const tbody = document.getElementById('patientsTableBody');
-            
-            if (filteredPatients.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="12" class="px-6 py-20 text-center text-gray-500">
-                            <div class="text-6xl mb-4">📋</div>
-                            <p class="font-semibold text-xl text-gray-700">${searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'ยังไม่มีข้อมูลผู้ป่วย'}</p>
-                            <p class="text-gray-500 mt-2">${searchTerm ? 'ลองเปลี่ยนคำค้นหา' : 'กรุณานำเข้าข้อมูลจากไฟล์ Excel'}</p>
-                        </td>
-                    </tr>
-                `;
-                updatePaginationInfo(0, 0, 0);
-                return;
-            }
-
-            // Ensure we have valid data to work with
-            if (!Array.isArray(filteredPatients)) {
-                console.error('❌ filteredPatients is not an array:', filteredPatients);
-                filteredPatients = [];
-            }
-
-            // Calculate pagination
-            const totalRecords = filteredPatients.length;
-            console.log(`📊 Filtered patients: ${totalRecords}`);
-            const totalPages = Math.ceil(totalRecords / recordsPerPage);
-            const startIndex = (currentPage - 1) * recordsPerPage;
-            const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
-            const currentPageData = filteredPatients.slice(startIndex, endIndex);
-
-            // Render current page data
-            tbody.innerHTML = currentPageData.map((patient, index) => {
-                const globalIndex = startIndex + index;
-                return `
-                    <tr class="table-row transition-all duration-300 border-b border-gray-100 ${globalIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-                        <td class="px-6 py-4 text-sm font-semibold text-gray-900">${patient.โรค || patient['โรค'] || ''}</td>
-                        <td class="px-6 py-4 text-sm text-blue-600 font-medium">${patient.รหัสโรค || patient['รหัสโรค'] || ''}</td>
-                        <td class="px-6 py-4 text-sm">${patient.เพศ || patient['เพศ'] || ''}</td>
-                        <td class="px-6 py-4 text-sm">${patient.อายุปี || patient['อายุปี'] || ''}</td>
-                        <td class="px-6 py-4 text-sm">${patient.อายุเดือน || patient['อายุเดือน'] || ''}</td>
-                        <td class="px-6 py-4 text-sm">${patient.อายุวัน || patient['อายุวัน'] || ''}</td>
-                        <td class="px-6 py-4 text-sm">${patient.แขวง || patient['แขวง'] || ''}</td>
-                        <td class="px-6 py-4 text-sm font-medium">${patient.เขต || patient['เขต'] || ''}</td>
-                        <td class="px-6 py-4 text-sm">${patient.จังหวัด || patient['จังหวัด'] || ''}</td>
-                        <td class="px-6 py-4 text-sm">${convertExcelDateToThai(patient.วันที่เริ่มป่วย || patient['วันที่เริ่มป่วย'])}</td>
-                        <td class="px-6 py-4 text-sm">
-                            <span class="px-2 py-1 text-xs font-medium rounded-full ${(patient.สภาพผู้ป่วย || patient['สภาพผู้ป่วย']) === 'เสียชีวิต' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
-                                ${patient.สภาพผู้ป่วย || patient['สภาพผู้ป่วย'] || ''}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-sm">${convertExcelDateToThai(patient.วันที่เสียชีวิต || patient['วันที่เสียชีวิต'])}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            // Update pagination info
-            updatePaginationInfo(totalRecords, currentPage, totalPages);
-            updatePaginationControls(totalPages);
-            
-            console.log(`Table updated: Page ${currentPage}/${totalPages}, showing ${currentPageData.length} of ${totalRecords} records`);
-        }
-
-        // Update pagination information display
-        function updatePaginationInfo(totalRecords, currentPage, totalPages) {
-            const startRecord = totalRecords > 0 ? ((currentPage - 1) * recordsPerPage) + 1 : 0;
-            const endRecord = Math.min(currentPage * recordsPerPage, totalRecords);
-            
-            document.getElementById('paginationInfo').textContent = 
-                `แสดง ${startRecord.toLocaleString()} - ${endRecord.toLocaleString()} จาก ${totalRecords.toLocaleString()} รายการ`;
-        }
-
-        // Update pagination controls
-        function updatePaginationControls(totalPages) {
-            const paginationControls = document.getElementById('paginationControls');
-            
-            if (totalPages <= 1) {
-                paginationControls.innerHTML = '';
-                return;
-            }
-
-            let paginationHTML = `
-                <button onclick="goToPage(1)" ${currentPage === 1 ? 'disabled' : ''} 
-                        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
-                    หน้าแรก
-                </button>
-                <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} 
-                        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border-t border-b border-gray-300 hover:bg-gray-50 ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
-                    ก่อนหน้า
-                </button>
-            `;
-
-            // Show page numbers (max 5 pages around current page)
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, currentPage + 2);
-
-            for (let i = startPage; i <= endPage; i++) {
-                paginationHTML += `
-                    <button onclick="goToPage(${i})" 
-                            class="px-3 py-2 text-sm font-medium border-t border-b border-gray-300 ${i === currentPage ? 'bg-blue-50 text-blue-600 border-blue-500' : 'text-gray-500 bg-white hover:bg-gray-50 hover:text-gray-700'}">
-                        ${i}
-                    </button>
-                `;
-            }
-
-            paginationHTML += `
-                <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} 
-                        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border-t border-b border-gray-300 hover:bg-gray-50 ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
-                    ถัดไป
-                </button>
-                <button onclick="goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''} 
-                        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
-                    หน้าสุดท้าย
-                </button>
-            `;
-
-            paginationControls.innerHTML = paginationHTML;
-        }
-
-        // Go to specific page
-        function goToPage(page) {
-            const totalPages = Math.ceil(filteredPatients.length / recordsPerPage);
-            if (page >= 1 && page <= totalPages) {
-                currentPage = page;
-                loadPatientsTable(document.getElementById('searchInput').value);
-            }
-        }
-
-        // Change records per page
-        function changeRecordsPerPage(newRecordsPerPage) {
-            recordsPerPage = parseInt(newRecordsPerPage);
-            currentPage = 1; // Reset to first page
-            loadPatientsTable(document.getElementById('searchInput').value);
-        }
-
-        // Search patients
-        function searchPatients() {
-            const searchTerm = document.getElementById('searchInput').value;
-            currentPage = 1; // Reset to first page when searching
-            loadPatientsTable(searchTerm);
-        }
-
-        // Clear search
-        function clearSearch() {
-            document.getElementById('searchInput').value = '';
-            currentPage = 1;
-            loadPatientsTable();
-        }
 
         // Show master data detail
         function showMasterDataDetail(type) {
