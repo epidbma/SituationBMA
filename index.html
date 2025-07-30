@@ -757,6 +757,100 @@
                     </table>
                 </div>
 
+                <!-- Add Patient Modal -->
+                <div id="addPatientModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+                    <div class="flex items-center justify-center min-h-screen p-4">
+                        <div class="glass-card w-full max-w-2xl p-8 relative">
+                            <button onclick="closeAddPatientModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                            
+                            <h3 class="text-2xl font-bold text-gray-900 mb-6">เพิ่มข้อมูลผู้ป่วย</h3>
+                            
+                            <form id="addPatientForm" onsubmit="submitPatientData(event)" class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">โรค</label>
+                                        <select id="newDiseaseCode" class="w-full input-field" required>
+                                            <option value="">เลือกโรค</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">เพศ</label>
+                                        <select id="newGender" class="w-full input-field" required>
+                                            <option value="">เลือกเพศ</option>
+                                            <option value="ชาย">ชาย</option>
+                                            <option value="หญิง">หญิง</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">อายุปี</label>
+                                        <input type="number" id="newAgeYears" class="w-full input-field" min="0" max="150" required>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">อายุเดือน</label>
+                                        <input type="number" id="newAgeMonths" class="w-full input-field" min="0" max="11">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">อายุวัน</label>
+                                        <input type="number" id="newAgeDays" class="w-full input-field" min="0" max="31">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">แขวง</label>
+                                        <input type="text" id="newSubdistrict" class="w-full input-field" required>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">เขต</label>
+                                        <input type="text" id="newDistrict" class="w-full input-field" required>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">จังหวัด</label>
+                                        <input type="text" id="newProvince" class="w-full input-field" value="กรุงเทพมหานคร" required>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่เริ่มป่วย</label>
+                                        <input type="date" id="newOnsetDate" class="w-full input-field" required>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">สภาพผู้ป่วย</label>
+                                        <select id="newPatientStatus" class="w-full input-field" required>
+                                            <option value="">เลือกสภาพผู้ป่วย</option>
+                                            <option value="รักษาหาย">รักษาหาย</option>
+                                            <option value="กำลังรักษา">กำลังรักษา</option>
+                                            <option value="เสียชีวิต">เสียชีวิต</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่เสียชีวิต</label>
+                                        <input type="date" id="newDeathDate" class="w-full input-field">
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end space-x-4 mt-8">
+                                    <button type="button" onclick="closeAddPatientModal()" class="btn-secondary">
+                                        ยกเลิก
+                                    </button>
+                                    <button type="submit" class="btn-primary">
+                                        บันทึกข้อมูล
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Pagination Controls -->
                 <div class="glass-card p-4 mt-6">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
