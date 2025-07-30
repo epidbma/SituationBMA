@@ -910,9 +910,26 @@
         // Patient Database Functions
         async function loadPatientsTable() {
             try {
-                const { database, ref, get } = window.firebaseDB;
+                // Show loading state
+                const tbody = document.getElementById('patientsTableBody');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="12" class="px-4 py-8 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <svg class="w-6 h-6 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span class="text-gray-600">กำลังโหลดข้อมูล...</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+
+                const { database, ref, get, query, orderByChild } = window.firebaseDB;
                 const patientsRef = ref(database, 'patients');
-                const snapshot = await get(patientsRef);
+                const patientsQuery = query(patientsRef);
+                const snapshot = await get(patientsQuery);
                 
                 if (snapshot.exists()) {
                     allPatients = Object.values(snapshot.val());
@@ -926,6 +943,14 @@
             } catch (error) {
                 console.error('Error loading patients:', error);
                 showNotification('ไม่สามารถโหลดข้อมูลผู้ป่วยได้', 'error');
+                const tbody = document.getElementById('patientsTableBody');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="12" class="px-4 py-8 text-center">
+                            <p class="text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
+                        </td>
+                    </tr>
+                `;
             }
         }
         
@@ -933,14 +958,21 @@
             const tbody = document.getElementById('patientsTableBody');
             tbody.innerHTML = '';
             
-            if (allPatients.length === 0) {
+            if (!allPatients || allPatients.length === 0) {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="12" class="px-4 py-8 text-center">
-                            <p class="text-gray-500">ไม่พบข้อมูลผู้ป่วย</p>
+                            <div class="text-center">
+                                <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                                </svg>
+                                <p class="text-gray-500 text-lg font-medium">ไม่พบข้อมูลผู้ป่วย</p>
+                                <p class="text-gray-400 mt-1">กรุณานำเข้าข้อมูลจากไฟล์ Excel</p>
+                            </div>
                         </td>
                     </tr>
                 `;
+                updatePaginationInfo();
                 return;
             }
             
@@ -948,22 +980,22 @@
             const end = start + recordsPerPage;
             const patientsToShow = allPatients.slice(start, end);
             
-            patientsToShow.forEach(patient => {
+            patientsToShow.forEach((patient, index) => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-50';
+                tr.className = 'hover:bg-gray-50 ' + (index % 2 === 0 ? 'bg-white' : 'bg-gray-50');
                 tr.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.รหัสโรค || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.โรค || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.เพศ || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.อายุปี || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.อายุเดือน || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.อายุวัน || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.แขวง || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.เขต || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.จังหวัด || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.วันที่เริ่มป่วย || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.สภาพผู้ป่วย || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${patient.วันที่เสียชีวิต || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['รหัสโรค'] || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['โรค'] || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['เพศ'] || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['อายุปี'] || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['อายุเดือน'] || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['อายุวัน'] || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['แขวง'] || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['เขต'] || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['จังหวัด'] || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['วันที่เริ่มป่วย'] || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['สภาพผู้ป่วย'] || '-'}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['วันที่เสียชีวิต'] || '-'}</td>
                 `;
                 tbody.appendChild(tr);
             });
