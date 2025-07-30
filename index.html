@@ -2037,26 +2037,31 @@
             // Clear table
             tbody.innerHTML = '';
             
-            // Show import status
+            // Show import status with progress bar
             const statusDiv = document.createElement('div');
             statusDiv.id = 'importStatus';
-            statusDiv.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 slide-in';
+            statusDiv.className = 'fixed top-4 right-4 bg-white text-gray-800 px-6 py-4 rounded-lg shadow-lg z-50 slide-in';
             document.body.appendChild(statusDiv);
             
             let successCount = 0;
+            const totalRecords = jsonData.length;
             
             // Process records one by one
-            for (let i = 0; i < jsonData.length; i++) {
+            for (let i = 0; i < totalRecords; i++) {
                 const record = jsonData[i];
+                const progress = ((i + 1) / totalRecords) * 100;
                 
-                // Update status
+                // Update status with progress bar
                 statusDiv.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="animate-spin mr-3">⚡</div>
-                        <div>
-                            <div class="font-medium">กำลังนำเข้ารายการที่ ${i + 1}</div>
-                            <div class="text-sm">นำเข้าสำเร็จ ${successCount} รายการ</div>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div class="font-medium">กำลังนำเข้าข้อมูล</div>
+                            <div class="text-sm font-medium">${i + 1} / ${totalRecords}</div>
                         </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: ${progress}%"></div>
+                        </div>
+                        <div class="text-sm text-gray-600">นำเข้าสำเร็จ ${successCount} รายการ</div>
                     </div>
                 `;
                 
@@ -2077,12 +2082,15 @@
             
             // Show completion status
             statusDiv.innerHTML = `
-                <div class="flex items-center">
-                    <div class="text-white mr-3">✅</div>
-                    <div>
-                        <div class="font-medium">นำเข้าข้อมูลเสร็จสิ้น</div>
-                        <div class="text-sm">นำเข้าสำเร็จ ${successCount} รายการ</div>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="font-medium text-green-600">นำเข้าข้อมูลเสร็จสิ้น</div>
+                        <div class="text-sm font-medium">${totalRecords} / ${totalRecords}</div>
                     </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-green-600 h-2.5 rounded-full transition-all duration-300" style="width: 100%"></div>
+                    </div>
+                    <div class="text-sm text-gray-600">นำเข้าสำเร็จ ${successCount} รายการ</div>
                 </div>
             `;
             
@@ -2090,7 +2098,7 @@
             setTimeout(() => {
                 statusDiv.style.opacity = '0';
                 setTimeout(() => statusDiv.remove(), 300);
-            }, 3000);
+            }, 5000);
         }
         
         // Add record to table with animation
