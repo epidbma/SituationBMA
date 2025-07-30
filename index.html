@@ -728,55 +728,6 @@
                     </div>
                 </div>
 
-                <!-- Table Container -->
-                <div class="overflow-x-auto bg-white rounded-lg shadow mt-4">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">โรค</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสโรค</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เพศ</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อายุปี</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อายุเดือน</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อายุวัน</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">แขวง</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เขต</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จังหวัด</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่เริ่มป่วย</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สภาพผู้ป่วย</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่เสียชีวิต</th>
-                            </tr>
-                        </thead>
-                        <tbody id="patientsTableBody" class="bg-white divide-y divide-gray-200">
-                            <!-- Table rows will be dynamically inserted here -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                <div class="flex items-center justify-between mt-4 bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-                    <div class="flex-1 flex justify-between sm:hidden">
-                        <button onclick="previousPage()" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:text-gray-500">
-                            ก่อนหน้า
-                        </button>
-                        <button onclick="nextPage()" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:text-gray-500">
-                            ถัดไป
-                        </button>
-                    </div>
-                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                        <div>
-                            <p id="paginationInfo" class="text-sm text-gray-700">
-                                แสดง 0 - 0 จาก 0 รายการ
-                            </p>
-                        </div>
-                        <div>
-                            <nav id="paginationControls" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                                <!-- Pagination controls will be dynamically inserted here -->
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-
 
 
                 <!-- Pagination Controls -->
@@ -960,17 +911,15 @@
                 // Try to get data from Firebase first
                 if (snapshot.exists()) {
                     data = snapshot.val();
-                    console.log(`✅ Loaded raw data from Firebase: ${path}`);
+                    console.log(`✅ Loaded from Firebase: ${path}, Data:`, data);
                 }
 
-                // Convert Firebase data structure to array
-                if (data && typeof data === 'object') {
-                    if (!Array.isArray(data)) {
-                        data = Object.entries(data).map(([key, value]) => ({
-                            id: key,
-                            ...value
-                        }));
-                        console.log(`🔄 Converted Firebase object to array, Length: ${data.length}`);
+                // If data is an object with numeric keys, convert to array
+                if (data && typeof data === 'object' && !Array.isArray(data)) {
+                    const keys = Object.keys(data);
+                    if (keys.every(key => !isNaN(key))) {
+                        data = Object.values(data);
+                        console.log(`🔄 Converted object to array for ${path}, Length:`, data.length);
                     }
                 }
 
@@ -982,29 +931,23 @@
                         if (localData) {
                             data = JSON.parse(localData);
                             console.log(`✅ Loaded from localStorage: ${path}, Length:`, Array.isArray(data) ? data.length : 'not array');
-                            
-                            // Convert localStorage data if needed
-                            if (data && typeof data === 'object' && !Array.isArray(data)) {
-                                data = Object.entries(data).map(([key, value]) => ({
-                                    id: key,
-                                    ...value
-                                }));
-                                console.log(`🔄 Converted localStorage object to array, Length: ${data.length}`);
-                            }
                         }
                     } catch (localError) {
                         console.error(`❌ Error loading from localStorage: ${path}`, localError);
                     }
                 }
 
-                // Ensure we have an array
-                if (!Array.isArray(data)) {
-                    console.log(`⚠️ Data is not an array, converting...`);
-                    data = data ? [data] : [];
+                // If still no data, return empty array
+                if (!data) {
+                    console.log(`📭 No data found in both Firebase and localStorage: ${path}`);
+                    return [];
                 }
 
-                console.log(`✅ Final data array length: ${data.length}`);
-                return data;
+                // Process the data
+                if (Array.isArray(data)) {
+                    console.log(`✅ Got array data (${data.length} items)`);
+                    return data;
+                }
                 
                 if (typeof data === 'object') {
                     const arrayData = Object.values(data);
@@ -2661,28 +2604,24 @@
             }
         }
 
-        // Load patients table with pagination
+        // Load and display patients data with pagination
         async function loadPatientsTable(searchTerm = '') {
             console.log('🔄 Loading patients data...');
             
-            try {
-                // Use global variables if available (for real-time import)
-                if (window.allPatients && Array.isArray(window.allPatients) && window.allPatients.length > 0) {
-                    allPatients = window.allPatients;
-                    console.log(`📊 Using cached patients data: ${allPatients.length}`);
+            // Use global variables if available (for real-time import)
+            if (window.allPatients && Array.isArray(window.allPatients) && window.allPatients.length > 0) {
+                allPatients = window.allPatients;
+                console.log(`📊 Using cached patients data: ${allPatients.length}`);
+            } else {
+                // Load from Firebase
+                const firebaseData = await loadFromFirebase('patients');
+                if (Array.isArray(firebaseData)) {
+                    allPatients = firebaseData;
+                    console.log(`📊 Total patients loaded from Firebase: ${allPatients.length}`);
                 } else {
-                    // Load from Firebase
-                    console.log('📡 Fetching data from Firebase...');
-                    const firebaseData = await loadFromFirebase('patients');
-                    console.log('📦 Firebase data received:', firebaseData);
-                    
-                    if (Array.isArray(firebaseData)) {
-                        allPatients = firebaseData;
-                        console.log(`📊 Total patients loaded from Firebase: ${allPatients.length}`);
-                    } else {
-                        console.error('❌ Firebase data is not an array:', firebaseData);
-                        allPatients = [];
-                    }
+                    console.error('❌ Firebase data is not an array:', firebaseData);
+                    allPatients = [];
+                }
                 
                 // Try loading from localStorage if no Firebase data
                 if (allPatients.length === 0) {
@@ -2723,65 +2662,62 @@
 
             const tbody = document.getElementById('patientsTableBody');
             
-            if (filteredPatients.length === 0) {
+            if (!filteredPatients || filteredPatients.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="12" class="px-6 py-10 text-center text-gray-500">
+                        <td colspan="12" class="px-6 py-4 text-center text-gray-500">
                             <div class="text-6xl mb-4">📋</div>
-                            <p class="font-medium text-lg text-gray-900">${searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'ยังไม่มีข้อมูลผู้ป่วย'}</p>
-                            <p class="text-sm text-gray-500 mt-1">${searchTerm ? 'ลองเปลี่ยนคำค้นหา' : 'กรุณานำเข้าข้อมูลจากไฟล์ Excel'}</p>
+                            <p class="font-semibold text-xl text-gray-700">${searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'ยังไม่มีข้อมูลผู้ป่วย'}</p>
+                            <p class="text-gray-500 mt-2">${searchTerm ? 'ลองเปลี่ยนคำค้นหา' : 'กรุณานำเข้าข้อมูลจากไฟล์ Excel'}</p>
                         </td>
                     </tr>
                 `;
-                updatePaginationInfo(0, 0, 0);
+                updatePaginationInfo(0, 1, 1);
+                updatePaginationControls(1);
                 return;
             }
 
-            // Calculate pagination
+            // คำนวณข้อมูลสำหรับการแบ่งหน้า
             const totalRecords = filteredPatients.length;
             const totalPages = Math.ceil(totalRecords / recordsPerPage);
             const startIndex = (currentPage - 1) * recordsPerPage;
             const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
             const currentPageData = filteredPatients.slice(startIndex, endIndex);
 
-            // Render current page data
+            // แสดงข้อมูลในตาราง
             tbody.innerHTML = currentPageData.map((patient, index) => {
                 const globalIndex = startIndex + index;
                 return `
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">${patient.โรค || patient['โรค'] || '-'}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-blue-600">${patient.รหัสโรค || patient['รหัสโรค'] || '-'}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.เพศ || patient['เพศ'] || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุปี || patient['อายุปี'] || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุเดือน || patient['อายุเดือน'] || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุวัน || patient['อายุวัน'] || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.แขวง || patient['แขวง'] || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.เขต || patient['เขต'] || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.จังหวัด || patient['จังหวัด'] || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${convertExcelDateToThai(patient.วันที่เริ่มป่วย || patient['วันที่เริ่มป่วย']) || '-'}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                    <tr class="${globalIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">${patient.รหัสโรค || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${patient.โรค || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.เพศ || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุปี || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุเดือน || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุวัน || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.แขวง || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.เขต || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.จังหวัด || ''}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${convertExcelDateToThai(patient.วันที่เริ่มป่วย)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                (patient.สภาพผู้ป่วย || patient['สภาพผู้ป่วย']) === 'เสียชีวิต' 
+                                patient.สภาพผู้ป่วย === 'เสียชีวิต' 
                                 ? 'bg-red-100 text-red-800' 
                                 : 'bg-green-100 text-green-800'
                             }">
-                                ${patient.สภาพผู้ป่วย || patient['สภาพผู้ป่วย'] || 'ไม่ระบุ'}
+                                ${patient.สภาพผู้ป่วย || ''}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            ${convertExcelDateToThai(patient.วันที่เสียชีวิต || patient['วันที่เสียชีวิต']) || '-'}
-                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${convertExcelDateToThai(patient.วันที่เสียชีวิต)}</td>
                     </tr>
                 `;
             }).join('');
 
-            // Update pagination
+            // อัพเดทข้อมูลการแบ่งหน้า
             updatePaginationInfo(totalRecords, currentPage, totalPages);
             updatePaginationControls(totalPages);
+            
+            console.log(`📊 Showing page ${currentPage}/${totalPages} (${currentPageData.length} of ${totalRecords} records)`);
         }
 
         // Update pagination information display
