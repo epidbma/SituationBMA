@@ -928,25 +928,38 @@
 
         async function loadFromFirebase(path) {
             try {
-                const { database, ref, get } = window.firebaseDB;
                 console.log(`🔄 Attempting to load from Firebase: ${path}`);
+                const { database, ref, get } = window.firebaseDB;
+                if (!database || !ref || !get) {
+                    console.error('❌ Firebase DB functions not available');
+                    return [];
+                }
                 const snapshot = await get(ref(database, path));
                 let data = null;
 
                 // Try to get data from Firebase first
                 if (snapshot.exists()) {
                     data = snapshot.val();
-                    console.log(`✅ Loaded from Firebase: ${path}`, data);
+                    console.log(`✅ Loaded from Firebase: ${path}, Data:`, data);
+                }
+
+                // If data is an object with numeric keys, convert to array
+                if (data && typeof data === 'object' && !Array.isArray(data)) {
+                    const keys = Object.keys(data);
+                    if (keys.every(key => !isNaN(key))) {
+                        data = Object.values(data);
+                        console.log(`🔄 Converted object to array for ${path}, Length:`, data.length);
+                    }
                 }
 
                 // If no data in Firebase, try localStorage
-                if (!data) {
+                if (!data || (Array.isArray(data) && data.length === 0)) {
                     console.log(`📭 No data found in Firebase: ${path}`);
                     try {
                         const localData = localStorage.getItem(path.replace('/', '_'));
                         if (localData) {
                             data = JSON.parse(localData);
-                            console.log(`✅ Loaded from localStorage: ${path}`);
+                            console.log(`✅ Loaded from localStorage: ${path}, Length:`, Array.isArray(data) ? data.length : 'not array');
                         }
                     } catch (localError) {
                         console.error(`❌ Error loading from localStorage: ${path}`, localError);
@@ -2234,13 +2247,19 @@
             console.log('🔄 Loading patients table...');
             
             // Use global variables if available (for real-time import)
-            if (window.allPatients && window.allPatients.length > 0) {
+            if (window.allPatients && Array.isArray(window.allPatients) && window.allPatients.length > 0) {
                 allPatients = window.allPatients;
-                console.log(`📊 Using cached patients data:`, window.allPatients);
+                console.log(`📊 Using cached patients data: ${allPatients.length}`);
             } else {
                 // ลองโหลดจาก Firebase ก่อน
-                allPatients = await loadFromFirebase('patients');
-                console.log(`📊 Total patients loaded from Firebase: ${allPatients.length}`);
+                const firebaseData = await loadFromFirebase('patients');
+                if (Array.isArray(firebaseData)) {
+                    allPatients = firebaseData;
+                    console.log(`📊 Total patients loaded from Firebase: ${allPatients.length}`);
+                } else {
+                    console.error('❌ Firebase data is not an array:', firebaseData);
+                    allPatients = [];
+                }
                 
                 // หากไม่มีข้อมูลใน Firebase ลองโหลดจาก localStorage
                 if (allPatients.length === 0) {
@@ -2295,8 +2314,15 @@
                 return;
             }
 
+            // Ensure we have valid data to work with
+            if (!Array.isArray(filteredPatients)) {
+                console.error('❌ filteredPatients is not an array:', filteredPatients);
+                filteredPatients = [];
+            }
+
             // Calculate pagination
             const totalRecords = filteredPatients.length;
+            console.log(`📊 Filtered patients: ${totalRecords}`);
             const totalPages = Math.ceil(totalRecords / recordsPerPage);
             const startIndex = (currentPage - 1) * recordsPerPage;
             const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
