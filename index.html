@@ -558,6 +558,14 @@
                         <p class="text-gray-600 text-lg">จัดการข้อมูลผู้ป่วยและนำเข้าจากไฟล์ Excel</p>
                     </div>
                     <div class="flex space-x-4">
+                        <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" onchange="importExcel()">
+                        <button onclick="document.getElementById('excelFile').click()" class="btn-primary">
+                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
+                            </svg>
+                            นำเข้าจาก Excel
+                        </button>
+
                         <button onclick="clearAllPatients()" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg">
                             <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"/>
@@ -573,7 +581,48 @@
                     </div>
                 </div>
 
-                <!-- Progress Bar Removed -->
+                <!-- Import Progress Bar -->
+                <div id="importProgressContainer" class="hidden mb-8">
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
+                                    <svg id="importIcon" class="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-lg">กำลังนำเข้าข้อมูลผู้ป่วย</h3>
+                                    <p id="importStatus" class="text-gray-600">กำลังเตรียมข้อมูล...</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div id="importPercentage" class="text-2xl font-bold text-blue-600">0%</div>
+                                <div id="importCount" class="text-sm text-gray-500">0 / 0 รายการ</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
+                            <div id="progressBar" class="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+                        </div>
+                        
+                        <!-- Progress Details -->
+                        <div class="grid grid-cols-3 gap-4 text-center mb-4">
+                            <div class="bg-blue-50 rounded-lg p-3">
+                                <div id="processedCount" class="text-xl font-bold text-blue-600">0</div>
+                                <div class="text-xs text-blue-600 font-medium">ประมวลผลแล้ว</div>
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-3">
+                                <div id="validCount" class="text-xl font-bold text-green-600">0</div>
+                                <div class="text-xs text-green-600 font-medium">บันทึกสำเร็จ</div>
+                            </div>
+                            <div class="bg-orange-50 rounded-lg p-3">
+                                <div id="errorCount" class="text-xl font-bold text-orange-600">0</div>
+                                <div class="text-xs text-orange-600 font-medium">ข้อมูลผิดพลาด</div>
+                            </div>
+                        </div>
                         
                         <!-- Batch Processing Details -->
                         <div id="batchDetails" class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-4 hidden">
@@ -1212,116 +1261,37 @@
                     updateImportStatus('⚡ ประมวลผลข้อมูล Excel...');
                 }
                 
-                // แสดงสถานะการใช้หน่วยความจำ
-                const memoryBefore = window.performance.memory ? window.performance.memory.usedJSHeapSize / (1024 * 1024) : 0;
-                console.log(`📊 Memory usage before processing: ${memoryBefore.toFixed(2)} MB`);
-                
                 // Optimized XLSX reading for large files
                 const workbook = XLSX.read(data, {
                     type: 'array',
                     cellDates: true,
                     cellNF: false,
                     cellText: false,
-                    dense: true,
-                    raw: true,
-                    codepage: 65001
+                    // Performance optimizations
+                    dense: true,  // Use dense mode for better memory usage
+                    raw: false,   // Don't parse formulas
+                    codepage: 65001 // UTF-8 for Thai characters
                 });
-                
-                // Clear input data from memory
-                data = null;
                 
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // Process in smaller chunks to avoid memory issues
-                const chunkSize = 10000; // Process 10,000 rows at a time
-                const range = XLSX.utils.decode_range(firstSheet['!ref']);
-                const totalRows = range.e.r - range.s.r + 1;
-                
-                console.log(`📊 Total rows to process: ${totalRows}`);
-                
-                // Convert headers first
-                const headers = XLSX.utils.sheet_to_json(firstSheet, { 
-                    header: 1,
-                    raw: true,
-                    range: XLSX.utils.encode_range({s: {r: 0, c: 0}, e: {r: 0, c: range.e.c}})
-                })[0];
-                
-                let jsonData = [];
-                
-                // Process data in chunks
-                for(let startRow = 1; startRow <= totalRows; startRow += chunkSize) {
-                    const endRow = Math.min(startRow + chunkSize - 1, totalRows);
-                    
-                    updateImportStatus(`⚡ ประมวลผลแถวที่ ${startRow.toLocaleString()} ถึง ${endRow.toLocaleString()}...`);
-                    
-                    const chunkRange = XLSX.utils.encode_range({
-                        s: {r: startRow, c: 0},
-                        e: {r: endRow, c: range.e.c}
-                    });
-                    
-                    const chunkData = XLSX.utils.sheet_to_json(firstSheet, {
-                        raw: true,
-                        dateNF: 'dd/mm/yyyy',
-                        defval: '',
-                        blankrows: false,
-                        range: chunkRange,
-                        header: headers
-                    });
-                    
-                    jsonData = jsonData.concat(chunkData);
-                    
-                    // Force garbage collection if available
-                    if (global && global.gc) global.gc();
-                }
+                // Use faster conversion method for large datasets
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+                    raw: false,
+                    dateNF: 'dd/mm/yyyy',
+                    defval: '', // Default value for empty cells
+                    blankrows: false // Skip blank rows
+                });
                 
                 console.log(`📊 Parsed ${jsonData.length.toLocaleString()} records from Excel`);
                 
-                // Clear the workbook from memory
+                // Clear the workbook from memory immediately
                 workbook.Sheets = null;
-                firstSheet = null;
-                workbook = null;
-                
-                if (global && global.gc) global.gc();
-                
-                const memoryAfter = window.performance.memory ? window.performance.memory.usedJSHeapSize / (1024 * 1024) : 0;
-                console.log(`📊 Memory usage after processing: ${memoryAfter.toFixed(2)} MB`);
-                console.log(`📊 Memory difference: ${(memoryAfter - memoryBefore).toFixed(2)} MB`);
                 
                 updateImportStatus('🚀 เริ่มระบบนำเข้าความเร็วสูง...');
                 updateImportCount(0, jsonData.length);
                 
-                // Process data in smaller batches
-                const batchSize = 1000; // Process 1,000 records at a time
-                let processedCount = 0;
-                
-                function processBatch() {
-                    const batch = jsonData.slice(processedCount, processedCount + batchSize);
-                    if (batch.length === 0) {
-                        // All data processed
-                        updateImportStatus('✅ ประมวลผลเสร็จสิ้น กำลังบันทึกข้อมูล...');
-                        saveProcessedData(jsonData);
-                        return;
-                    }
-                    
-                    // Process batch
-                    batch.forEach(record => {
-                        // Add any necessary data validation or transformation here
-                        if (record['รหัสโรค'] && record['เพศ']) {
-                            validRecords++;
-                        } else {
-                            errorRecords++;
-                        }
-                    });
-                    
-                    processedCount += batch.length;
-                    updateImportCount(processedCount, jsonData.length);
-                    updateImportStatus(`⚡ ประมวลผล ${processedCount.toLocaleString()} จาก ${jsonData.length.toLocaleString()} รายการ...`);
-                    
-                    // Schedule next batch with small delay to prevent UI blocking
-                    setTimeout(processBatch, 10);
-                }
-                
-                // Start processing
+                // Enhanced time estimation based on actual performance data
                 const estimatedSpeed = getEstimatedProcessingSpeed(jsonData.length);
                 const estimatedTime = Math.ceil(jsonData.length / estimatedSpeed);
                 
