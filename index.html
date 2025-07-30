@@ -540,6 +540,8 @@
             </div>
         </div>
 
+
+
         <!-- Master Data Page -->
         <div id="masterDataPage" class="hidden">
             <div class="glass-card p-8 slide-in">
@@ -775,7 +777,7 @@
             
             // Initialize all data collections
             const collections = [
-                'diseases', 'responsible', 'patients', 'population', 
+                'diseases', 'responsible', 'population', 
                 'agePopulation', 'thailandPopulation', 'epidemicWeeks', 'bangkokDistricts'
             ];
             
@@ -814,7 +816,7 @@
             });
 
             // Reset all tabs
-            const tabs = ['summaryTab', 'reportTab', 'patientsTab', 'masterDataTab'];
+            const tabs = ['summaryTab', 'reportTab', 'masterDataTab'];
             tabs.forEach(tabId => {
                 const tab = document.getElementById(tabId);
                 tab.className = tab.className.replace('tab-active', 'tab-inactive');
