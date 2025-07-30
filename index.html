@@ -558,14 +558,6 @@
                         <p class="text-gray-600 text-lg">จัดการข้อมูลผู้ป่วยและนำเข้าจากไฟล์ Excel</p>
                     </div>
                     <div class="flex space-x-4">
-                        <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" onchange="importExcel()">
-                        <button onclick="document.getElementById('excelFile').click()" class="btn-primary">
-                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z"/>
-                            </svg>
-                            นำเข้าจาก Excel
-                        </button>
-
                         <button onclick="clearAllPatients()" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg">
                             <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"/>
@@ -581,48 +573,7 @@
                     </div>
                 </div>
 
-                <!-- Import Progress Bar -->
-                <div id="importProgressContainer" class="hidden mb-8">
-                    <div class="glass-card p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
-                                    <svg id="importIcon" class="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-gray-900 text-lg">กำลังนำเข้าข้อมูลผู้ป่วย</h3>
-                                    <p id="importStatus" class="text-gray-600">กำลังเตรียมข้อมูล...</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div id="importPercentage" class="text-2xl font-bold text-blue-600">0%</div>
-                                <div id="importCount" class="text-sm text-gray-500">0 / 0 รายการ</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Progress Bar -->
-                        <div class="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
-                            <div id="progressBar" class="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
-                        </div>
-                        
-                        <!-- Progress Details -->
-                        <div class="grid grid-cols-3 gap-4 text-center mb-4">
-                            <div class="bg-blue-50 rounded-lg p-3">
-                                <div id="processedCount" class="text-xl font-bold text-blue-600">0</div>
-                                <div class="text-xs text-blue-600 font-medium">ประมวลผลแล้ว</div>
-                            </div>
-                            <div class="bg-green-50 rounded-lg p-3">
-                                <div id="validCount" class="text-xl font-bold text-green-600">0</div>
-                                <div class="text-xs text-green-600 font-medium">บันทึกสำเร็จ</div>
-                            </div>
-                            <div class="bg-orange-50 rounded-lg p-3">
-                                <div id="errorCount" class="text-xl font-bold text-orange-600">0</div>
-                                <div class="text-xs text-orange-600 font-medium">ข้อมูลผิดพลาด</div>
-                            </div>
-                        </div>
+                <!-- Progress Bar Removed -->
                         
                         <!-- Batch Processing Details -->
                         <div id="batchDetails" class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-4 hidden">
