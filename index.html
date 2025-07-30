@@ -960,15 +960,17 @@
                 // Try to get data from Firebase first
                 if (snapshot.exists()) {
                     data = snapshot.val();
-                    console.log(`✅ Loaded from Firebase: ${path}, Data:`, data);
+                    console.log(`✅ Loaded raw data from Firebase: ${path}`);
                 }
 
-                // If data is an object with numeric keys, convert to array
-                if (data && typeof data === 'object' && !Array.isArray(data)) {
-                    const keys = Object.keys(data);
-                    if (keys.every(key => !isNaN(key))) {
-                        data = Object.values(data);
-                        console.log(`🔄 Converted object to array for ${path}, Length:`, data.length);
+                // Convert Firebase data structure to array
+                if (data && typeof data === 'object') {
+                    if (!Array.isArray(data)) {
+                        data = Object.entries(data).map(([key, value]) => ({
+                            id: key,
+                            ...value
+                        }));
+                        console.log(`🔄 Converted Firebase object to array, Length: ${data.length}`);
                     }
                 }
 
@@ -980,23 +982,29 @@
                         if (localData) {
                             data = JSON.parse(localData);
                             console.log(`✅ Loaded from localStorage: ${path}, Length:`, Array.isArray(data) ? data.length : 'not array');
+                            
+                            // Convert localStorage data if needed
+                            if (data && typeof data === 'object' && !Array.isArray(data)) {
+                                data = Object.entries(data).map(([key, value]) => ({
+                                    id: key,
+                                    ...value
+                                }));
+                                console.log(`🔄 Converted localStorage object to array, Length: ${data.length}`);
+                            }
                         }
                     } catch (localError) {
                         console.error(`❌ Error loading from localStorage: ${path}`, localError);
                     }
                 }
 
-                // If still no data, return empty array
-                if (!data) {
-                    console.log(`📭 No data found in both Firebase and localStorage: ${path}`);
-                    return [];
+                // Ensure we have an array
+                if (!Array.isArray(data)) {
+                    console.log(`⚠️ Data is not an array, converting...`);
+                    data = data ? [data] : [];
                 }
 
-                // Process the data
-                if (Array.isArray(data)) {
-                    console.log(`✅ Got array data (${data.length} items)`);
-                    return data;
-                }
+                console.log(`✅ Final data array length: ${data.length}`);
+                return data;
                 
                 if (typeof data === 'object') {
                     const arrayData = Object.values(data);
@@ -2657,20 +2665,24 @@
         async function loadPatientsTable(searchTerm = '') {
             console.log('🔄 Loading patients data...');
             
-            // Use global variables if available (for real-time import)
-            if (window.allPatients && Array.isArray(window.allPatients) && window.allPatients.length > 0) {
-                allPatients = window.allPatients;
-                console.log(`📊 Using cached patients data: ${allPatients.length}`);
-            } else {
-                // Load from Firebase
-                const firebaseData = await loadFromFirebase('patients');
-                if (Array.isArray(firebaseData)) {
-                    allPatients = firebaseData;
-                    console.log(`📊 Total patients loaded from Firebase: ${allPatients.length}`);
+            try {
+                // Use global variables if available (for real-time import)
+                if (window.allPatients && Array.isArray(window.allPatients) && window.allPatients.length > 0) {
+                    allPatients = window.allPatients;
+                    console.log(`📊 Using cached patients data: ${allPatients.length}`);
                 } else {
-                    console.error('❌ Firebase data is not an array:', firebaseData);
-                    allPatients = [];
-                }
+                    // Load from Firebase
+                    console.log('📡 Fetching data from Firebase...');
+                    const firebaseData = await loadFromFirebase('patients');
+                    console.log('📦 Firebase data received:', firebaseData);
+                    
+                    if (Array.isArray(firebaseData)) {
+                        allPatients = firebaseData;
+                        console.log(`📊 Total patients loaded from Firebase: ${allPatients.length}`);
+                    } else {
+                        console.error('❌ Firebase data is not an array:', firebaseData);
+                        allPatients = [];
+                    }
                 
                 // Try loading from localStorage if no Firebase data
                 if (allPatients.length === 0) {
