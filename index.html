@@ -942,13 +942,13 @@
                     console.log(`✅ Loaded from Firebase: ${path}, Data:`, data);
                 }
 
-                // If data is an object with numeric keys, convert to array
+                // If data is an object, convert to array with Firebase keys
                 if (data && typeof data === 'object' && !Array.isArray(data)) {
-                    const keys = Object.keys(data);
-                    if (keys.every(key => !isNaN(key))) {
-                        data = Object.values(data);
-                        console.log(`🔄 Converted object to array for ${path}, Length:`, data.length);
-                    }
+                    data = Object.entries(data).map(([key, value]) => ({
+                        ...value,
+                        _id: key // Add Firebase key as _id
+                    }));
+                    console.log(`🔄 Converted object to array for ${path}, Length:`, data.length);
                 }
 
                 // If no data in Firebase, try localStorage
@@ -2651,6 +2651,13 @@
                 }
             }
             
+            // Sort patients by latest first
+            allPatients = allPatients.sort((a, b) => {
+                const dateA = a.วันที่รับแจ้ง ? new Date(a.วันที่รับแจ้ง) : new Date(0);
+                const dateB = b.วันที่รับแจ้ง ? new Date(b.วันที่รับแจ้ง) : new Date(0);
+                return dateB - dateA;
+            });
+
             // Filter patients based on search term
             if (searchTerm) {
                 filteredPatients = allPatients.filter(patient => {
