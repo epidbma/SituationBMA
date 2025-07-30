@@ -1816,8 +1816,7 @@
                             <p>• นำเข้าข้อมูลผู้ป่วยจากไฟล์ Excel (.xlsx)</p>
                             <p>• ข้อมูลที่จำเป็น:</p>
                             <ul class="list-disc list-inside pl-4 text-sm">
-                                <li>โรค</li>
-                                <li>รหัสโรค</li>
+                                <li>รหัสโรค (ระบบจะดึงชื่อโรคให้อัตโนมัติ)</li>
                                 <li>เพศ</li>
                                 <li>อายุปี</li>
                                 <li>แขวง</li>
@@ -1911,7 +1910,6 @@
             
             // Create headers
             const headers = [
-                'โรค',
                 'รหัสโรค',
                 'เพศ',
                 'อายุปี',
@@ -1928,8 +1926,8 @@
             // Create sample data
             const data = [
                 headers,
-                ['ไข้เลือดออก', 'A90', 'ชาย', '25', '0', '0', 'คลองเตย', 'คลองเตย', 'กรุงเทพมหานคร', '2023-07-15', 'หาย', ''],
-                ['อหิวาตกโรค', 'A00', 'หญิง', '35', '0', '0', 'ดินแดง', 'ดินแดง', 'กรุงเทพมหานคร', '2023-07-20', 'เสียชีวิต', '2023-07-25']
+                ['A90', 'ชาย', '25', '0', '0', 'คลองเตย', 'คลองเตย', 'กรุงเทพมหานคร', '2023-07-15', 'หาย', ''],
+                ['A00', 'หญิง', '35', '0', '0', 'ดินแดง', 'ดินแดง', 'กรุงเทพมหานคร', '2023-07-20', 'เสียชีวิต', '2023-07-25']
             ];
             
             // Create worksheet
@@ -1977,6 +1975,10 @@
             importButton.disabled = true;
             
             try {
+                // โหลดข้อมูลรหัสโรคทั้งหมด
+                const diseases = await loadFromFirebase('diseases');
+                const diseasesMap = new Map(diseases.map(d => [d.code, d.name]));
+                
                 const reader = new FileReader();
                 reader.onload = async function(e) {
                     try {
@@ -1990,6 +1992,15 @@
                         if (skipFirstRow) {
                             jsonData = jsonData.slice(1);
                         }
+                        
+                        // เพิ่มชื่อโรคจากรหัสโรค
+                        jsonData = jsonData.map(row => {
+                            const diseaseCode = row['รหัสโรค'];
+                            return {
+                                ...row,
+                                'โรค': diseasesMap.get(diseaseCode) || row['โรค'] || ''
+                            };
+                        });
                         
                         // Process records
                         await importRecords(jsonData);
