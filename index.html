@@ -540,7 +540,82 @@
             </div>
         </div>
 
+        <!-- Patients Page -->
+        <div id="patientsPage" class="hidden">
+            <div class="glass-card p-8 slide-in">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-3xl font-bold bg-gradient-to-r from-purple-800 to-purple-600 bg-clip-text text-transparent mb-3">
+                            ฐานข้อมูลผู้ป่วย
+                        </h2>
+                        <p class="text-gray-600 text-lg">จัดการข้อมูลผู้ป่วยและนำเข้าจากไฟล์ Excel</p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button onclick="showImportPatientsModal()" class="btn-primary">
+                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z"/>
+                                <path d="M9 13h2v5a1 1 0 11-2 0v-5z"/>
+                            </svg>
+                            นำเข้าข้อมูลจาก Excel
+                        </button>
+                        <button onclick="showPage('summary')" class="btn-secondary">
+                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"/>
+                            </svg>
+                            กลับหน้าหลัก
+                        </button>
+                    </div>
+                </div>
 
+                <!-- Search and Filter Controls -->
+                <div class="glass-card p-6 mb-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
+                        <div class="flex-1 max-w-md">
+                            <div class="relative">
+                                <input type="text" id="searchInput" placeholder="ค้นหาข้อมูลผู้ป่วย..." 
+                                       class="w-full input-field pl-10 pr-10" 
+                                       onkeyup="if(event.key==='Enter') searchPatients()" 
+                                       oninput="if(this.value==='') searchPatients()">
+                                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patients Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gradient-to-r from-purple-50 to-purple-100">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">รหัสโรค</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ชื่อโรค</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">เพศ</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุปี</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุเดือน</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุวัน</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">แขวง</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">เขต</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">จังหวัด</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">วันที่เริ่มป่วย</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">สภาพผู้ป่วย</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">วันที่เสียชีวิต</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientsTableBody">
+                            <tr>
+                                <td colspan="12" class="px-6 py-20 text-center text-gray-500">
+                                    <div class="text-6xl mb-4">📋</div>
+                                    <p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลผู้ป่วย</p>
+                                    <p class="text-gray-500 mt-2">กรุณานำเข้าข้อมูลจากไฟล์ Excel</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
         <!-- Master Data Page -->
         <div id="masterDataPage" class="hidden">
@@ -561,6 +636,16 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="master-data-card" onclick="showPage('patients')">
+                        <div class="w-16 h-16 icon-gradient-purple rounded-2xl mx-auto mb-6 flex items-center justify-center">
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                            </svg>
+                        </div>
+                        <h3 class="font-bold text-gray-900 mb-3 text-lg">ฐานข้อมูลผู้ป่วย</h3>
+                        <p class="text-gray-600">จัดการข้อมูลผู้ป่วยและนำเข้าจาก Excel</p>
+                    </div>
+
                     <div class="master-data-card" onclick="showMasterDataDetail('diseases')">
                         <div class="w-16 h-16 icon-gradient-blue rounded-2xl mx-auto mb-6 flex items-center justify-center">
                             <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
@@ -808,7 +893,7 @@
         // Page navigation with animation
         function showPage(page) {
             // Hide all pages
-            const pages = ['summaryPage', 'reportPage', 'masterDataPage', 'masterDataDetailPage'];
+            const pages = ['summaryPage', 'reportPage', 'patientsPage', 'masterDataPage', 'masterDataDetailPage'];
             pages.forEach(pageId => {
                 const element = document.getElementById(pageId);
                 element.classList.add('hidden');
@@ -913,6 +998,297 @@
                 button.innerHTML = originalText;
                 alert('ฟีเจอร์ส่งออกรายงานจะพัฒนาในเวอร์ชั่นต่อไป พร้อมการสร้าง PDF และ Excel อัตโนมัติ');
             }, 2000);
+        }
+
+        // Show import patients modal
+        function showImportPatientsModal() {
+            const modalHTML = `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full mx-4 relative slide-up">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6">นำเข้าข้อมูลผู้ป่วย</h3>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    เลือกไฟล์ Excel (.xlsx)
+                                </label>
+                                <input type="file" id="patientsExcelFile" accept=".xlsx" 
+                                       class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
+                                              file:rounded-full file:border-0 file:text-sm file:font-semibold
+                                              file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                                       onchange="validateExcelFile(this)">
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" id="skipFirstRowPatients" class="rounded text-purple-600">
+                                <label class="ml-2 text-sm text-gray-600">ข้ามบรรทัดแรก (หัวตาราง)</label>
+                            </div>
+
+                            <div class="border-t border-gray-200 pt-4">
+                                <h4 class="font-medium text-gray-900 mb-2">รูปแบบไฟล์ Excel ที่รองรับ:</h4>
+                                <p class="text-sm text-gray-600">คอลัมน์ที่จำเป็น: รหัสโรค, เพศ, อายุปี, อายุเดือน, อายุวัน, แขวง, เขต, จังหวัด, วันที่เริ่มป่วย, สภาพผู้ป่วย, วันที่เสียชีวิต</p>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <button onclick="downloadPatientsExampleFile()" class="text-sm text-purple-600 hover:text-purple-700 flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z"/>
+                                    </svg>
+                                    ดาวน์โหลดไฟล์ตัวอย่าง
+                                </button>
+                            </div>
+
+                            <div class="flex space-x-4 pt-4">
+                                <button onclick="processImportPatients()" class="flex-1 btn-primary" id="importPatientsButton" disabled>
+                                    นำเข้าข้อมูล
+                                </button>
+                                <button onclick="closeImportPatientsModal()" class="flex-1 btn-secondary">
+                                    ยกเลิก
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Create modal element
+            const modalElement = document.createElement('div');
+            modalElement.id = 'importPatientsModal';
+            modalElement.innerHTML = modalHTML;
+            document.body.appendChild(modalElement);
+        }
+
+        // Close import patients modal
+        function closeImportPatientsModal() {
+            const modal = document.getElementById('importPatientsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Validate Excel file
+        function validateExcelFile(input) {
+            const importButton = document.getElementById('importPatientsButton');
+            const file = input.files[0];
+            
+            if (file) {
+                // Check file extension
+                const fileName = file.name.toLowerCase();
+                if (!fileName.endsWith('.xlsx')) {
+                    showNotification('กรุณาเลือกไฟล์ Excel (.xlsx) เท่านั้น', 'error');
+                    input.value = '';
+                    importButton.disabled = true;
+                    return;
+                }
+                
+                // Enable import button if file is valid
+                importButton.disabled = false;
+            } else {
+                importButton.disabled = true;
+            }
+        }
+
+        // Download example Excel file
+        function downloadPatientsExampleFile() {
+            const exampleData = [
+                {
+                    'รหัสโรค': 'A01.0',
+                    'เพศ': 'ชาย',
+                    'อายุปี': 45,
+                    'อายุเดือน': 0,
+                    'อายุวัน': 0,
+                    'แขวง': 'สามเสนใน',
+                    'เขต': 'พญาไท',
+                    'จังหวัด': 'กรุงเทพมหานคร',
+                    'วันที่เริ่มป่วย': '2568-07-15',
+                    'สภาพผู้ป่วย': 'กำลังรักษา',
+                    'วันที่เสียชีวิต': ''
+                }
+            ];
+            
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(exampleData);
+            XLSX.utils.book_append_sheet(wb, ws, 'ข้อมูลผู้ป่วย');
+            
+            // Generate filename with current date
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const filename = `ตัวอย่าง_ข้อมูลผู้ป่วย_${dateStr}.xlsx`;
+            
+            // Download the file
+            XLSX.writeFile(wb, filename);
+        }
+
+        // Process import of patient data
+        async function processImportPatients() {
+            const fileInput = document.getElementById('patientsExcelFile');
+            const skipFirstRow = document.getElementById('skipFirstRowPatients').checked;
+            
+            if (!fileInput.files || !fileInput.files[0]) {
+                showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
+                return;
+            }
+            
+            // Show loading state
+            const importButton = document.getElementById('importPatientsButton');
+            const originalText = importButton.innerHTML;
+            importButton.innerHTML = `
+                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังนำเข้าข้อมูล...
+            `;
+            importButton.disabled = true;
+            
+            try {
+                // Load disease data for mapping
+                const diseases = await loadFromFirebase('diseases');
+                const diseasesMap = new Map(diseases.map(d => [d.code, d.name]));
+                
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        // Get first worksheet
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                        let jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        
+                        if (skipFirstRow) {
+                            jsonData = jsonData.slice(1);
+                        }
+                        
+                        // Add disease names from disease codes
+                        jsonData = jsonData.map(row => {
+                            const diseaseCode = row['รหัสโรค'];
+                            return {
+                                ...row,
+                                'โรค': diseasesMap.get(diseaseCode) || ''
+                            };
+                        });
+                        
+                        // Save records to database
+                        let successCount = 0;
+                        for (const record of jsonData) {
+                            try {
+                                const saved = await saveRecordToDatabase(record);
+                                if (saved) {
+                                    successCount++;
+                                    addRecordToTable(record);
+                                }
+                            } catch (error) {
+                                console.error('Error saving record:', error);
+                            }
+                        }
+                        
+                        closeImportPatientsModal();
+                        showNotification(`นำเข้าข้อมูลสำเร็จ ${successCount} รายการ`, 'success');
+                        
+                    } catch (error) {
+                        console.error('Error processing Excel file:', error);
+                        showNotification('เกิดข้อผิดพลาดในการประมวลผลไฟล์', 'error');
+                        importButton.innerHTML = originalText;
+                        importButton.disabled = false;
+                    }
+                };
+                
+                reader.readAsArrayBuffer(fileInput.files[0]);
+                
+            } catch (error) {
+                console.error('Error reading file:', error);
+                showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
+                importButton.innerHTML = originalText;
+                importButton.disabled = false;
+            }
+        }
+
+        // Save patient record to database
+        async function saveRecordToDatabase(record) {
+            try {
+                const { database, ref, push } = window.firebaseDB;
+                const patientsRef = ref(database, 'patients');
+                await push(patientsRef, record);
+                return true;
+            } catch (error) {
+                console.error('Error saving to database:', error);
+                return false;
+            }
+        }
+
+        // Add record to patients table
+        function addRecordToTable(record) {
+            const tbody = document.getElementById('patientsTableBody');
+            
+            // Clear "no data" message if it exists
+            if (tbody.querySelector('tr td[colspan="12"]')) {
+                tbody.innerHTML = '';
+            }
+            
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50 transition-colors';
+            
+            const columns = ['รหัสโรค', 'โรค', 'เพศ', 'อายุปี', 'อายุเดือน', 'อายุวัน', 
+                           'แขวง', 'เขต', 'จังหวัด', 'วันที่เริ่มป่วย', 'สภาพผู้ป่วย', 'วันที่เสียชีวิต'];
+            
+            columns.forEach(col => {
+                const td = document.createElement('td');
+                td.className = 'px-6 py-4 text-sm text-gray-700 whitespace-nowrap';
+                td.textContent = record[col] || '-';
+                tr.appendChild(td);
+            });
+            
+            tbody.insertBefore(tr, tbody.firstChild);
+        }
+
+        // Search patients
+        async function searchPatients() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const tbody = document.getElementById('patientsTableBody');
+            
+            try {
+                const { database, ref, get } = window.firebaseDB;
+                const patientsRef = ref(database, 'patients');
+                const snapshot = await get(patientsRef);
+                
+                let records = [];
+                snapshot.forEach((childSnapshot) => {
+                    records.push(childSnapshot.val());
+                });
+                
+                if (searchInput) {
+                    records = records.filter(record => 
+                        Object.values(record).some(value => 
+                            String(value).toLowerCase().includes(searchInput)
+                        )
+                    );
+                }
+                
+                tbody.innerHTML = '';
+                
+                if (records.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="12" class="px-6 py-20 text-center text-gray-500">
+                                <div class="text-6xl mb-4">🔍</div>
+                                <p class="font-semibold text-xl text-gray-700">ไม่พบข้อมูลที่ค้นหา</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                records.forEach(record => {
+                    addRecordToTable(record);
+                });
+                
+            } catch (error) {
+                console.error('Error searching patients:', error);
+                showNotification('เกิดข้อผิดพลาดในการค้นหาข้อมูล', 'error');
+            }
+        }
         }
 
         // High-performance Excel import for large datasets (100K+ records)
