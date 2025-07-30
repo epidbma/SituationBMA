@@ -1550,28 +1550,69 @@
             const requiredFields = ['โรค', 'รหัสโรค', 'เพศ', 'อายุปี', 'อายุเดือน', 'อายุวัน', 'แขวง', 'เขต', 'จังหวัด', 'วันที่เริ่มป่วย', 'สภาพผู้ป่วย', 'วันที่เสียชีวิต'];
             
             const totalRecords = jsonData.length;
-            let processedRecords = 0;
-            let validRecords = 0;
-            let errorRecords = 0;
-            let savedRecords = 0;
-            const startTime = Date.now();
-
-            // Initialize global array for real-time display
-            window.allPatients = [];
-            
-            // Clear existing table and show processing state
-            const tbody = document.getElementById('patientsTableBody');
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="12" class="px-6 py-20 text-center text-gray-500">
-                        <div class="text-6xl mb-4">⚡</div>
-                        <p class="font-semibold text-xl text-gray-700">กำลังนำเข้าข้อมูลทีละรายการ...</p>
-                        <p class="text-gray-500 mt-2">แสดงผลแบบเรียลไทม์</p>
-                    </td>
-                </tr>
-            `;
-            
-            // Determine batch size for progress display only
+                    let processedCount = 0;
+                    let successCount = 0;
+                    let errorCount = 0;
+                    
+                    // Initialize or reset global patients array
+                    if (!window.allPatients) {
+                        window.allPatients = [];
+                    }
+                    
+                    // Process records sequentially
+                    async function processRecords() {
+                        // Clear loading message if exists
+                        if (processedCount > 0) {
+                            tbody.innerHTML = '';
+                        }
+                        
+                        // Process current record
+                        const record = jsonData[processedCount];
+                        if (record) {
+                            try {
+                                // Clean and validate record
+                                const cleanRecord = {};
+                                for (const field of requiredFields) {
+                                    let value = record[field] || '';
+                                    if (field === 'อายุปี' && value) {
+                                        value = parseInt(value, 10);
+                                    }
+                                    cleanRecord[field] = value;
+                                }
+                                
+                                // Save if valid
+                                if (cleanRecord['รหัสโรค'] && cleanRecord['เพศ']) {
+                                    const saved = await saveRecordToDatabase(cleanRecord);
+                                    if (saved) {
+                                        successCount++;
+                                        window.allPatients.unshift(cleanRecord);
+                                        addRecordToTable(cleanRecord, successCount);
+                                    }
+                                } else {
+                                    errorCount++;
+                                }
+                            } catch (error) {
+                                console.error('Error processing record:', error);
+                                errorCount++;
+                            }
+                            
+                            // Update status
+                            processedCount++;
+                            const statusElement = document.getElementById('importStatus');
+                            if (statusElement) {
+                                statusElement.textContent = `${processedCount} / ${jsonData.length} รายการ (สำเร็จ: ${successCount}, ผิดพลาด: ${errorCount})`;
+                            }
+                            
+                            // Process next record after small delay
+                            setTimeout(processRecords, 50);
+                        } else {
+                            // All records processed
+                            showNotification(`นำเข้าข้อมูลเสร็จสิ้น\nสำเร็จ: ${successCount} รายการ\nผิดพลาด: ${errorCount} รายการ`, 'success');
+                        }
+                    }
+                    
+                    // Start processing
+                    processRecords();            // Determine batch size for progress display only
             const batchSize = Math.max(100, Math.floor(totalRecords / 20));
             console.log(`📊 Using batch size for progress: ${batchSize.toLocaleString()} for ${totalRecords.toLocaleString()} records`);
             
