@@ -728,7 +728,35 @@
                     </div>
                 </div>
 
-
+                <div class="table-container">
+                    <table class="w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">โรค</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">รหัสโรค</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">เพศ</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุปี</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุเดือน</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุวัน</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">แขวง</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">เขต</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">จังหวัด</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">วันที่เริ่มป่วย</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">สภาพผู้ป่วย</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">วันที่เสียชีวิต</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientsTableBody">
+                            <tr>
+                                <td colspan="12" class="px-6 py-20 text-center text-gray-500">
+                                    <div class="text-6xl mb-4">📋</div>
+                                    <p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลผู้ป่วย</p>
+                                    <p class="text-gray-500 mt-2">กรุณานำเข้าข้อมูลจากไฟล์ Excel</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 <!-- Pagination Controls -->
                 <div class="glass-card p-4 mt-6">
@@ -1823,7 +1851,7 @@
                         </div>
 
                         <div class="flex space-x-4 mt-8">
-                            <button onclick="cancelImport()" class="flex-1 btn-secondary" id="cancelImportButton">
+                            <button onclick="closeImportPatientsModal()" class="flex-1 btn-secondary">
                                 ยกเลิก
                             </button>
                             <button onclick="processImportPatients()" class="flex-1 btn-primary" id="importPatientsButton" disabled>
@@ -1927,30 +1955,11 @@
 
         // Process patients import
         async function processImportPatients() {
-            importCancelled = false;
-            importInProgress = true;
-            
             const fileInput = document.getElementById('patientsExcelFile');
             const skipFirstRow = document.getElementById('skipFirstRowPatients').checked;
             
             if (!fileInput.files || !fileInput.files[0]) {
                 showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
-                importInProgress = false;
-                return;
-            }
-
-            // ตรวจสอบนามสกุลไฟล์
-            const filename = fileInput.files[0].name.toLowerCase();
-            if (!filename.endsWith('.xlsx') && !filename.endsWith('.xls')) {
-                showNotification('กรุณาเลือกไฟล์ Excel ที่มีนามสกุล .xlsx หรือ .xls เท่านั้น', 'error');
-                importInProgress = false;
-                return;
-            }
-
-            // ตรวจสอบขนาดไฟล์ (ไม่เกิน 10MB)
-            if (fileInput.files[0].size > 10 * 1024 * 1024) {
-                showNotification('ไฟล์มีขนาดใหญ่เกินไป กรุณาเลือกไฟล์ขนาดไม่เกิน 10MB', 'error');
-                importInProgress = false;
                 return;
             }
             
@@ -1973,55 +1982,12 @@
                 const reader = new FileReader();
                 reader.onload = async function(e) {
                     try {
-                        // ตรวจสอบว่ามีข้อมูลหรือไม่
-                        if (!e.target.result) {
-                            throw new Error('ไม่พบข้อมูลในไฟล์');
-                        }
-
-                        // แปลงข้อมูลและตรวจสอบความถูกต้อง
                         const data = new Uint8Array(e.target.result);
-                        let workbook;
-                        try {
-                            workbook = XLSX.read(data, { type: 'array' });
-                        } catch (error) {
-                            console.error('Error reading Excel:', error);
-                            throw new Error('ไฟล์ไม่ใช่รูปแบบ Excel ที่ถูกต้อง');
-                        }
-
-                        // ตรวจสอบว่ามี sheet หรือไม่
-                        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-                            throw new Error('ไม่พบ Sheet ในไฟล์ Excel');
-                        }
-
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
                         // Get first worksheet
                         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                        if (!worksheet) {
-                            throw new Error('ไม่สามารถอ่านข้อมูลจาก Sheet ได้');
-                        }
-
-                        // แปลงข้อมูลเป็น JSON
-                        let jsonData;
-                        try {
-                            jsonData = XLSX.utils.sheet_to_json(worksheet);
-                        } catch (error) {
-                            console.error('Error converting to JSON:', error);
-                            throw new Error('ไม่สามารถแปลงข้อมูลเป็นรูปแบบที่ถูกต้องได้');
-                        }
-
-                        // ตรวจสอบว่ามีข้อมูลหรือไม่
-                        if (!jsonData || jsonData.length === 0) {
-                            throw new Error('ไม่พบข้อมูลในไฟล์ Excel');
-                        }
-
-                        // ตรวจสอบคอลัมน์ที่จำเป็น
-                        const requiredColumns = ['รหัสโรค', 'เพศ'];
-                        const missingColumns = requiredColumns.filter(col => 
-                            !jsonData.some(row => row[col] !== undefined || row[col] !== null)
-                        );
-
-                        if (missingColumns.length > 0) {
-                            throw new Error(`ไม่พบคอลัมน์ที่จำเป็น: ${missingColumns.join(', ')}`);
-                        }
+                        let jsonData = XLSX.utils.sheet_to_json(worksheet);
                         
                         if (skipFirstRow) {
                             jsonData = jsonData.slice(1);
@@ -2037,25 +2003,16 @@
                         });
                         
                         // Process records
-                        for (const record of jsonData) {
-                            if (importCancelled) {
-                                showNotification('การนำเข้าข้อมูลถูกยกเลิก', 'warning');
-                                break;
-                            }
-                            await importRecord(record);
-                        }
+                        await importRecords(jsonData);
                         
-                        if (!importCancelled) {
-                            closeImportPatientsModal();
-                            showNotification('นำเข้าข้อมูลสำเร็จ!', 'success');
-                        }
+                        closeImportPatientsModal();
+                        showNotification('นำเข้าข้อมูลสำเร็จ!', 'success');
                         
                     } catch (error) {
                         console.error('Error processing Excel file:', error);
-                        showNotification(error.message || 'เกิดข้อผิดพลาดในการประมวลผลไฟล์', 'error');
+                        showNotification('เกิดข้อผิดพลาดในการประมวลผลไฟล์', 'error');
                         importButton.innerHTML = originalText;
                         importButton.disabled = false;
-                        importInProgress = false;
                     }
                 };
                 
@@ -2651,28 +2608,17 @@
         // Import control variables
         let importCancelled = false;
         let currentImportProcess = null;
-        let importInProgress = false;
 
-        // Function to cancel import
-        function cancelImport() {
-            if (importInProgress) {
-                importCancelled = true;
-                showNotification('กำลังยกเลิกการนำเข้าข้อมูล...', 'warning');
-                // ปิด modal นำเข้าข้อมูล
-                closeImportPatientsModal();
-            }
-        }
-
-        // Load and display patients data with pagination
+        // Load patients table with pagination
         async function loadPatientsTable(searchTerm = '') {
-            console.log('🔄 Loading patients data...');
+            console.log('🔄 Loading patients table...');
             
             // Use global variables if available (for real-time import)
             if (window.allPatients && Array.isArray(window.allPatients) && window.allPatients.length > 0) {
                 allPatients = window.allPatients;
                 console.log(`📊 Using cached patients data: ${allPatients.length}`);
             } else {
-                // Load from Firebase
+                // ลองโหลดจาก Firebase ก่อน
                 const firebaseData = await loadFromFirebase('patients');
                 if (Array.isArray(firebaseData)) {
                     allPatients = firebaseData;
@@ -2682,7 +2628,7 @@
                     allPatients = [];
                 }
                 
-                // Try loading from localStorage if no Firebase data
+                // หากไม่มีข้อมูลใน Firebase ลองโหลดจาก localStorage
                 if (allPatients.length === 0) {
                     console.log('🔍 No data from Firebase, checking localStorage...');
                     const localData = localStorage.getItem('patients');
@@ -2700,7 +2646,7 @@
                 }
             }
             
-            // Filter patients based on search term if needed
+            // Filter patients based on search term
             if (searchTerm) {
                 filteredPatients = allPatients.filter(patient => {
                     const searchFields = [
@@ -2721,62 +2667,64 @@
 
             const tbody = document.getElementById('patientsTableBody');
             
-            if (!filteredPatients || filteredPatients.length === 0) {
+            if (filteredPatients.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="12" class="px-6 py-4 text-center text-gray-500">
+                        <td colspan="12" class="px-6 py-20 text-center text-gray-500">
                             <div class="text-6xl mb-4">📋</div>
                             <p class="font-semibold text-xl text-gray-700">${searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'ยังไม่มีข้อมูลผู้ป่วย'}</p>
                             <p class="text-gray-500 mt-2">${searchTerm ? 'ลองเปลี่ยนคำค้นหา' : 'กรุณานำเข้าข้อมูลจากไฟล์ Excel'}</p>
                         </td>
                     </tr>
                 `;
-                updatePaginationInfo(0, 1, 1);
-                updatePaginationControls(1);
+                updatePaginationInfo(0, 0, 0);
                 return;
             }
 
-            // คำนวณข้อมูลสำหรับการแบ่งหน้า
+            // Ensure we have valid data to work with
+            if (!Array.isArray(filteredPatients)) {
+                console.error('❌ filteredPatients is not an array:', filteredPatients);
+                filteredPatients = [];
+            }
+
+            // Calculate pagination
             const totalRecords = filteredPatients.length;
+            console.log(`📊 Filtered patients: ${totalRecords}`);
             const totalPages = Math.ceil(totalRecords / recordsPerPage);
             const startIndex = (currentPage - 1) * recordsPerPage;
             const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
             const currentPageData = filteredPatients.slice(startIndex, endIndex);
 
-            // แสดงข้อมูลในตาราง
+            // Render current page data
             tbody.innerHTML = currentPageData.map((patient, index) => {
                 const globalIndex = startIndex + index;
                 return `
-                    <tr class="${globalIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">${patient.รหัสโรค || ''}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">${patient.โรค || ''}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.เพศ || ''}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุปี || ''}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุเดือน || ''}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุวัน || ''}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.แขวง || ''}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.เขต || ''}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.จังหวัด || ''}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${convertExcelDateToThai(patient.วันที่เริ่มป่วย)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                patient.สภาพผู้ป่วย === 'เสียชีวิต' 
-                                ? 'bg-red-100 text-red-800' 
-                                : 'bg-green-100 text-green-800'
-                            }">
-                                ${patient.สภาพผู้ป่วย || ''}
+                    <tr class="table-row transition-all duration-300 border-b border-gray-100 ${globalIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900">${patient.โรค || patient['โรค'] || ''}</td>
+                        <td class="px-6 py-4 text-sm text-blue-600 font-medium">${patient.รหัสโรค || patient['รหัสโรค'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.เพศ || patient['เพศ'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.อายุปี || patient['อายุปี'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.อายุเดือน || patient['อายุเดือน'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.อายุวัน || patient['อายุวัน'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.แขวง || patient['แขวง'] || ''}</td>
+                        <td class="px-6 py-4 text-sm font-medium">${patient.เขต || patient['เขต'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.จังหวัด || patient['จังหวัด'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${convertExcelDateToThai(patient.วันที่เริ่มป่วย || patient['วันที่เริ่มป่วย'])}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${(patient.สภาพผู้ป่วย || patient['สภาพผู้ป่วย']) === 'เสียชีวิต' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+                                ${patient.สภาพผู้ป่วย || patient['สภาพผู้ป่วย'] || ''}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${convertExcelDateToThai(patient.วันที่เสียชีวิต)}</td>
+                        <td class="px-6 py-4 text-sm">${convertExcelDateToThai(patient.วันที่เสียชีวิต || patient['วันที่เสียชีวิต'])}</td>
                     </tr>
                 `;
             }).join('');
 
-            // อัพเดทข้อมูลการแบ่งหน้า
+            // Update pagination info
             updatePaginationInfo(totalRecords, currentPage, totalPages);
             updatePaginationControls(totalPages);
             
-            console.log(`📊 Showing page ${currentPage}/${totalPages} (${currentPageData.length} of ${totalRecords} records)`);
+            console.log(`Table updated: Page ${currentPage}/${totalPages}, showing ${currentPageData.length} of ${totalRecords} records`);
         }
 
         // Update pagination information display
