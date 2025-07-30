@@ -378,14 +378,7 @@
                         <span class="text-sm">สร้างรายงาน</span>
                     </div>
                 </button>
-                <button id="patientsTab" onclick="showPage('patients')" class="px-6 py-4 text-center font-semibold rounded-lg transition-all tab-inactive">
-                    <div class="flex flex-col items-center space-y-2 relative">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
-                        </svg>
-                        <span class="text-sm">ข้อมูลผู้ป่วย</span>
-                    </div>
-                </button>
+
                 <button id="masterDataTab" onclick="showPage('masterData')" class="px-6 py-4 text-center font-semibold rounded-lg transition-all tab-inactive">
                     <div class="flex flex-col items-center space-y-2">
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -544,165 +537,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Patients Page -->
-        <div id="patientsPage" class="hidden">
-            <div class="glass-card p-8 slide-in">
-                <div class="flex items-center justify-between mb-8">
-                    <div>
-                        <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-3">
-                            ข้อมูลผู้ป่วย
-                        </h2>
-                        <p class="text-gray-600 text-lg">จัดการข้อมูลผู้ป่วยและนำเข้าจากไฟล์ Excel</p>
-                    </div>
-                    <div class="flex space-x-4">
-                        <button onclick="showImportPatientsModal()" class="btn-primary">
-                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z"/>
-                                <path d="M9 13h2v5a1 1 0 11-2 0v-5z"/>
-                            </svg>
-                            นำเข้าข้อมูลจาก Excel
-                        </button>
-                        <button onclick="clearAllPatients()" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg">
-                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"/>
-                            </svg>
-                            ลบข้อมูลทั้งหมด
-                        </button>
-                        <button onclick="showPage('summary')" class="btn-secondary">
-                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"/>
-                            </svg>
-                            กลับหน้าหลัก
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Import Progress Bar -->
-                <div id="importProgressContainer" class="hidden mb-8">
-                    <div class="glass-card p-6">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
-                                    <svg id="importIcon" class="w-5 h-5 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-gray-900 text-lg">กำลังนำเข้าข้อมูลผู้ป่วย</h3>
-                                    <p id="importStatus" class="text-gray-600">กำลังเตรียมข้อมูล...</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div id="importPercentage" class="text-2xl font-bold text-blue-600">0%</div>
-                                <div id="importCount" class="text-sm text-gray-500">0 / 0 รายการ</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Progress Bar -->
-                        <div class="w-full bg-gray-200 rounded-full h-3 mb-4 overflow-hidden">
-                            <div id="progressBar" class="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
-                        </div>
-                        
-                        <!-- Progress Details -->
-                        <div class="grid grid-cols-3 gap-4 text-center mb-4">
-                            <div class="bg-blue-50 rounded-lg p-3">
-                                <div id="processedCount" class="text-xl font-bold text-blue-600">0</div>
-                                <div class="text-xs text-blue-600 font-medium">ประมวลผลแล้ว</div>
-                            </div>
-                            <div class="bg-green-50 rounded-lg p-3">
-                                <div id="validCount" class="text-xl font-bold text-green-600">0</div>
-                                <div class="text-xs text-green-600 font-medium">บันทึกสำเร็จ</div>
-                            </div>
-                            <div class="bg-orange-50 rounded-lg p-3">
-                                <div id="errorCount" class="text-xl font-bold text-orange-600">0</div>
-                                <div class="text-xs text-orange-600 font-medium">ข้อมูลผิดพลาด</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Batch Processing Details -->
-                        <div id="batchDetails" class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-4 hidden">
-                            <div class="flex items-center justify-between mb-3">
-                                <h4 class="font-bold text-purple-700 flex items-center">
-                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
-                                    </svg>
-                                    ข้อมูล Batch Processing
-                                </h4>
-                                <div id="currentBatchInfo" class="text-sm text-purple-600 font-medium">
-                                    กำลังเตรียม...
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4 text-sm">
-                                <div class="bg-white rounded-lg p-3">
-                                    <div class="text-gray-600 mb-1">ขนาด Batch</div>
-                                    <div id="batchSize" class="font-bold text-purple-600">-</div>
-                                </div>
-                                <div class="bg-white rounded-lg p-3">
-                                    <div class="text-gray-600 mb-1">จำนวน Batch ทั้งหมด</div>
-                                    <div id="totalBatches" class="font-bold text-purple-600">-</div>
-                                </div>
-                                <div class="bg-white rounded-lg p-3">
-                                    <div class="text-gray-600 mb-1">Batch ปัจจุบัน</div>
-                                    <div id="currentBatch" class="font-bold text-blue-600">-</div>
-                                </div>
-                                <div class="bg-white rounded-lg p-3">
-                                    <div class="text-gray-600 mb-1">ช่วงข้อมูล</div>
-                                    <div id="batchRange" class="font-bold text-green-600">-</div>
-                                </div>
-                            </div>
-                            
-                            <!-- Batch Progress Bar -->
-                            <div class="mt-4">
-                                <div class="flex justify-between text-xs text-gray-600 mb-1">
-                                    <span>ความคืบหน้า Batch</span>
-                                    <span id="batchPercentage">0%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div id="batchProgressBar" class="h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all duration-300" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Speed and Time Info -->
-                        <div class="flex justify-between items-center mt-4 text-sm text-gray-500">
-                            <div>ความเร็ว: <span id="importSpeed" class="font-medium">0 รายการ/วินาที</span></div>
-                            <div>เวลาที่เหลือ: <span id="timeRemaining" class="font-medium">กำลังคำนวณ...</span></div>
-                        </div>
-                        
-                        <!-- Cancel Button -->
-                        <div class="flex justify-center mt-6">
-                            <button id="cancelImportBtn" onclick="cancelImport()" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg">
-                                <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
-                                </svg>
-                                ยกเลิกการนำเข้า
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Search and Filter Controls -->
-                <div class="glass-card p-6 mb-6">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
-                        <div class="flex-1 max-w-md">
-                            <div class="relative">
-                                <input type="text" id="searchInput" placeholder="ค้นหาข้อมูลผู้ป่วย..." 
-                                       class="w-full input-field pl-10 pr-10" 
->
-                                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Content after data import will be displayed here -->
             </div>
         </div>
 
@@ -972,7 +806,7 @@
         // Page navigation with animation
         function showPage(page) {
             // Hide all pages
-            const pages = ['summaryPage', 'reportPage', 'patientsPage', 'masterDataPage', 'masterDataDetailPage'];
+            const pages = ['summaryPage', 'reportPage', 'masterDataPage', 'masterDataDetailPage'];
             pages.forEach(pageId => {
                 const element = document.getElementById(pageId);
                 element.classList.add('hidden');
@@ -1516,7 +1350,7 @@
                                     if (saved) {
                                         successCount++;
                                         window.allPatients.unshift(cleanRecord);
-                                        // Table functionality removed
+                                        addRecordToTable(cleanRecord, successCount);
                                     }
                                 } else {
                                     errorCount++;
@@ -1591,7 +1425,7 @@
                             window.allPatients.unshift(newRow);
                             
                             // Add to table display (limit to 100 records)
-                            // Table functionality removed
+                            addRecordToTable(newRow, savedRecords);
                         }
                         
                         // Update batch progress display
@@ -1988,6 +1822,7 @@
                     const saved = await saveRecordToDatabase(record);
                     if (saved) {
                         successCount++;
+                        addRecordToTable(record, successCount);
                     }
                 } catch (error) {
                     console.error('Error saving record:', error);
@@ -2018,7 +1853,29 @@
             }, 5000);
         }
         
-        // Placeholder for future record processing
+        // Add record to table with animation
+        function addRecordToTable(record, recordNumber) {
+            const tbody = document.getElementById('patientsTableBody');
+            if (!tbody) {
+                console.error('❌ Table body not found');
+                return;
+            }
+            
+            // Remove empty state if exists
+            const emptyState = tbody.querySelector('td[colspan="12"]');
+            if (emptyState) {
+                tbody.innerHTML = '';
+            }
+            
+            // Limit display to 100 records to prevent performance issues
+            const existingRows = tbody.querySelectorAll('tr');
+            if (existingRows.length >= 100) {
+                // Remove the last row with fade out animation
+                const lastRow = existingRows[existingRows.length - 1];
+                lastRow.style.transition = 'opacity 0.3s';
+                lastRow.style.opacity = '0';
+                setTimeout(() => lastRow.remove(), 300);
+            }
             
             // Create new row with fade in animation
             const newRow = document.createElement('tr');
@@ -2511,6 +2368,210 @@
         // Import control variables
         let importCancelled = false;
         let currentImportProcess = null;
+
+        // Load patients table with pagination
+        async function loadPatientsTable(searchTerm = '') {
+            console.log('🔄 Loading patients table...');
+            
+            // Use global variables if available (for real-time import)
+            if (window.allPatients && Array.isArray(window.allPatients) && window.allPatients.length > 0) {
+                allPatients = window.allPatients;
+                console.log(`📊 Using cached patients data: ${allPatients.length}`);
+            } else {
+                // ลองโหลดจาก Firebase ก่อน
+                const firebaseData = await loadFromFirebase('patients');
+                if (Array.isArray(firebaseData)) {
+                    allPatients = firebaseData;
+                    console.log(`📊 Total patients loaded from Firebase: ${allPatients.length}`);
+                } else {
+                    console.error('❌ Firebase data is not an array:', firebaseData);
+                    allPatients = [];
+                }
+                
+                // หากไม่มีข้อมูลใน Firebase ลองโหลดจาก localStorage
+                if (allPatients.length === 0) {
+                    console.log('🔍 No data from Firebase, checking localStorage...');
+                    const localData = localStorage.getItem('patients');
+                    if (localData) {
+                        try {
+                            const parsedData = JSON.parse(localData);
+                            if (Array.isArray(parsedData) && parsedData.length > 0) {
+                                allPatients = parsedData;
+                                console.log(`✅ Loaded ${allPatients.length} patients from localStorage`);
+                            }
+                        } catch (error) {
+                            console.error('❌ Error parsing localStorage patients data:', error);
+                        }
+                    }
+                }
+            }
+            
+            // Filter patients based on search term
+            if (searchTerm) {
+                filteredPatients = allPatients.filter(patient => {
+                    const searchFields = [
+                        patient.โรค || patient['โรค'] || '',
+                        patient.รหัสโรค || patient['รหัสโรค'] || '',
+                        patient.เพศ || patient['เพศ'] || '',
+                        patient.แขวง || patient['แขวง'] || '',
+                        patient.เขต || patient['เขต'] || '',
+                        patient.จังหวัด || patient['จังหวัด'] || ''
+                    ];
+                    return searchFields.some(field => 
+                        field.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                });
+            } else {
+                filteredPatients = [...allPatients];
+            }
+
+            const tbody = document.getElementById('patientsTableBody');
+            
+            if (filteredPatients.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="12" class="px-6 py-20 text-center text-gray-500">
+                            <div class="text-6xl mb-4">📋</div>
+                            <p class="font-semibold text-xl text-gray-700">${searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'ยังไม่มีข้อมูลผู้ป่วย'}</p>
+                            <p class="text-gray-500 mt-2">${searchTerm ? 'ลองเปลี่ยนคำค้นหา' : 'กรุณานำเข้าข้อมูลจากไฟล์ Excel'}</p>
+                        </td>
+                    </tr>
+                `;
+                updatePaginationInfo(0, 0, 0);
+                return;
+            }
+
+            // Ensure we have valid data to work with
+            if (!Array.isArray(filteredPatients)) {
+                console.error('❌ filteredPatients is not an array:', filteredPatients);
+                filteredPatients = [];
+            }
+
+            // Calculate pagination
+            const totalRecords = filteredPatients.length;
+            console.log(`📊 Filtered patients: ${totalRecords}`);
+            const totalPages = Math.ceil(totalRecords / recordsPerPage);
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
+            const currentPageData = filteredPatients.slice(startIndex, endIndex);
+
+            // Render current page data
+            tbody.innerHTML = currentPageData.map((patient, index) => {
+                const globalIndex = startIndex + index;
+                return `
+                    <tr class="table-row transition-all duration-300 border-b border-gray-100 ${globalIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900">${patient.โรค || patient['โรค'] || ''}</td>
+                        <td class="px-6 py-4 text-sm text-blue-600 font-medium">${patient.รหัสโรค || patient['รหัสโรค'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.เพศ || patient['เพศ'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.อายุปี || patient['อายุปี'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.อายุเดือน || patient['อายุเดือน'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.อายุวัน || patient['อายุวัน'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.แขวง || patient['แขวง'] || ''}</td>
+                        <td class="px-6 py-4 text-sm font-medium">${patient.เขต || patient['เขต'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.จังหวัด || patient['จังหวัด'] || ''}</td>
+                        <td class="px-6 py-4 text-sm">${convertExcelDateToThai(patient.วันที่เริ่มป่วย || patient['วันที่เริ่มป่วย'])}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${(patient.สภาพผู้ป่วย || patient['สภาพผู้ป่วย']) === 'เสียชีวิต' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+                                ${patient.สภาพผู้ป่วย || patient['สภาพผู้ป่วย'] || ''}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm">${convertExcelDateToThai(patient.วันที่เสียชีวิต || patient['วันที่เสียชีวิต'])}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Update pagination info
+            updatePaginationInfo(totalRecords, currentPage, totalPages);
+            updatePaginationControls(totalPages);
+            
+            console.log(`Table updated: Page ${currentPage}/${totalPages}, showing ${currentPageData.length} of ${totalRecords} records`);
+        }
+
+        // Update pagination information display
+        function updatePaginationInfo(totalRecords, currentPage, totalPages) {
+            const startRecord = totalRecords > 0 ? ((currentPage - 1) * recordsPerPage) + 1 : 0;
+            const endRecord = Math.min(currentPage * recordsPerPage, totalRecords);
+            
+            document.getElementById('paginationInfo').textContent = 
+                `แสดง ${startRecord.toLocaleString()} - ${endRecord.toLocaleString()} จาก ${totalRecords.toLocaleString()} รายการ`;
+        }
+
+        // Update pagination controls
+        function updatePaginationControls(totalPages) {
+            const paginationControls = document.getElementById('paginationControls');
+            
+            if (totalPages <= 1) {
+                paginationControls.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = `
+                <button onclick="goToPage(1)" ${currentPage === 1 ? 'disabled' : ''} 
+                        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+                    หน้าแรก
+                </button>
+                <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} 
+                        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border-t border-b border-gray-300 hover:bg-gray-50 ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+                    ก่อนหน้า
+                </button>
+            `;
+
+            // Show page numbers (max 5 pages around current page)
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <button onclick="goToPage(${i})" 
+                            class="px-3 py-2 text-sm font-medium border-t border-b border-gray-300 ${i === currentPage ? 'bg-blue-50 text-blue-600 border-blue-500' : 'text-gray-500 bg-white hover:bg-gray-50 hover:text-gray-700'}">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            paginationHTML += `
+                <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} 
+                        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border-t border-b border-gray-300 hover:bg-gray-50 ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+                    ถัดไป
+                </button>
+                <button onclick="goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''} 
+                        class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : 'hover:text-gray-700'}">
+                    หน้าสุดท้าย
+                </button>
+            `;
+
+            paginationControls.innerHTML = paginationHTML;
+        }
+
+        // Go to specific page
+        function goToPage(page) {
+            const totalPages = Math.ceil(filteredPatients.length / recordsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                loadPatientsTable(document.getElementById('searchInput').value);
+            }
+        }
+
+        // Change records per page
+        function changeRecordsPerPage(newRecordsPerPage) {
+            recordsPerPage = parseInt(newRecordsPerPage);
+            currentPage = 1; // Reset to first page
+            loadPatientsTable(document.getElementById('searchInput').value);
+        }
+
+        // Search patients
+        function searchPatients() {
+            const searchTerm = document.getElementById('searchInput').value;
+            currentPage = 1; // Reset to first page when searching
+            loadPatientsTable(searchTerm);
+        }
+
+        // Clear search
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            currentPage = 1;
+            loadPatientsTable();
+        }
 
         // Show master data detail
         function showMasterDataDetail(type) {
