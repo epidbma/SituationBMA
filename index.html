@@ -728,6 +728,55 @@
                     </div>
                 </div>
 
+                <!-- Table Container -->
+                <div class="overflow-x-auto bg-white rounded-lg shadow mt-4">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">โรค</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสโรค</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เพศ</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อายุปี</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อายุเดือน</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อายุวัน</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">แขวง</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เขต</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จังหวัด</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่เริ่มป่วย</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สภาพผู้ป่วย</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่เสียชีวิต</th>
+                            </tr>
+                        </thead>
+                        <tbody id="patientsTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Table rows will be dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="flex items-center justify-between mt-4 bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        <button onclick="previousPage()" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:text-gray-500">
+                            ก่อนหน้า
+                        </button>
+                        <button onclick="nextPage()" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:text-gray-500">
+                            ถัดไป
+                        </button>
+                    </div>
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p id="paginationInfo" class="text-sm text-gray-700">
+                                แสดง 0 - 0 จาก 0 รายการ
+                            </p>
+                        </div>
+                        <div>
+                            <nav id="paginationControls" class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <!-- Pagination controls will be dynamically inserted here -->
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+
 
 
                 <!-- Pagination Controls -->
@@ -2604,9 +2653,8 @@
             }
         }
 
-        // Load patients data with pagination
+        // Load patients table with pagination
         async function loadPatientsTable(searchTerm = '') {
-            // This function now only loads the data without rendering a table
             console.log('🔄 Loading patients data...');
             
             // Use global variables if available (for real-time import)
@@ -2660,8 +2708,68 @@
             } else {
                 filteredPatients = [...allPatients];
             }
+
+            const tbody = document.getElementById('patientsTableBody');
             
-            console.log(`📊 Total records: ${filteredPatients.length}`);
+            if (filteredPatients.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="12" class="px-6 py-10 text-center text-gray-500">
+                            <div class="text-6xl mb-4">📋</div>
+                            <p class="font-medium text-lg text-gray-900">${searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'ยังไม่มีข้อมูลผู้ป่วย'}</p>
+                            <p class="text-sm text-gray-500 mt-1">${searchTerm ? 'ลองเปลี่ยนคำค้นหา' : 'กรุณานำเข้าข้อมูลจากไฟล์ Excel'}</p>
+                        </td>
+                    </tr>
+                `;
+                updatePaginationInfo(0, 0, 0);
+                return;
+            }
+
+            // Calculate pagination
+            const totalRecords = filteredPatients.length;
+            const totalPages = Math.ceil(totalRecords / recordsPerPage);
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
+            const currentPageData = filteredPatients.slice(startIndex, endIndex);
+
+            // Render current page data
+            tbody.innerHTML = currentPageData.map((patient, index) => {
+                const globalIndex = startIndex + index;
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${patient.โรค || patient['โรค'] || '-'}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-blue-600">${patient.รหัสโรค || patient['รหัสโรค'] || '-'}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.เพศ || patient['เพศ'] || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุปี || patient['อายุปี'] || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุเดือน || patient['อายุเดือน'] || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.อายุวัน || patient['อายุวัน'] || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.แขวง || patient['แขวง'] || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.เขต || patient['เขต'] || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.จังหวัด || patient['จังหวัด'] || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${convertExcelDateToThai(patient.วันที่เริ่มป่วย || patient['วันที่เริ่มป่วย']) || '-'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                (patient.สภาพผู้ป่วย || patient['สภาพผู้ป่วย']) === 'เสียชีวิต' 
+                                ? 'bg-red-100 text-red-800' 
+                                : 'bg-green-100 text-green-800'
+                            }">
+                                ${patient.สภาพผู้ป่วย || patient['สภาพผู้ป่วย'] || 'ไม่ระบุ'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${convertExcelDateToThai(patient.วันที่เสียชีวิต || patient['วันที่เสียชีวิต']) || '-'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Update pagination
+            updatePaginationInfo(totalRecords, currentPage, totalPages);
+            updatePaginationControls(totalPages);
         }
 
         // Update pagination information display
