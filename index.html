@@ -80,7 +80,9 @@
         // Patient Database Functions
         async function loadPatientsTable() {
             try {
+                console.log('Loading patients data...');
                 const patients = await loadFromFirebase('patients') || {};
+                console.log('Patients data:', patients);
                 const tableBody = document.getElementById('patientsTableBody');
                 tableBody.innerHTML = '';
 
@@ -110,14 +112,22 @@
 
         async function importPatientsFromExcel(event) {
             const file = event.target.files[0];
+            if (!file) {
+                alert('กรุณาเลือกไฟล์ Excel');
+                return;
+            }
+            console.log('Importing file:', file.name);
+
             const reader = new FileReader();
 
             reader.onload = async function(e) {
                 try {
+                    console.log('File loaded, processing...');
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                     const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    console.log('Excel rows:', rows);
 
                     // Skip header row and process data
                     const patients = {};
@@ -145,9 +155,22 @@
                     }
 
                     // Save to Firebase
-                    await saveToFirebase('patients', patients);
-                    alert('นำเข้าข้อมูลสำเร็จ');
-                    loadPatientsTable();
+                    console.log('Saving patients to Firebase:', patients);
+                    if (Object.keys(patients).length === 0) {
+                        alert('ไม่พบข้อมูลในไฟล์ Excel ที่เลือก');
+                        return;
+                    }
+                    
+                    try {
+                        // Get existing patients
+                        const existingPatients = await loadFromFirebase('patients') || {};
+                        // Merge with new patients
+                        const allPatients = { ...existingPatients, ...patients };
+                        
+                        await saveToFirebase('patients', allPatients);
+                        console.log('Data saved successfully');
+                        alert('นำเข้าข้อมูลสำเร็จ');
+                        await loadPatientsTable();
                 } catch (error) {
                     console.error('Error importing Excel file:', error);
                     alert('เกิดข้อผิดพลาดในการนำเข้าไฟล์ Excel');
