@@ -1851,7 +1851,7 @@
                         </div>
 
                         <div class="flex space-x-4 mt-8">
-                            <button onclick="closeImportPatientsModal()" class="flex-1 btn-secondary">
+                            <button onclick="cancelImport()" class="flex-1 btn-secondary" id="cancelImportButton">
                                 ยกเลิก
                             </button>
                             <button onclick="processImportPatients()" class="flex-1 btn-primary" id="importPatientsButton" disabled>
@@ -1955,11 +1955,15 @@
 
         // Process patients import
         async function processImportPatients() {
+            importCancelled = false;
+            importInProgress = true;
+            
             const fileInput = document.getElementById('patientsExcelFile');
             const skipFirstRow = document.getElementById('skipFirstRowPatients').checked;
             
             if (!fileInput.files || !fileInput.files[0]) {
                 showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
+                importInProgress = false;
                 return;
             }
             
@@ -2003,10 +2007,18 @@
                         });
                         
                         // Process records
-                        await importRecords(jsonData);
+                        for (const record of jsonData) {
+                            if (importCancelled) {
+                                showNotification('การนำเข้าข้อมูลถูกยกเลิก', 'warning');
+                                break;
+                            }
+                            await importRecord(record);
+                        }
                         
-                        closeImportPatientsModal();
-                        showNotification('นำเข้าข้อมูลสำเร็จ!', 'success');
+                        if (!importCancelled) {
+                            closeImportPatientsModal();
+                            showNotification('นำเข้าข้อมูลสำเร็จ!', 'success');
+                        }
                         
                     } catch (error) {
                         console.error('Error processing Excel file:', error);
@@ -2608,16 +2620,39 @@
         // Import control variables
         let importCancelled = false;
         let currentImportProcess = null;
+        let importInProgress = false;
+
+        // Function to cancel import
+        function cancelImport() {
+            if (importInProgress) {
+                importCancelled = true;
+                showNotification('กำลังยกเลิกการนำเข้าข้อมูล...', 'warning');
+                // ปิด modal นำเข้าข้อมูล
+                closeImportPatientsModal();
+            }
+        }
 
         // Load patients table with pagination
         async function loadPatientsTable(searchTerm = '') {
             console.log('🔄 Loading patients table...');
             
-            // Use global variables if available (for real-time import)
-            if (window.allPatients && Array.isArray(window.allPatients) && window.allPatients.length > 0) {
-                allPatients = window.allPatients;
-                console.log(`📊 Using cached patients data: ${allPatients.length}`);
-            } else {
+            // แสดง loading indicator
+            const tbody = document.getElementById('patientsTableBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="12" class="px-6 py-4 text-center">
+                        <div class="flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-3 animate-spin" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            กำลังโหลดข้อมูล...
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            try {
                 // ลองโหลดจาก Firebase ก่อน
                 const firebaseData = await loadFromFirebase('patients');
                 if (Array.isArray(firebaseData)) {
@@ -2642,8 +2677,14 @@
                         } catch (error) {
                             console.error('❌ Error parsing localStorage patients data:', error);
                         }
+                        allPatients = firebaseData;
+                        console.log(`📊 Total patients loaded from Firebase: ${allPatients.length} records`);
                     }
                 }
+            } catch (error) {
+                console.error('Error loading patients:', error);
+                showNotification('ไม่สามารถโหลดข้อมูลผู้ป่วยได้', 'error');
+                return;
             }
             
             // Filter patients based on search term
@@ -2665,15 +2706,19 @@
                 filteredPatients = [...allPatients];
             }
 
-            const tbody = document.getElementById('patientsTableBody');
+            const tableBody = document.getElementById('patientsTableBody');
             
             if (filteredPatients.length === 0) {
-                tbody.innerHTML = `
+                tableBody.innerHTML = `
                     <tr>
-                        <td colspan="12" class="px-6 py-20 text-center text-gray-500">
-                            <div class="text-6xl mb-4">📋</div>
-                            <p class="font-semibold text-xl text-gray-700">${searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'ยังไม่มีข้อมูลผู้ป่วย'}</p>
-                            <p class="text-gray-500 mt-2">${searchTerm ? 'ลองเปลี่ยนคำค้นหา' : 'กรุณานำเข้าข้อมูลจากไฟล์ Excel'}</p>
+                        <td colspan="12" class="px-6 py-4 text-center text-gray-500">
+                            <div class="flex flex-col items-center justify-center">
+                                <svg class="w-12 h-12 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p class="text-lg font-semibold">${searchTerm ? 'ไม่พบข้อมูลที่ค้นหา' : 'ยังไม่มีข้อมูลผู้ป่วย'}</p>
+                                <p class="text-sm mt-1 text-gray-500">${searchTerm ? 'ลองค้นหาด้วยคำค้นหาอื่น' : 'กรุณานำเข้าข้อมูลจากไฟล์ Excel'}</p>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -2696,13 +2741,26 @@
             const currentPageData = filteredPatients.slice(startIndex, endIndex);
 
             // Render current page data
-            tbody.innerHTML = currentPageData.map((patient, index) => {
+            tableBody.innerHTML = currentPageData.map((patient, index) => {
                 const globalIndex = startIndex + index;
+                const age = [
+                    patient.อายุปี ? `${patient.อายุปี} ปี` : '',
+                    patient.อายุเดือน ? `${patient.อายุเดือน} เดือน` : '',
+                    patient.อายุวัน ? `${patient.อายุวัน} วัน` : ''
+                ].filter(Boolean).join(' ');
+                
                 return `
-                    <tr class="table-row transition-all duration-300 border-b border-gray-100 ${globalIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-                        <td class="px-6 py-4 text-sm font-semibold text-gray-900">${patient.โรค || patient['โรค'] || ''}</td>
-                        <td class="px-6 py-4 text-sm text-blue-600 font-medium">${patient.รหัสโรค || patient['รหัสโรค'] || ''}</td>
-                        <td class="px-6 py-4 text-sm">${patient.เพศ || patient['เพศ'] || ''}</td>
+                    <tr class="table-row transition-all duration-300 border-b border-gray-100 hover:bg-gray-50 ${globalIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900">${patient.โรค || ''}</td>
+                        <td class="px-6 py-4 text-sm text-blue-600 font-medium">${patient.รหัสโรค || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.เพศ || ''}</td>
+                        <td class="px-6 py-4 text-sm">${age || '-'}</td>
+                        <td class="px-6 py-4 text-sm">${patient.แขวง || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.เขต || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.จังหวัด || ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.วันที่เริ่มป่วย ? formatDateTH(patient.วันที่เริ่มป่วย) : ''}</td>
+                        <td class="px-6 py-4 text-sm">${patient.สภาพผู้ป่วย || ''}</td>
+                        <td class="px-6 py-4 text-sm ${patient.วันที่เสียชีวิต ? 'text-red-600' : ''}">${patient.วันที่เสียชีวิต ? formatDateTH(patient.วันที่เสียชีวิต) : '-'}</td>
                         <td class="px-6 py-4 text-sm">${patient.อายุปี || patient['อายุปี'] || ''}</td>
                         <td class="px-6 py-4 text-sm">${patient.อายุเดือน || patient['อายุเดือน'] || ''}</td>
                         <td class="px-6 py-4 text-sm">${patient.อายุวัน || patient['อายุวัน'] || ''}</td>
@@ -2732,8 +2790,13 @@
             const startRecord = totalRecords > 0 ? ((currentPage - 1) * recordsPerPage) + 1 : 0;
             const endRecord = Math.min(currentPage * recordsPerPage, totalRecords);
             
-            document.getElementById('paginationInfo').textContent = 
-                `แสดง ${startRecord.toLocaleString()} - ${endRecord.toLocaleString()} จาก ${totalRecords.toLocaleString()} รายการ`;
+            document.getElementById('paginationInfo').innerHTML = `
+                <div class="text-sm text-gray-700">
+                    <span class="font-medium">แสดง ${startRecord.toLocaleString()}</span> - 
+                    <span class="font-medium">${endRecord.toLocaleString()}</span> จาก 
+                    <span class="font-medium">${totalRecords.toLocaleString()}</span> รายการ
+                </div>
+            `;
         }
 
         // Update pagination controls
