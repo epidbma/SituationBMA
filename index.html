@@ -549,6 +549,88 @@
 
         <!-- Patients Page -->
         <div id="patientsPage" class="hidden">
+            <!-- Add New Patient Form -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">เพิ่มข้อมูลผู้ป่วยใหม่</h2>
+                <form id="addPatientForm" onsubmit="addNewPatient(event)">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">รหัสโรค</label>
+                            <select id="patientDiseaseCode" class="w-full input-field" required>
+                                <option value="">เลือกรหัสโรค</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">เพศ</label>
+                            <select id="patientGender" class="w-full input-field" required>
+                                <option value="">เลือกเพศ</option>
+                                <option value="ชาย">ชาย</option>
+                                <option value="หญิง">หญิง</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">อายุ (ปี)</label>
+                            <input type="number" id="patientAgeYear" class="w-full input-field" min="0" max="150" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">อายุ (เดือน)</label>
+                            <input type="number" id="patientAgeMonth" class="w-full input-field" min="0" max="11">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">อายุ (วัน)</label>
+                            <input type="number" id="patientAgeDay" class="w-full input-field" min="0" max="31">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">แขวง</label>
+                            <input type="text" id="patientSubDistrict" class="w-full input-field" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">เขต</label>
+                            <input type="text" id="patientDistrict" class="w-full input-field" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">จังหวัด</label>
+                            <input type="text" id="patientProvince" class="w-full input-field" required value="กรุงเทพมหานคร">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่เริ่มป่วย</label>
+                            <input type="date" id="patientStartDate" class="w-full input-field" required>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">สภาพผู้ป่วย</label>
+                            <select id="patientCondition" class="w-full input-field" required>
+                                <option value="">เลือกสภาพผู้ป่วย</option>
+                                <option value="หาย">หาย</option>
+                                <option value="กำลังรักษา">กำลังรักษา</option>
+                                <option value="เสียชีวิต">เสียชีวิต</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">วันที่เสียชีวิต</label>
+                            <input type="date" id="patientDeathDate" class="w-full input-field">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end space-x-4">
+                        <button type="button" class="btn-secondary" onclick="resetPatientForm()">
+                            ล้างฟอร์ม
+                        </button>
+                        <button type="submit" class="btn-primary">
+                            บันทึกข้อมูล
+                        </button>
+                    </div>
+                </form>
+            </div>
             <div class="glass-card p-8 slide-in">
                 <div class="flex items-center justify-between mb-8">
                     <div>
@@ -558,12 +640,6 @@
                         <p class="text-gray-600 text-lg">จัดการข้อมูลผู้ป่วยและนำเข้าจากไฟล์ Excel</p>
                     </div>
                     <div class="flex space-x-4">
-                        <button onclick="addNewPatient()" class="btn-primary">
-                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
-                            </svg>
-                            เพิ่มข้อมูลผู้ป่วย
-                        </button>
                         <button onclick="clearAllPatients()" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-lg">
                             <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"/>
@@ -755,100 +831,6 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
-
-                <!-- Add Patient Modal -->
-                <div id="addPatientModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-                    <div class="flex items-center justify-center min-h-screen p-4">
-                        <div class="glass-card w-full max-w-2xl p-8 relative">
-                            <button onclick="closeAddPatientModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
-                            
-                            <h3 class="text-2xl font-bold text-gray-900 mb-6">เพิ่มข้อมูลผู้ป่วย</h3>
-                            
-                            <form id="addPatientForm" onsubmit="submitPatientData(event)" class="space-y-6">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">โรค</label>
-                                        <select id="newDiseaseCode" class="w-full input-field" required>
-                                            <option value="">เลือกโรค</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">เพศ</label>
-                                        <select id="newGender" class="w-full input-field" required>
-                                            <option value="">เลือกเพศ</option>
-                                            <option value="ชาย">ชาย</option>
-                                            <option value="หญิง">หญิง</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">อายุปี</label>
-                                        <input type="number" id="newAgeYears" class="w-full input-field" min="0" max="150" required>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">อายุเดือน</label>
-                                        <input type="number" id="newAgeMonths" class="w-full input-field" min="0" max="11">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">อายุวัน</label>
-                                        <input type="number" id="newAgeDays" class="w-full input-field" min="0" max="31">
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">แขวง</label>
-                                        <input type="text" id="newSubdistrict" class="w-full input-field" required>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">เขต</label>
-                                        <input type="text" id="newDistrict" class="w-full input-field" required>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">จังหวัด</label>
-                                        <input type="text" id="newProvince" class="w-full input-field" value="กรุงเทพมหานคร" required>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่เริ่มป่วย</label>
-                                        <input type="date" id="newOnsetDate" class="w-full input-field" required>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">สภาพผู้ป่วย</label>
-                                        <select id="newPatientStatus" class="w-full input-field" required>
-                                            <option value="">เลือกสภาพผู้ป่วย</option>
-                                            <option value="รักษาหาย">รักษาหาย</option>
-                                            <option value="กำลังรักษา">กำลังรักษา</option>
-                                            <option value="เสียชีวิต">เสียชีวิต</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">วันที่เสียชีวิต</label>
-                                        <input type="date" id="newDeathDate" class="w-full input-field">
-                                    </div>
-                                </div>
-                                
-                                <div class="flex justify-end space-x-4 mt-8">
-                                    <button type="button" onclick="closeAddPatientModal()" class="btn-secondary">
-                                        ยกเลิก
-                                    </button>
-                                    <button type="submit" class="btn-primary">
-                                        บันทึกข้อมูล
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Pagination Controls -->
@@ -2585,6 +2567,89 @@
             updatePaginationControls(totalPages);
             
             console.log(`Table updated: Page ${currentPage}/${totalPages}, showing ${currentPageData.length} of ${totalRecords} records`);
+            
+            // Load disease options if form exists
+            if (document.getElementById('patientDiseaseCode')) {
+                loadPatientDiseaseOptions();
+            }
+        }
+
+        // Load disease options for patient form
+        async function loadPatientDiseaseOptions() {
+            const diseases = await loadFromFirebase('diseases');
+            const select = document.getElementById('patientDiseaseCode');
+            
+            if (select) {
+                select.innerHTML = '<option value="">เลือกรหัสโรค</option>';
+                diseases.forEach(disease => {
+                    const option = document.createElement('option');
+                    option.value = disease.code;
+                    option.textContent = `${disease.code} - ${disease.name}`;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        // Reset patient form
+        function resetPatientForm() {
+            document.getElementById('addPatientForm').reset();
+        }
+
+        // Add new patient
+        async function addNewPatient(event) {
+            event.preventDefault();
+            
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = `
+                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังบันทึก...
+            `;
+            submitBtn.disabled = true;
+
+            try {
+                // Get form values
+                const diseaseCode = document.getElementById('patientDiseaseCode').value;
+                const disease = (await loadFromFirebase('diseases')).find(d => d.code === diseaseCode);
+                
+                const newPatient = {
+                    'รหัสโรค': diseaseCode,
+                    'โรค': disease ? disease.name : '',
+                    'เพศ': document.getElementById('patientGender').value,
+                    'อายุปี': parseInt(document.getElementById('patientAgeYear').value),
+                    'อายุเดือน': parseInt(document.getElementById('patientAgeMonth').value) || 0,
+                    'อายุวัน': parseInt(document.getElementById('patientAgeDay').value) || 0,
+                    'แขวง': document.getElementById('patientSubDistrict').value,
+                    'เขต': document.getElementById('patientDistrict').value,
+                    'จังหวัด': document.getElementById('patientProvince').value,
+                    'วันที่เริ่มป่วย': document.getElementById('patientStartDate').value,
+                    'สภาพผู้ป่วย': document.getElementById('patientCondition').value,
+                    'วันที่เสียชีวิต': document.getElementById('patientDeathDate').value || null
+                };
+
+                // Save to Firebase
+                const patients = await loadFromFirebase('patients') || [];
+                patients.unshift(newPatient);
+                await saveToFirebase('patients', patients);
+
+                // Reset form
+                resetPatientForm();
+
+                // Refresh table
+                await loadPatientsTable();
+
+                showNotification('เพิ่มข้อมูลผู้ป่วยสำเร็จ!', 'success');
+
+            } catch (error) {
+                console.error('Error adding patient:', error);
+                showNotification('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
         }
 
         // Update pagination information display
