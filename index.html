@@ -1149,16 +1149,17 @@
             }, 2000);
         }
 
-        // High-performance Excel import for large datasets (100K+ records)
+        // Import Excel with real-time display
         function importExcel() {
             const file = document.getElementById('excelFile').files[0];
             if (!file) return;
 
+            // Reset import variables
+            importCancelled = false;
+            window.allPatients = [];
+            
             const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
             console.log(`📊 File size: ${fileSizeMB} MB`);
-            
-            // Enhanced file size warnings with performance tips
-            if (file.size > 100 * 1024 * 1024) { // 100MB+
                 const confirmed = confirm(
                     `⚠️ ไฟล์ขนาดใหญ่มาก: ${fileSizeMB} MB\n\n` +
                     `🚀 เทคนิคเพิ่มความเร็ว:\n` +
@@ -1545,7 +1546,7 @@
             document.getElementById('importCount').textContent = `${current.toLocaleString()} / ${total.toLocaleString()} รายการ`;
         }
 
-        // Process data one by one with batch progress display
+        // Process data with real-time display
         function processDataWithHighPerformance(jsonData) {
             const requiredFields = ['โรค', 'รหัสโรค', 'เพศ', 'อายุปี', 'อายุเดือน', 'อายุวัน', 'แขวง', 'เขต', 'จังหวัด', 'วันที่เริ่มป่วย', 'สภาพผู้ป่วย', 'วันที่เสียชีวิต'];
             
@@ -1555,18 +1556,21 @@
             let errorRecords = 0;
             let savedRecords = 0;
             const startTime = Date.now();
-
-            // Initialize global array for real-time display
-            window.allPatients = [];
             
-            // Clear existing table and show processing state
+            // Clear existing table and show processing state with real-time indication
             const tbody = document.getElementById('patientsTableBody');
             tbody.innerHTML = `
                 <tr>
                     <td colspan="12" class="px-6 py-20 text-center text-gray-500">
-                        <div class="text-6xl mb-4">⚡</div>
-                        <p class="font-semibold text-xl text-gray-700">กำลังนำเข้าข้อมูลทีละรายการ...</p>
-                        <p class="text-gray-500 mt-2">แสดงผลแบบเรียลไทม์</p>
+                        <div class="flex flex-col items-center">
+                            <div class="text-6xl mb-4">⚡</div>
+                            <p class="font-semibold text-xl text-gray-700">กำลังนำเข้าข้อมูลทีละรายการ...</p>
+                            <p class="text-gray-500 mt-2">แสดงผลแบบเรียลไทม์</p>
+                            <div class="mt-4 flex items-center space-x-2">
+                                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"></div>
+                                <span id="realTimeStatus" class="text-green-600">เริ่มนำเข้าข้อมูล...</span>
+                            </div>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -1581,15 +1585,17 @@
             updateImportStatus('🔍 เริ่มตรวจสอบและบันทึกข้อมูลทีละรายการ...');
             
             // Process records one by one
-            function processRecord(index) {
+            async function processRecord(index) {
                 if (importCancelled) {
                     console.log(`🛑 Import cancelled at record ${index + 1}`);
+                    document.getElementById('realTimeStatus').textContent = 'การนำเข้าถูกยกเลิก';
                     return;
                 }
                 
                 if (index >= totalRecords) {
                     // Finish import
                     finishImportProcess(savedRecords, validRecords, errorRecords);
+                    document.getElementById('realTimeStatus').textContent = 'นำเข้าข้อมูลเสร็จสิ้น';
                     return;
                 }
                 
@@ -1607,8 +1613,9 @@
                 if (newRow['รหัสโรค'] && newRow['เพศ']) {
                     validRecords++;
                     
-                    // Save record to database
-                    saveRecordToDatabase(newRow).then((success) => {
+                    // Save and display record in real-time
+                    try {
+                        const success = await saveRecordToDatabase(newRow);
                         if (success) {
                             savedRecords++;
                             
@@ -1617,6 +1624,10 @@
                             
                             // Add to table display (limit to 100 records)
                             addRecordToTable(newRow, savedRecords);
+                            
+                            // Update real-time status
+                            document.getElementById('realTimeStatus').textContent = 
+                                `กำลังนำเข้ารายการที่ ${savedRecords} จาก ${totalRecords}`;
                         }
                         
                         // Update batch progress display
@@ -1736,7 +1747,7 @@
             }
         }
         
-        // Add record to table with animation
+        // Add record to table with smooth animation
         function addRecordToTable(record, recordNumber) {
             const tbody = document.getElementById('patientsTableBody');
             
@@ -1748,12 +1759,15 @@
             // Limit display to 100 records to prevent performance issues
             const existingRows = tbody.querySelectorAll('tr');
             if (existingRows.length >= 100) {
-                // Remove the last row
-                existingRows[existingRows.length - 1].remove();
+                // Remove the last row with fade-out animation
+                const lastRow = existingRows[existingRows.length - 1];
+                lastRow.classList.add('fade-out');
+                setTimeout(() => lastRow.remove(), 300);
             }
             
-            // Create new row
+            // Create new row with fade-in animation
             const newRow = document.createElement('tr');
+            newRow.classList.add('fade-in');
             newRow.className = 'table-row transition-all duration-300 border-b border-gray-100 bg-green-50 animate-slideInFromTop';
             newRow.innerHTML = `
                 <td class="px-6 py-4 text-sm font-semibold text-gray-900">${record.โรค || record['โรค'] || ''}</td>
