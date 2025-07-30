@@ -768,16 +768,34 @@
             }
         }
 
-        async function displayPatients() {
+        function displayPatients() {
+            console.log('Starting to display patients...');
+            if (!window.firebaseDB) {
+                console.error('Firebase not initialized');
+                return;
+            }
+
             const { database, ref, onValue } = window.firebaseDB;
+            if (!database || !ref || !onValue) {
+                console.error('Firebase functions not available');
+                return;
+            }
+
             const patientRef = ref(database, 'patients');
+            console.log('Patient reference created');
             
             onValue(patientRef, (snapshot) => {
+                console.log('Received Firebase snapshot');
                 const data = snapshot.val();
                 const tableBody = document.getElementById('patientTableBody');
+                if (!tableBody) {
+                    console.error('Patient table body not found');
+                    return;
+                }
                 tableBody.innerHTML = '';
 
                 if (data) {
+                    console.log('Found patient data:', Object.keys(data).length, 'records');
                     Object.entries(data).forEach(([key, patient]) => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
@@ -796,14 +814,39 @@
                         `;
                         tableBody.appendChild(row);
                     });
+                } else {
+                    console.log('No patient data found');
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="12" class="px-6 py-4 text-center text-gray-500">
+                                ไม่พบข้อมูลผู้ป่วย
+                            </td>
+                        </tr>
+                    `;
+                }
+            }, (error) => {
+                console.error('Error fetching patient data:', error);
+                const tableBody = document.getElementById('patientTableBody');
+                if (tableBody) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="12" class="px-6 py-4 text-center text-red-500">
+                                เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาลองใหม่อีกครั้ง
+                            </td>
+                        </tr>
+                    `;
                 }
             });
         }
 
         // Call displayPatients when the page loads
         window.addEventListener('load', () => {
+            console.log('Page loaded, checking Firebase...');
             if (window.firebaseDB) {
+                console.log('Firebase available, displaying patients...');
                 displayPatients();
+            } else {
+                console.log('Firebase not available yet');
             }
         });
 
@@ -963,22 +1006,20 @@
                 if (page === 'summary') {
                     const pageElement = document.getElementById('summaryPage');
                     pageElement.classList.remove('hidden');
-                    pageElement.classList.add('slide-in');
-                    const tab = document.getElementById('summaryTab');
-                    tab.className = tab.className.replace('tab-inactive', 'tab-active');
-                } else if (page === 'report') {
-                    const pageElement = document.getElementById('reportPage');
                 } else if (page === 'patientDb') {
                     const pageElement = document.getElementById('patientDbPage');
                     pageElement.classList.remove('hidden');
                     pageElement.classList.add('slide-in');
                     document.getElementById('patientDbTab').className = document.getElementById('patientDbTab').className.replace('tab-inactive', 'tab-active');
-                } else if (page === 'patientDb') {
-                    const pageElement = document.getElementById('patientDbPage');
-                    pageElement.classList.remove('hidden');
+                    // Initialize patient data display
+                    if (window.firebaseDB) {
+                        displayPatients();
+                    }
                     pageElement.classList.add('slide-in');
-                    const tab = document.getElementById('patientDbTab');
+                    const tab = document.getElementById('summaryTab');
                     tab.className = tab.className.replace('tab-inactive', 'tab-active');
+                } else if (page === 'report') {
+                    const pageElement = document.getElementById('reportPage');
                     pageElement.classList.remove('hidden');
                     pageElement.classList.add('slide-in');
                     const tab = document.getElementById('reportTab');
