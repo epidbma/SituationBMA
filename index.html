@@ -1753,6 +1753,73 @@
             }
         }
         
+        // Improved record import function with direct processing
+        async function importRecords(jsonData) {
+            const tbody = document.getElementById('patientsTableBody');
+            if (!tbody) {
+                console.error('❌ Table body not found');
+                return;
+            }
+
+            // Clear table
+            tbody.innerHTML = '';
+            
+            // Show import status
+            const statusDiv = document.createElement('div');
+            statusDiv.id = 'importStatus';
+            statusDiv.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 slide-in';
+            document.body.appendChild(statusDiv);
+            
+            let successCount = 0;
+            
+            // Process records one by one
+            for (let i = 0; i < jsonData.length; i++) {
+                const record = jsonData[i];
+                
+                // Update status
+                statusDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="animate-spin mr-3">⚡</div>
+                        <div>
+                            <div class="font-medium">กำลังนำเข้ารายการที่ ${i + 1}</div>
+                            <div class="text-sm">นำเข้าสำเร็จ ${successCount} รายการ</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Save record
+                try {
+                    const saved = await saveRecordToDatabase(record);
+                    if (saved) {
+                        successCount++;
+                        addRecordToTable(record, successCount);
+                    }
+                } catch (error) {
+                    console.error('Error saving record:', error);
+                }
+                
+                // Small delay between records
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // Show completion status
+            statusDiv.innerHTML = `
+                <div class="flex items-center">
+                    <div class="text-white mr-3">✅</div>
+                    <div>
+                        <div class="font-medium">นำเข้าข้อมูลเสร็จสิ้น</div>
+                        <div class="text-sm">นำเข้าสำเร็จ ${successCount} รายการ</div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove status after delay
+            setTimeout(() => {
+                statusDiv.style.opacity = '0';
+                setTimeout(() => statusDiv.remove(), 300);
+            }, 3000);
+        }
+        
         // Add record to table with animation
         function addRecordToTable(record, recordNumber) {
             const tbody = document.getElementById('patientsTableBody');
@@ -1761,7 +1828,7 @@
                 return;
             }
             
-            // Remove empty state if it exists
+            // Remove empty state if exists
             const emptyState = tbody.querySelector('td[colspan="12"]');
             if (emptyState) {
                 tbody.innerHTML = '';
