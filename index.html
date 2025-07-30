@@ -2033,6 +2033,11 @@
             let successCount = 0;
             const totalRecords = jsonData.length;
             
+            // Initialize allPatients array if not exists
+            if (!window.allPatients) {
+                window.allPatients = [];
+            }
+
             // Process records one by one
             for (let i = 0; i < totalRecords; i++) {
                 const record = jsonData[i];
@@ -2057,6 +2062,8 @@
                     const saved = await saveRecordToDatabase(record);
                     if (saved) {
                         successCount++;
+                        // Add to global allPatients array
+                        window.allPatients.unshift(record);
                         addRecordToTable(record, successCount);
                     }
                 } catch (error) {
@@ -2080,6 +2087,9 @@
                     <div class="text-sm text-gray-600">นำเข้าสำเร็จ ${successCount} รายการ</div>
                 </div>
             `;
+            
+            // Refresh the table to show all records
+            await loadPatientsTable();
             
             // Remove status after delay
             setTimeout(() => {
