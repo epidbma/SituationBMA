@@ -75,6 +75,88 @@
             }, 3000);
         };
     </script>
+    
+    <script>
+        // Patient Database Functions
+        async function loadPatientsTable() {
+            try {
+                const patients = await loadFromFirebase('patients') || {};
+                const tableBody = document.getElementById('patientsTableBody');
+                tableBody.innerHTML = '';
+
+                Object.values(patients).forEach(patient => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.diseaseCode || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.diseaseName || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.gender || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.ageYears || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.ageMonths || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.ageDays || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.subdistrict || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.district || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.province || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.onsetDate || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.patientStatus || ''}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500">${patient.deathDate || ''}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading patients:', error);
+                alert('เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ป่วย');
+            }
+        }
+
+        async function importPatientsFromExcel(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                    // Skip header row and process data
+                    const patients = {};
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (row.length === 0) continue;
+
+                        const patient = {
+                            diseaseCode: row[0] || '',
+                            diseaseName: row[1] || '',
+                            gender: row[2] || '',
+                            ageYears: row[3] || '',
+                            ageMonths: row[4] || '',
+                            ageDays: row[5] || '',
+                            subdistrict: row[6] || '',
+                            district: row[7] || '',
+                            province: row[8] || '',
+                            onsetDate: row[9] || '',
+                            patientStatus: row[10] || '',
+                            deathDate: row[11] || '',
+                        };
+
+                        const patientId = `patient_${Date.now()}_${i}`;
+                        patients[patientId] = patient;
+                    }
+
+                    // Save to Firebase
+                    await saveToFirebase('patients', patients);
+                    alert('นำเข้าข้อมูลสำเร็จ');
+                    loadPatientsTable();
+                } catch (error) {
+                    console.error('Error importing Excel file:', error);
+                    alert('เกิดข้อผิดพลาดในการนำเข้าไฟล์ Excel');
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@100;200;300;400;500;600;700&display=swap');
         
@@ -378,7 +460,7 @@
                         <span class="text-sm">สร้างรายงาน</span>
                     </div>
                 </button>
-                
+
                 <button id="patientsTab" onclick="showPage('patients')" class="px-6 py-4 text-center font-semibold rounded-lg transition-all tab-inactive">
                     <div class="flex flex-col items-center space-y-2">
                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -551,67 +633,28 @@
 
 
 
-        <!-- Patients Page -->
+        <!-- Patients Database Page -->
         <div id="patientsPage" class="hidden">
-            <div class="glass-card p-8 slide-in">
-                <div class="flex items-center justify-between mb-8">
-                    <div>
-                        <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-3">
-                            ฐานข้อมูลผู้ป่วย
-                        </h2>
-                        <p class="text-gray-600 text-lg">จัดการข้อมูลผู้ป่วยและนำเข้าจากไฟล์ Excel</p>
-                    </div>
+            <div class="glass-card p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">ฐานข้อมูลผู้ป่วย</h2>
                     <div class="flex space-x-4">
-                        <button onclick="showImportPatientsModal()" class="btn-primary">
-                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z"/>
-                                <path d="M9 13h2v5a1 1 0 11-2 0v-5z"/>
-                            </svg>
-                            นำเข้าข้อมูลจาก Excel
-                        </button>
-                        <button onclick="showPage('summary')" class="btn-secondary">
-                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"/>
-                            </svg>
-                            กลับหน้าหลัก
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Search and Filter Controls -->
-                <div class="glass-card p-6 mb-6">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
-                        <div class="flex-1 max-w-md">
-                            <div class="relative">
-                                <input type="text" id="patientSearchInput" placeholder="ค้นหาข้อมูลผู้ป่วย..." 
-                                       class="w-full input-field pl-10 pr-10" 
-                                       onkeyup="if(event.key==='Enter') searchPatients()">
-                                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        <label class="relative cursor-pointer bg-white hover:bg-gray-50 text-gray-800 font-semibold py-2 px-4 border border-gray-300 rounded-lg shadow-sm transition-all hover:shadow-md">
+                            <span class="flex items-center space-x-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3 3m0 0l-3-3m3 3v-7"/>
                                 </svg>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-4">
-                            <div class="flex items-center space-x-2">
-                                <label class="text-sm font-medium text-gray-700">แสดง:</label>
-                                <select id="recordsPerPage" onchange="changeRecordsPerPage(this.value)" class="input-field py-2 px-3 text-sm">
-                                    <option value="25">25</option>
-                                    <option value="50" selected>50</option>
-                                    <option value="100">100</option>
-                                    <option value="200">200</option>
-                                </select>
-                                <span class="text-sm text-gray-600">รายการ</span>
-                            </div>
-                        </div>
+                                <span>นำเข้าข้อมูล Excel</span>
+                            </span>
+                            <input type="file" class="hidden" id="excelFileInput" accept=".xlsx,.xls" onchange="importPatientsFromExcel(event)"/>
+                        </label>
                     </div>
                 </div>
 
-                <!-- Table -->
                 <div class="overflow-x-auto">
-                    <table class="w-full table-auto">
-                        <thead>
-                            <tr class="bg-gray-50">
+                    <table class="min-w-full bg-white rounded-lg overflow-hidden">
+                        <thead class="bg-gray-100">
+                            <tr>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รหัสโรค</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อโรค</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เพศ</th>
@@ -626,20 +669,10 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่เสียชีวิต</th>
                             </tr>
                         </thead>
-                        <tbody id="patientsTableBody">
+                        <tbody id="patientsTableBody" class="divide-y divide-gray-200">
                             <!-- Patient data will be inserted here -->
                         </tbody>
                     </table>
-                </div>
-
-                <!-- Pagination -->
-                <div class="flex items-center justify-between mt-6">
-                    <div class="text-sm text-gray-700">
-                        แสดง <span id="paginationStart">0</span> ถึง <span id="paginationEnd">0</span> จาก <span id="totalRecords">0</span> รายการ
-                    </div>
-                    <div class="flex space-x-2" id="paginationControls">
-                        <!-- Pagination controls will be inserted here -->
-                    </div>
                 </div>
             </div>
         </div>
@@ -905,400 +938,6 @@
             }
             
             console.log('✅ Data initialization complete');
-        }
-
-        // Patient Database Functions
-        async function loadPatientsTable() {
-            try {
-                // Show loading state
-                const tbody = document.getElementById('patientsTableBody');
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="12" class="px-4 py-8 text-center">
-                            <div class="flex items-center justify-center space-x-2">
-                                <svg class="w-6 h-6 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span class="text-gray-600">กำลังโหลดข้อมูล...</span>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-
-                const { database, ref, get, query, orderByChild } = window.firebaseDB;
-                const patientsRef = ref(database, 'patients');
-                const patientsQuery = query(patientsRef);
-                const snapshot = await get(patientsQuery);
-                
-                if (snapshot.exists()) {
-                    allPatients = Object.values(snapshot.val());
-                    displayPatients();
-                    updatePagination();
-                } else {
-                    allPatients = [];
-                    displayPatients();
-                    updatePagination();
-                }
-            } catch (error) {
-                console.error('Error loading patients:', error);
-                showNotification('ไม่สามารถโหลดข้อมูลผู้ป่วยได้', 'error');
-                const tbody = document.getElementById('patientsTableBody');
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="12" class="px-4 py-8 text-center">
-                            <p class="text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>
-                        </td>
-                    </tr>
-                `;
-            }
-        }
-        
-        function displayPatients() {
-            const tbody = document.getElementById('patientsTableBody');
-            tbody.innerHTML = '';
-            
-            if (!allPatients || allPatients.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="12" class="px-4 py-8 text-center">
-                            <div class="text-center">
-                                <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                                </svg>
-                                <p class="text-gray-500 text-lg font-medium">ไม่พบข้อมูลผู้ป่วย</p>
-                                <p class="text-gray-400 mt-1">กรุณานำเข้าข้อมูลจากไฟล์ Excel</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                updatePaginationInfo();
-                return;
-            }
-            
-            const start = (currentPage - 1) * recordsPerPage;
-            const end = start + recordsPerPage;
-            const patientsToShow = allPatients.slice(start, end);
-            
-            patientsToShow.forEach((patient, index) => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-50 ' + (index % 2 === 0 ? 'bg-white' : 'bg-gray-50');
-                tr.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['รหัสโรค'] || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['โรค'] || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['เพศ'] || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['อายุปี'] || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['อายุเดือน'] || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['อายุวัน'] || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['แขวง'] || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['เขต'] || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['จังหวัด'] || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['วันที่เริ่มป่วย'] || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['สภาพผู้ป่วย'] || '-'}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${patient['วันที่เสียชีวิต'] || '-'}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-            
-            updatePaginationInfo();
-        }
-        
-        function updatePaginationInfo() {
-            const start = (currentPage - 1) * recordsPerPage + 1;
-            const end = Math.min(start + recordsPerPage - 1, allPatients.length);
-            
-            document.getElementById('paginationStart').textContent = allPatients.length > 0 ? start : 0;
-            document.getElementById('paginationEnd').textContent = end;
-            document.getElementById('totalRecords').textContent = allPatients.length;
-        }
-        
-        function updatePagination() {
-            const totalPages = Math.ceil(allPatients.length / recordsPerPage);
-            const controls = document.getElementById('paginationControls');
-            controls.innerHTML = '';
-            
-            // Previous button
-            const prevButton = document.createElement('button');
-            prevButton.className = `px-3 py-1 rounded ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`;
-            prevButton.innerHTML = '←';
-            prevButton.disabled = currentPage === 1;
-            prevButton.onclick = () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    displayPatients();
-                    updatePagination();
-                }
-            };
-            controls.appendChild(prevButton);
-            
-            // Page numbers
-            for (let i = 1; i <= totalPages; i++) {
-                if (
-                    i === 1 || // First page
-                    i === totalPages || // Last page
-                    (i >= currentPage - 2 && i <= currentPage + 2) // Pages around current page
-                ) {
-                    const pageButton = document.createElement('button');
-                    pageButton.className = `px-3 py-1 rounded ${i === currentPage ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'}`;
-                    pageButton.textContent = i;
-                    pageButton.onclick = () => {
-                        currentPage = i;
-                        displayPatients();
-                        updatePagination();
-                    };
-                    controls.appendChild(pageButton);
-                } else if (
-                    i === currentPage - 3 ||
-                    i === currentPage + 3
-                ) {
-                    const ellipsis = document.createElement('span');
-                    ellipsis.className = 'px-2 py-1';
-                    ellipsis.textContent = '...';
-                    controls.appendChild(ellipsis);
-                }
-            }
-            
-            // Next button
-            const nextButton = document.createElement('button');
-            nextButton.className = `px-3 py-1 rounded ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50'}`;
-            nextButton.innerHTML = '→';
-            nextButton.disabled = currentPage === totalPages;
-            nextButton.onclick = () => {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    displayPatients();
-                    updatePagination();
-                }
-            };
-            controls.appendChild(nextButton);
-        }
-        
-        function searchPatients() {
-            const searchInput = document.getElementById('patientSearchInput');
-            const searchTerm = searchInput.value.toLowerCase();
-            
-            if (!searchTerm) {
-                loadPatientsTable();
-                return;
-            }
-            
-            const filteredPatients = allPatients.filter(patient => {
-                return (
-                    (patient.รหัสโรค && patient.รหัสโรค.toLowerCase().includes(searchTerm)) ||
-                    (patient.โรค && patient.โรค.toLowerCase().includes(searchTerm)) ||
-                    (patient.เพศ && patient.เพศ.toLowerCase().includes(searchTerm)) ||
-                    (patient.แขวง && patient.แขวง.toLowerCase().includes(searchTerm)) ||
-                    (patient.เขต && patient.เขต.toLowerCase().includes(searchTerm)) ||
-                    (patient.จังหวัด && patient.จังหวัด.toLowerCase().includes(searchTerm))
-                );
-            });
-            
-            allPatients = filteredPatients;
-            currentPage = 1;
-            displayPatients();
-            updatePagination();
-        }
-        
-        function changeRecordsPerPage(value) {
-            recordsPerPage = parseInt(value);
-            currentPage = 1;
-            displayPatients();
-            updatePagination();
-        }
-        
-        function showImportPatientsModal() {
-            // Create modal HTML
-            const modalHTML = `
-                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div class="bg-white rounded-lg max-w-2xl w-full p-6">
-                        <h3 class="text-xl font-bold mb-4">นำเข้าข้อมูลผู้ป่วยจาก Excel</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">
-                                    เลือกไฟล์ Excel (.xlsx)
-                                </label>
-                                <input type="file" id="patientsExcelFile" accept=".xlsx" class="w-full p-2 border rounded">
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="skipFirstRowPatients" class="mr-2">
-                                <label for="skipFirstRowPatients" class="text-sm text-gray-600">
-                                    ข้ามบรรทัดแรก (หัวตาราง)
-                                </label>
-                            </div>
-                            <div class="flex justify-end space-x-4">
-                                <button onclick="downloadPatientsExampleFile()" class="btn-secondary">
-                                    <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z"/>
-                                    </svg>
-                                    ดาวน์โหลดไฟล์ตัวอย่าง
-                                </button>
-                                <button onclick="processImportPatients()" class="btn-primary" id="importPatientsButton" disabled>
-                                    นำเข้าข้อมูล
-                                </button>
-                                <button onclick="closeImportPatientsModal()" class="btn-secondary">
-                                    ยกเลิก
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            const modalContainer = document.createElement('div');
-            modalContainer.id = 'importPatientsModal';
-            modalContainer.innerHTML = modalHTML;
-            document.body.appendChild(modalContainer);
-            
-            // Enable/disable import button based on file selection
-            document.getElementById('patientsExcelFile').addEventListener('change', function() {
-                document.getElementById('importPatientsButton').disabled = !this.files.length;
-            });
-        }
-        
-        function closeImportPatientsModal() {
-            const modal = document.getElementById('importPatientsModal');
-            if (modal) {
-                modal.remove();
-            }
-        }
-        
-        function downloadPatientsExampleFile() {
-            const headers = [
-                'รหัสโรค', 'โรค', 'เพศ', 'อายุปี', 'อายุเดือน', 'อายุวัน',
-                'แขวง', 'เขต', 'จังหวัด', 'วันที่เริ่มป่วย', 'สภาพผู้ป่วย', 'วันที่เสียชีวิต'
-            ];
-            
-            const sampleData = [
-                headers,
-                ['A01.0', 'อหิวาตกโรค', 'ชาย', '45', '0', '0', 'บางซื่อ', 'บางซื่อ', 'กรุงเทพมหานคร', '2023-07-01', 'หาย', ''],
-                ['A01.1', 'ไข้ไทฟอยด์', 'หญิง', '28', '6', '15', 'ลาดยาว', 'จตุจักร', 'กรุงเทพมหานคร', '2023-07-15', 'เสียชีวิต', '2023-07-20']
-            ];
-            
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(sampleData);
-            XLSX.utils.book_append_sheet(wb, ws, 'ข้อมูลผู้ป่วย');
-            
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            XLSX.writeFile(wb, `ตัวอย่าง_ข้อมูลผู้ป่วย_${dateStr}.xlsx`);
-            showNotification('ดาวน์โหลดไฟล์ตัวอย่างสำเร็จ', 'success');
-        }
-        
-        async function processImportPatients() {
-            const fileInput = document.getElementById('patientsExcelFile');
-            const skipFirstRow = document.getElementById('skipFirstRowPatients').checked;
-            const importButton = document.getElementById('importPatientsButton');
-            
-            if (!fileInput.files || !fileInput.files[0]) {
-                showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
-                return;
-            }
-
-            // Disable import button and show loading state
-            const originalButtonText = importButton.innerHTML;
-            importButton.disabled = true;
-            importButton.innerHTML = `
-                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                กำลังประมวลผล...
-            `;
-            
-            try {
-                // Load diseases for mapping
-                const diseases = await loadFromFirebase('diseases');
-                const diseasesMap = new Map(diseases.map(d => [d.code, d.name]));
-                
-                const reader = new FileReader();
-                reader.onload = async function(e) {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                        let jsonData = XLSX.utils.sheet_to_json(worksheet);
-                        
-                        if (skipFirstRow) {
-                            jsonData = jsonData.slice(1);
-                        }
-
-                        // Create progress modal
-                        const progressModal = document.createElement('div');
-                        progressModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-                        progressModal.innerHTML = `
-                            <div class="bg-white rounded-lg p-6 max-w-md w-full">
-                                <h3 class="text-lg font-semibold mb-4">กำลังนำเข้าข้อมูล</h3>
-                                <div class="mb-4">
-                                    <div class="flex justify-between text-sm text-gray-600 mb-1">
-                                        <span>ความคืบหน้า</span>
-                                        <span id="progressText">0/${jsonData.length}</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                        <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
-                                    </div>
-                                </div>
-                                <p id="progressStatus" class="text-sm text-gray-600">กำลังเตรียมข้อมูล...</p>
-                            </div>
-                        `;
-                        document.body.appendChild(progressModal);
-
-                        const updateProgress = (current, total, status) => {
-                            const percent = (current / total) * 100;
-                            document.getElementById('progressBar').style.width = percent + '%';
-                            document.getElementById('progressText').textContent = `${current}/${total}`;
-                            document.getElementById('progressStatus').textContent = status;
-                        };
-                        
-                        // Add disease names from disease codes and validate data
-                        const processedData = jsonData.map((row, index) => {
-                            updateProgress(index + 1, jsonData.length, 'กำลังตรวจสอบข้อมูล...');
-                            const diseaseCode = row['รหัสโรค'];
-                            return {
-                                ...row,
-                                'โรค': diseasesMap.get(diseaseCode) || row['โรค'] || '',
-                                'timestamp': new Date().toISOString()
-                            };
-                        });
-
-                        // Save to Firebase in batches
-                        const { database, ref, set, push } = window.firebaseDB;
-                        const patientsRef = ref(database, 'patients');
-                        const batchSize = 50;
-                        const batches = Math.ceil(processedData.length / batchSize);
-
-                        for (let i = 0; i < processedData.length; i += batchSize) {
-                            const batch = processedData.slice(i, i + batchSize);
-                            const promises = batch.map(record => push(patientsRef, record));
-                            await Promise.all(promises);
-                            updateProgress(
-                                Math.min(i + batchSize, processedData.length),
-                                processedData.length,
-                                'กำลังบันทึกข้อมูล...'
-                            );
-                        }
-
-                        // Clean up and show success
-                        progressModal.remove();
-                        closeImportPatientsModal();
-                        showNotification(`นำเข้าข้อมูลสำเร็จ ${processedData.length} รายการ`, 'success');
-                        await loadPatientsTable(); // Reload the table
-                        
-                    } catch (error) {
-                        console.error('Error processing Excel file:', error);
-                        showNotification('เกิดข้อผิดพลาดในการประมวลผลไฟล์', 'error');
-                        importButton.disabled = false;
-                        importButton.innerHTML = originalButtonText;
-                    }
-                };
-                
-                reader.readAsArrayBuffer(fileInput.files[0]);
-                
-            } catch (error) {
-                console.error('Error reading file:', error);
-                showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
-                importButton.disabled = false;
-                importButton.innerHTML = originalButtonText;
-            }
         }
 
         // Page navigation with animation
@@ -2006,10 +1645,9 @@
         async function saveRecordToDatabase(record) {
             try {
                 // Save to Firebase (individual record)
-                const { database, ref, push, set } = window.firebaseDB;
+                const { database, ref, push } = window.firebaseDB;
                 const patientsRef = ref(database, 'patients');
-                const newRef = push(patientsRef);
-                await set(newRef, record);
+                const newRef = await push(patientsRef, record);
                 
                 // Also update localStorage
                 const existingData = JSON.parse(localStorage.getItem('patients') || '[]');
