@@ -2006,9 +2006,10 @@
         async function saveRecordToDatabase(record) {
             try {
                 // Save to Firebase (individual record)
-                const { database, ref, push } = window.firebaseDB;
+                const { database, ref, push, set } = window.firebaseDB;
                 const patientsRef = ref(database, 'patients');
-                const newRef = await push(patientsRef, record);
+                const newRef = push(patientsRef);
+                await set(newRef, record);
                 
                 // Also update localStorage
                 const existingData = JSON.parse(localStorage.getItem('patients') || '[]');
