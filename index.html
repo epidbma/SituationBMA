@@ -1187,11 +1187,23 @@
         async function processImportPatients() {
             const fileInput = document.getElementById('patientsExcelFile');
             const skipFirstRow = document.getElementById('skipFirstRowPatients').checked;
+            const importButton = document.getElementById('importPatientsButton');
             
             if (!fileInput.files || !fileInput.files[0]) {
                 showNotification('กรุณาเลือกไฟล์ Excel ก่อน', 'error');
                 return;
             }
+
+            // Disable import button and show loading state
+            const originalButtonText = importButton.innerHTML;
+            importButton.disabled = true;
+            importButton.innerHTML = `
+                <svg class="w-5 h-5 mr-2 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                กำลังประมวลผล...
+            `;
             
             try {
                 // Load diseases for mapping
@@ -1209,31 +1221,73 @@
                         if (skipFirstRow) {
                             jsonData = jsonData.slice(1);
                         }
+
+                        // Create progress modal
+                        const progressModal = document.createElement('div');
+                        progressModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                        progressModal.innerHTML = `
+                            <div class="bg-white rounded-lg p-6 max-w-md w-full">
+                                <h3 class="text-lg font-semibold mb-4">กำลังนำเข้าข้อมูล</h3>
+                                <div class="mb-4">
+                                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                        <span>ความคืบหน้า</span>
+                                        <span id="progressText">0/${jsonData.length}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                        <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <p id="progressStatus" class="text-sm text-gray-600">กำลังเตรียมข้อมูล...</p>
+                            </div>
+                        `;
+                        document.body.appendChild(progressModal);
+
+                        const updateProgress = (current, total, status) => {
+                            const percent = (current / total) * 100;
+                            document.getElementById('progressBar').style.width = percent + '%';
+                            document.getElementById('progressText').textContent = `${current}/${total}`;
+                            document.getElementById('progressStatus').textContent = status;
+                        };
                         
-                        // Add disease names from disease codes
-                        jsonData = jsonData.map(row => {
+                        // Add disease names from disease codes and validate data
+                        const processedData = jsonData.map((row, index) => {
+                            updateProgress(index + 1, jsonData.length, 'กำลังตรวจสอบข้อมูล...');
                             const diseaseCode = row['รหัสโรค'];
                             return {
                                 ...row,
-                                'โรค': diseasesMap.get(diseaseCode) || row['โรค'] || ''
+                                'โรค': diseasesMap.get(diseaseCode) || row['โรค'] || '',
+                                'timestamp': new Date().toISOString()
                             };
                         });
-                        
-                        // Save to Firebase
-                        const { database, ref, push } = window.firebaseDB;
+
+                        // Save to Firebase in batches
+                        const { database, ref, set, push } = window.firebaseDB;
                         const patientsRef = ref(database, 'patients');
-                        
-                        for (const record of jsonData) {
-                            await push(patientsRef, record);
+                        const batchSize = 50;
+                        const batches = Math.ceil(processedData.length / batchSize);
+
+                        for (let i = 0; i < processedData.length; i += batchSize) {
+                            const batch = processedData.slice(i, i + batchSize);
+                            const promises = batch.map(record => push(patientsRef, record));
+                            await Promise.all(promises);
+                            updateProgress(
+                                Math.min(i + batchSize, processedData.length),
+                                processedData.length,
+                                'กำลังบันทึกข้อมูล...'
+                            );
                         }
-                        
+
+                        // Clean up and show success
+                        progressModal.remove();
                         closeImportPatientsModal();
-                        showNotification('นำเข้าข้อมูลสำเร็จ', 'success');
-                        loadPatientsTable(); // Reload the table
+                        showNotification(`นำเข้าข้อมูลสำเร็จ ${processedData.length} รายการ`, 'success');
+                        await loadPatientsTable(); // Reload the table
                         
                     } catch (error) {
                         console.error('Error processing Excel file:', error);
                         showNotification('เกิดข้อผิดพลาดในการประมวลผลไฟล์', 'error');
+                        importButton.disabled = false;
+                        importButton.innerHTML = originalButtonText;
                     }
                 };
                 
@@ -1242,6 +1296,8 @@
             } catch (error) {
                 console.error('Error reading file:', error);
                 showNotification('เกิดข้อผิดพลาดในการอ่านไฟล์', 'error');
+                importButton.disabled = false;
+                importButton.innerHTML = originalButtonText;
             }
         }
 
