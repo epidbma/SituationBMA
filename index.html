@@ -929,13 +929,14 @@
         async function loadFromFirebase(path) {
             try {
                 const { database, ref, get } = window.firebaseDB;
+                console.log(`🔄 Attempting to load from Firebase: ${path}`);
                 const snapshot = await get(ref(database, path));
                 let data = null;
 
                 // Try to get data from Firebase first
                 if (snapshot.exists()) {
                     data = snapshot.val();
-                    console.log(`✅ Loaded from Firebase: ${path}`);
+                    console.log(`✅ Loaded from Firebase: ${path}`, data);
                 }
 
                 // If no data in Firebase, try localStorage
@@ -2235,7 +2236,7 @@
             // Use global variables if available (for real-time import)
             if (window.allPatients && window.allPatients.length > 0) {
                 allPatients = window.allPatients;
-                console.log(`📊 Using cached patients data: ${allPatients.length}`);
+                console.log(`📊 Using cached patients data:`, window.allPatients);
             } else {
                 // ลองโหลดจาก Firebase ก่อน
                 allPatients = await loadFromFirebase('patients');
