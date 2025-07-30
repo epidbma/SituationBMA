@@ -1742,15 +1742,6 @@
         // Save individual record to database
         async function saveRecordToDatabase(record) {
             try {
-                // Show saving indicator
-                const statusDiv = document.createElement('div');
-                statusDiv.className = 'fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 slide-in text-sm flex items-center';
-                statusDiv.innerHTML = `
-                    <div class="animate-spin mr-2">⚡</div>
-                    กำลังบันทึกข้อมูล...
-                `;
-                document.body.appendChild(statusDiv);
-
                 // Save to Firebase (individual record)
                 const { database, ref, push } = window.firebaseDB;
                 const patientsRef = ref(database, 'patients');
@@ -1766,10 +1757,6 @@
                 }
                 
                 localStorage.setItem('patients', JSON.stringify(existingData));
-                
-                // Remove saving indicator with animation
-                statusDiv.style.opacity = '0';
-                setTimeout(() => statusDiv.remove(), 300);
                 
                 return true;
             } catch (error) {
