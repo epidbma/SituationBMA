@@ -968,6 +968,17 @@
                     tab.className = tab.className.replace('tab-inactive', 'tab-active');
                 } else if (page === 'report') {
                     const pageElement = document.getElementById('reportPage');
+                } else if (page === 'patientDb') {
+                    const pageElement = document.getElementById('patientDbPage');
+                    pageElement.classList.remove('hidden');
+                    pageElement.classList.add('slide-in');
+                    document.getElementById('patientDbTab').className = document.getElementById('patientDbTab').className.replace('tab-inactive', 'tab-active');
+                } else if (page === 'patientDb') {
+                    const pageElement = document.getElementById('patientDbPage');
+                    pageElement.classList.remove('hidden');
+                    pageElement.classList.add('slide-in');
+                    const tab = document.getElementById('patientDbTab');
+                    tab.className = tab.className.replace('tab-inactive', 'tab-active');
                     pageElement.classList.remove('hidden');
                     pageElement.classList.add('slide-in');
                     const tab = document.getElementById('reportTab');
