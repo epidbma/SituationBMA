@@ -1149,17 +1149,16 @@
             }, 2000);
         }
 
-        // Import Excel with real-time display
+        // High-performance Excel import for large datasets (100K+ records)
         function importExcel() {
             const file = document.getElementById('excelFile').files[0];
             if (!file) return;
 
-            // Reset import variables
-            importCancelled = false;
-            window.allPatients = [];
-            
             const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
             console.log(`📊 File size: ${fileSizeMB} MB`);
+            
+            // Enhanced file size warnings with performance tips
+            if (file.size > 100 * 1024 * 1024) { // 100MB+
                 const confirmed = confirm(
                     `⚠️ ไฟล์ขนาดใหญ่มาก: ${fileSizeMB} MB\n\n` +
                     `🚀 เทคนิคเพิ่มความเร็ว:\n` +
@@ -1546,7 +1545,7 @@
             document.getElementById('importCount').textContent = `${current.toLocaleString()} / ${total.toLocaleString()} รายการ`;
         }
 
-        // Process data with real-time display
+        // Process data one by one with batch progress display
         function processDataWithHighPerformance(jsonData) {
             const requiredFields = ['โรค', 'รหัสโรค', 'เพศ', 'อายุปี', 'อายุเดือน', 'อายุวัน', 'แขวง', 'เขต', 'จังหวัด', 'วันที่เริ่มป่วย', 'สภาพผู้ป่วย', 'วันที่เสียชีวิต'];
             
@@ -1556,21 +1555,18 @@
             let errorRecords = 0;
             let savedRecords = 0;
             const startTime = Date.now();
+
+            // Initialize global array for real-time display
+            window.allPatients = [];
             
-            // Clear existing table and show processing state with real-time indication
+            // Clear existing table and show processing state
             const tbody = document.getElementById('patientsTableBody');
             tbody.innerHTML = `
                 <tr>
                     <td colspan="12" class="px-6 py-20 text-center text-gray-500">
-                        <div class="flex flex-col items-center">
-                            <div class="text-6xl mb-4">⚡</div>
-                            <p class="font-semibold text-xl text-gray-700">กำลังนำเข้าข้อมูลทีละรายการ...</p>
-                            <p class="text-gray-500 mt-2">แสดงผลแบบเรียลไทม์</p>
-                            <div class="mt-4 flex items-center space-x-2">
-                                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"></div>
-                                <span id="realTimeStatus" class="text-green-600">เริ่มนำเข้าข้อมูล...</span>
-                            </div>
-                        </div>
+                        <div class="text-6xl mb-4">⚡</div>
+                        <p class="font-semibold text-xl text-gray-700">กำลังนำเข้าข้อมูลทีละรายการ...</p>
+                        <p class="text-gray-500 mt-2">แสดงผลแบบเรียลไทม์</p>
                     </td>
                 </tr>
             `;
@@ -1585,37 +1581,38 @@
             updateImportStatus('🔍 เริ่มตรวจสอบและบันทึกข้อมูลทีละรายการ...');
             
             // Process records one by one
-            async function processRecord(index) {
-                if (importCancelled) {
-                    console.log(`🛑 Import cancelled at record ${index + 1}`);
-                    document.getElementById('realTimeStatus').textContent = 'การนำเข้าถูกยกเลิก';
-                    return;
+        function processRecord(index) {
+            if (importCancelled) {
+                console.log(`🛑 Import cancelled at record ${index + 1}`);
+                return;
+            }
+            
+            if (index >= totalRecords) {
+                // Finish import
+                finishImportProcess(savedRecords, validRecords, errorRecords);
+                return;
+            }
+            
+            const row = jsonData[index];
+            const newRow = {};
+            
+            // Copy required fields with data cleaning
+            for (const field of requiredFields) {
+                let value = row[field] || '';
+                // Clean up common data issues
+                value = value.toString().trim();
+                if (field === 'อายุปี' && !isNaN(value)) {
+                    value = parseInt(value);
                 }
-                
-                if (index >= totalRecords) {
-                    // Finish import
-                    finishImportProcess(savedRecords, validRecords, errorRecords);
-                    document.getElementById('realTimeStatus').textContent = 'นำเข้าข้อมูลเสร็จสิ้น';
-                    return;
-                }
-                
-                const row = jsonData[index];
-                const newRow = {};
-                
-                // Copy required fields
-                for (const field of requiredFields) {
-                    newRow[field] = row[field] || '';
-                }
-                
-                processedRecords++;
+                newRow[field] = value;
+            }                processedRecords++;
                 
                 // Validate record
                 if (newRow['รหัสโรค'] && newRow['เพศ']) {
                     validRecords++;
                     
-                    // Save and display record in real-time
-                    try {
-                        const success = await saveRecordToDatabase(newRow);
+                    // Save record to database
+                    saveRecordToDatabase(newRow).then((success) => {
                         if (success) {
                             savedRecords++;
                             
@@ -1624,10 +1621,6 @@
                             
                             // Add to table display (limit to 100 records)
                             addRecordToTable(newRow, savedRecords);
-                            
-                            // Update real-time status
-                            document.getElementById('realTimeStatus').textContent = 
-                                `กำลังนำเข้ารายการที่ ${savedRecords} จาก ${totalRecords}`;
                         }
                         
                         // Update batch progress display
@@ -1709,14 +1702,23 @@
         // Save individual record to database
         async function saveRecordToDatabase(record) {
             try {
+                // Show saving indicator
+                const statusDiv = document.createElement('div');
+                statusDiv.className = 'fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 slide-in text-sm flex items-center';
+                statusDiv.innerHTML = `
+                    <div class="animate-spin mr-2">⚡</div>
+                    กำลังบันทึกข้อมูล...
+                `;
+                document.body.appendChild(statusDiv);
+
                 // Save to Firebase (individual record)
                 const { database, ref, push } = window.firebaseDB;
                 const patientsRef = ref(database, 'patients');
-                await push(patientsRef, record);
+                const newRef = await push(patientsRef, record);
                 
                 // Also update localStorage
                 const existingData = JSON.parse(localStorage.getItem('patients') || '[]');
-                existingData.unshift(record); // Add to beginning
+                existingData.unshift({...record, _id: newRef.key}); // Add to beginning with Firebase ID
                 
                 // Keep only latest 50000 records in localStorage to prevent memory issues
                 if (existingData.length > 50000) {
@@ -1724,6 +1726,10 @@
                 }
                 
                 localStorage.setItem('patients', JSON.stringify(existingData));
+                
+                // Remove saving indicator with animation
+                statusDiv.style.opacity = '0';
+                setTimeout(() => statusDiv.remove(), 300);
                 
                 return true;
             } catch (error) {
@@ -1747,27 +1753,34 @@
             }
         }
         
-        // Add record to table with smooth animation
+        // Add record to table with animation
         function addRecordToTable(record, recordNumber) {
             const tbody = document.getElementById('patientsTableBody');
+            if (!tbody) {
+                console.error('❌ Table body not found');
+                return;
+            }
             
             // Remove empty state if it exists
-            if (tbody.querySelector('td[colspan="12"]')) {
+            const emptyState = tbody.querySelector('td[colspan="12"]');
+            if (emptyState) {
                 tbody.innerHTML = '';
             }
             
             // Limit display to 100 records to prevent performance issues
             const existingRows = tbody.querySelectorAll('tr');
             if (existingRows.length >= 100) {
-                // Remove the last row with fade-out animation
+                // Remove the last row with fade out animation
                 const lastRow = existingRows[existingRows.length - 1];
-                lastRow.classList.add('fade-out');
+                lastRow.style.transition = 'opacity 0.3s';
+                lastRow.style.opacity = '0';
                 setTimeout(() => lastRow.remove(), 300);
             }
             
-            // Create new row with fade-in animation
+            // Create new row with fade in animation
             const newRow = document.createElement('tr');
-            newRow.classList.add('fade-in');
+            newRow.style.opacity = '0';
+            newRow.style.transition = 'opacity 0.3s';
             newRow.className = 'table-row transition-all duration-300 border-b border-gray-100 bg-green-50 animate-slideInFromTop';
             newRow.innerHTML = `
                 <td class="px-6 py-4 text-sm font-semibold text-gray-900">${record.โรค || record['โรค'] || ''}</td>
