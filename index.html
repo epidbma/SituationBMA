@@ -463,76 +463,6 @@
                         <div id="weekDateRange" class="text-xs text-gray-500">กำลังโหลด...</div>
                     </div>
                 </div>
-
-                <!-- ส่วนข้อมูลเพิ่มเติม -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <!-- ข้อมูลระบบ -->
-                    <div class="glass-card p-6">
-                        <div class="flex items-center mb-4">
-                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
-                                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
-                                </svg>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-800">ข้อมูลระบบ</h3>
-                        </div>
-                        <ul class="space-y-2 text-sm text-gray-600">
-                            <li class="flex items-center">
-                                <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                                ระบบเชื่อมต่อ Firebase แบบเรียลไทม์
-                            </li>
-                            <li class="flex items-center">
-                                <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                                อัปเดตข้อมูลสถิติอัตโนมัติ
-                            </li>
-                            <li class="flex items-center">
-                                <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                                รองรับการทำงานแบบออฟไลน์
-                            </li>
-                        </ul>
-                    </div>
-
-                    <!-- ข้อมูลสัปดาห์ระบาดวิทยา -->
-                    <div class="glass-card p-6">
-                        <div class="flex items-center mb-4">
-                            <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mr-3">
-                                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
-                                </svg>
-                            </div>
-                            <h3 class="text-lg font-semibold text-gray-800">สัปดาห์ระบาดวิทยา</h3>
-                        </div>
-                        <ul class="space-y-2 text-sm text-gray-600">
-                            <li class="flex items-center">
-                                <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
-                                เลือกสัปดาห์ล่าสุดที่ไม่เกินปัจจุบัน
-                            </li>
-                            <li class="flex items-center">
-                                <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
-                                ใช้ข้อมูลจากฐานข้อมูลสัปดาห์การระบาด
-                            </li>
-                            <li class="flex items-center">
-                                <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
-                                สำหรับการทำรายงานโรคระบาด
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- คำแนะนำการใช้งาน -->
-                <div class="glass-card p-6 pulse-glow">
-                    <div class="flex items-center">
-                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
-                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-gray-800 font-semibold text-lg">การใช้งานระบบ</p>
-                            <p class="text-gray-600">ใช้เมนูด้านบนเพื่อเพิ่มข้อมูลผู้ป่วย สร้างรายงาน และติดตามสถานการณ์โรคระบาด</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -739,6 +669,32 @@
                                     </svg>
                                     <span>ลบข้อมูลทั้งหมด</span>
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Database Overview Section -->
+                    <div class="glass-card p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="text-xl font-bold bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent mb-2">
+                                    📊 ภาพรวมฐานข้อมูล
+                                </h3>
+                                <p class="text-gray-600">จำนวนผู้ป่วยในแต่ละโรคที่มีข้อมูลในระบบ</p>
+                            </div>
+                            <button onclick="refreshDatabaseOverview()" class="btn-secondary text-sm">
+                                <svg class="w-4 h-4 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"/>
+                                </svg>
+                                รีเฟรช
+                            </button>
+                        </div>
+                        
+                        <div id="databaseOverviewGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            <!-- Database overview cards will be populated here -->
+                            <div class="text-center text-gray-500 col-span-full py-8">
+                                <div class="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+                                กำลังโหลดข้อมูล...
                             </div>
                         </div>
                     </div>
@@ -1083,6 +1039,9 @@
                     
                     // สร้างสรุปข้อมูลโรค
                     createDiseaseSummary();
+                    
+                    // โหลดภาพรวมฐานข้อมูล
+                    loadDatabaseOverview();
                 } else {
                     console.log('No patient data found');
                     window.allPatients = [];
@@ -1095,6 +1054,7 @@
                     `;
                     updatePaginationInfo(0, 1, 1);
                     createDiseaseSummary(); // อัพเดทสรุปข้อมูลโรค
+                    loadDatabaseOverview(); // โหลดภาพรวมฐานข้อมูล
                 }
             }, (error) => {
                 console.error('Error fetching patient data:', error);
@@ -1158,6 +1118,111 @@
 
             summaryGrid.innerHTML = diseaseCards;
             document.getElementById('totalPatientCount').textContent = `รวมผู้ป่วยทั้งหมด: ${totalPatients} ราย`;
+        }
+
+        // Database Overview Functions
+        async function loadDatabaseOverview() {
+            try {
+                const overviewGrid = document.getElementById('databaseOverviewGrid');
+                
+                // โหลดข้อมูลผู้ป่วยและโรค
+                const { database, ref, get } = window.firebaseDB;
+                if (!database || !ref || !get) {
+                    overviewGrid.innerHTML = '<p class="text-gray-500 col-span-full text-center">ไม่สามารถเชื่อมต่อฐานข้อมูลได้</p>';
+                    return;
+                }
+
+                const [patientSnapshot, diseaseSnapshot] = await Promise.all([
+                    get(ref(database, 'patients')),
+                    get(ref(database, 'diseases'))
+                ]);
+
+                if (!patientSnapshot.exists()) {
+                    overviewGrid.innerHTML = '<p class="text-gray-500 col-span-full text-center">ไม่มีข้อมูลผู้ป่วยในระบบ</p>';
+                    return;
+                }
+
+                const patients = Object.values(patientSnapshot.val());
+                const diseases = diseaseSnapshot.exists() ? diseaseSnapshot.val() : [];
+                
+                // สร้าง map ชื่อโรค
+                const diseaseMap = {};
+                if (diseases && Array.isArray(diseases)) {
+                    diseases.forEach(disease => {
+                        if (disease.code && disease.name) {
+                            diseaseMap[disease.code] = disease.name;
+                        }
+                    });
+                }
+
+                // นับจำนวนผู้ป่วยแต่ละโรค
+                const diseaseCount = {};
+                patients.forEach(patient => {
+                    if (patient.diseaseCode) {
+                        diseaseCount[patient.diseaseCode] = (diseaseCount[patient.diseaseCode] || 0) + 1;
+                    }
+                });
+
+                // กรองเฉพาะโรคที่มีผู้ป่วย (> 0) และเรียงตามจำนวนผู้ป่วย
+                const filteredDiseases = Object.entries(diseaseCount)
+                    .filter(([code, count]) => count > 0)
+                    .sort(([,a], [,b]) => b - a);
+
+                if (filteredDiseases.length === 0) {
+                    overviewGrid.innerHTML = '<p class="text-gray-500 col-span-full text-center">ไม่มีข้อมูลผู้ป่วยในระบบ</p>';
+                    return;
+                }
+
+                // สร้างการ์ดแสดงข้อมูล
+                const overviewCards = filteredDiseases.map(([diseaseCode, count]) => {
+                    const diseaseName = diseaseMap[diseaseCode] || 'ไม่ระบุชื่อโรค';
+                    const totalPatients = patients.length;
+                    const percentage = ((count / totalPatients) * 100).toFixed(1);
+                    
+                    return `
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full mr-2"></div>
+                                    <span class="text-xs text-gray-500 font-medium">${diseaseCode}</span>
+                                </div>
+                                <span class="text-xs text-gray-400">${percentage}%</span>
+                            </div>
+                            <h4 class="text-sm font-semibold text-gray-900 mb-2 line-clamp-2" title="${diseaseName}">
+                                ${diseaseName}
+                            </h4>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xl font-bold text-blue-600">${count.toLocaleString()}</span>
+                                <span class="text-xs text-gray-500">ราย</span>
+                            </div>
+                            <div class="mt-2 w-full bg-gray-100 rounded-full h-1.5">
+                                <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-300" 
+                                     style="width: ${Math.min(percentage, 100)}%"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                overviewGrid.innerHTML = overviewCards;
+
+            } catch (error) {
+                console.error('Error loading database overview:', error);
+                document.getElementById('databaseOverviewGrid').innerHTML = 
+                    '<p class="text-red-500 col-span-full text-center">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+            }
+        }
+
+        function refreshDatabaseOverview() {
+            const overviewGrid = document.getElementById('databaseOverviewGrid');
+            overviewGrid.innerHTML = `
+                <div class="text-center text-gray-500 col-span-full py-8">
+                    <div class="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+                    กำลังรีเฟรชข้อมูล...
+                </div>
+            `;
+            setTimeout(() => {
+                loadDatabaseOverview();
+            }, 500);
         }
 
         function displayPaginatedPatients() {
@@ -1308,6 +1373,9 @@
                 
                 // Reset summary
                 createDiseaseSummary();
+                
+                // รีเฟรชภาพรวมฐานข้อมูล
+                loadDatabaseOverview();
                 
                 // อัพเดทข้อมูลภาพรวมระบบ
                 if (window.firebaseDB) {
@@ -2266,6 +2334,13 @@
                         } else {
                             // All records processed
                             showNotification(`นำเข้าข้อมูลเสร็จสิ้น\nสำเร็จ: ${successCount} รายการ\nผิดพลาด: ${errorCount} รายการ`, 'success');
+                            
+                            // รีเฟรชข้อมูลทั้งหมด
+                            createDiseaseSummary();
+                            loadDatabaseOverview();
+                            if (window.firebaseDB) {
+                                loadSystemOverview();
+                            }
                         }
                     }
                     
@@ -6189,6 +6264,9 @@
                 
                 // Reload table
                 await loadPatientsTable();
+                
+                // รีเฟรชภาพรวมฐานข้อมูล
+                loadDatabaseOverview();
                 
                 // Show auto-refresh notification
                 const refreshDiv = document.createElement('div');
