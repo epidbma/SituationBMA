@@ -564,7 +564,7 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">สัดส่วนชายต่อหญิง</h3>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">อัตราส่วนชายต่อหญิง</h3>
                                     <div id="genderRatio" class="text-2xl font-bold text-purple-600">-</div>
                                 </div>
                             </div>
@@ -1826,8 +1826,8 @@
                 // คำนวณอัตราส่วนชาย:หญิง
                 let genderRatio = '';
                 if (maleCount > 0 && femaleCount > 0) {
-                    const ratio = maleCount / femaleCount;
-                    genderRatio = `${ratio.toFixed(2)} : 1`;
+                    const ratio = femaleCount / maleCount; // เปลี่ยนเป็น หญิง/ชาย
+                    genderRatio = `1 : ${ratio.toFixed(2)}`;
                 } else if (maleCount > 0 && femaleCount === 0) {
                     genderRatio = 'ชายเท่านั้น';
                 } else if (maleCount === 0 && femaleCount > 0) {
