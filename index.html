@@ -1045,6 +1045,7 @@
                 if (page === 'summary') {
                     const pageElement = document.getElementById('summaryPage');
                     pageElement.classList.remove('hidden');
+                    document.getElementById('summaryTab').className = document.getElementById('summaryTab').className.replace('tab-inactive', 'tab-active');
                 } else if (page === 'patientDb') {
                     const pageElement = document.getElementById('patientDbPage');
                     pageElement.classList.remove('hidden');
@@ -1054,9 +1055,6 @@
                     if (window.firebaseDB) {
                         displayPatients();
                     }
-                    pageElement.classList.add('slide-in');
-                    const tab = document.getElementById('summaryTab');
-                    tab.className = tab.className.replace('tab-inactive', 'tab-active');
                 } else if (page === 'report') {
                     const pageElement = document.getElementById('reportPage');
                     pageElement.classList.remove('hidden');
