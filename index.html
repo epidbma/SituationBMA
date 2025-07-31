@@ -8,7 +8,6 @@
     <title>ระบบสรุปสถานการณ์โรค - กลุ่มงานระบาดวิทยา</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Firebase SDK -->
     <script type="module">
@@ -405,169 +404,54 @@
 
         <!-- Summary Page -->
         <div id="summaryPage" class="slide-in">
-            <!-- ส่วนที่ 1: ภาพรวมข้อมูลปัจจุบัน -->
-            <div class="glass-card p-8 mb-8">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-4">
-                        ส่วนที่ 1: ภาพรวมข้อมูลปัจจุบัน
-                    </h2>
-                    <p class="text-gray-600 text-lg">ข้อมูลสถิติระบบเฝ้าระวังโรค</p>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="stat-card floating-animation" style="animation-delay: 0.1s;">
-                        <div class="w-16 h-16 icon-gradient-blue rounded-2xl mx-auto mb-6 flex items-center justify-center">
-                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
-                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3h4v1a1 1 0 102 0V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"/>
-                            </svg>
-                        </div>
-                        <div id="diseaseCount" class="text-3xl font-bold text-gray-900 mb-2">-</div>
-                        <div class="text-sm text-gray-600 font-medium">จำนวนโรคที่เฝ้าระวัง</div>
-                    </div>
-                    
-                    <div class="stat-card floating-animation" style="animation-delay: 0.2s;">
-                        <div class="w-16 h-16 icon-gradient-green rounded-2xl mx-auto mb-6 flex items-center justify-center">
-                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
-                            </svg>
-                        </div>
-                        <div id="patientCount" class="text-3xl font-bold text-gray-900 mb-2">-</div>
-                        <div class="text-sm text-gray-600 font-medium">จำนวนผู้ป่วยในฐานข้อมูล</div>
-                    </div>
-                    
-                    <div class="stat-card floating-animation" style="animation-delay: 0.3s;">
-                        <div class="w-16 h-16 icon-gradient-orange rounded-2xl mx-auto mb-6 flex items-center justify-center">
-                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
-                            </svg>
-                        </div>
-                        <div class="text-center">
-                            <div id="currentWeek" class="text-3xl font-bold text-gray-900 mb-1">-</div>
-                            <div id="weekDateRange" class="text-xs text-gray-500 mb-2">-</div>
-                            <div class="text-sm text-gray-600 font-medium">สัปดาห์การระบาดปัจจุบัน</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ส่วนที่ 2: ภาพรวมข้อมูลผู้ป่วย -->
-            <div class="glass-card p-8 mb-8">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent mb-4">
-                        ส่วนที่ 2: ภาพรวมข้อมูลผู้ป่วย
-                    </h2>
-                    <p class="text-gray-600 text-lg">จำนวนผู้ป่วยรวมของแต่ละโรค</p>
-                </div>
-                
-                <div id="diseasePatientStats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                    <!-- จะถูกเติมข้อมูลโดย JavaScript -->
-                </div>
-                
-                <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
-                                <strong>หมายเหตุ:</strong> ข้อมูลแสดงจำนวนผู้ป่วยที่บันทึกในระบบ โดยนับตามรหัสโรคที่พบในฐานข้อมูลผู้ป่วย
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ส่วนที่ 3: รายละเอียดรายโรค -->
             <div class="glass-card p-8">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold bg-gradient-to-r from-purple-800 to-purple-600 bg-clip-text text-transparent mb-4">
-                        ส่วนที่ 3: รายละเอียดรายโรค
-                    </h2>
-                    <p class="text-gray-600 text-lg">เลือกโรคเพื่อดูข้อมูลรายละเอียด</p>
-                </div>
-                
-                <div class="mb-8">
-                    <label class="block text-sm font-semibold text-gray-700 mb-3">เลือกโรคที่ต้องการดู</label>
-                    <select id="selectedDisease" class="w-full max-w-md input-field" onchange="loadDiseaseDetails()">
-                        <option value="">-- กรุณาเลือกโรค --</option>
-                    </select>
-                </div>
-
-                <div id="diseaseDetails" class="hidden">
-                    <!-- 3.1 สถิติผู้ป่วย -->
-                    <div class="mb-8">
-                        <h3 class="text-xl font-bold text-gray-800 mb-6">3.1 สถิติผู้ป่วย</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div class="stat-card">
-                                <div class="text-2xl font-bold text-blue-600 mb-2" id="totalPatients">-</div>
-                                <div class="text-sm text-gray-600">ผู้ป่วยรวม</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="text-2xl font-bold text-green-600 mb-2" id="malePatients">-</div>
-                                <div class="text-sm text-gray-600">ผู้ป่วยชาย</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="text-2xl font-bold text-pink-600 mb-2" id="femalePatients">-</div>
-                                <div class="text-sm text-gray-600">ผู้ป่วยหญิง</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="text-2xl font-bold text-purple-600 mb-2" id="genderRatio">-</div>
-                                <div class="text-sm text-gray-600">อัตราส่วน ชาย:หญิง</div>
-                            </div>
-                        </div>
+                <!-- ส่วนที่ 1: ภาพรวมข้อมูลปัจจุบัน -->
+                <div class="mb-12">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-4">
+                            ส่วนที่ 1 - ภาพรวมข้อมูลปัจจุบัน
+                        </h2>
+                        <p class="text-gray-600 text-lg">ข้อมูลสำคัญในระบบสรุปสถานการณ์โรค</p>
                     </div>
-
-                    <!-- 3.2 จำนวนผู้เสียชีวิต -->
-                    <div class="mb-8">
-                        <h3 class="text-xl font-bold text-gray-800 mb-6">3.2 จำนวนผู้เสียชีวิต</h3>
-                        <div class="stat-card inline-block">
-                            <div class="text-3xl font-bold text-red-600 mb-2" id="deathCount">-</div>
-                            <div class="text-sm text-gray-600">จำนวนผู้เสียชีวิต</div>
-                        </div>
-                    </div>
-
-                    <!-- 3.3 เขตที่พบผู้ป่วยมากที่สุด 3 อันดับ -->
-                    <div class="mb-8">
-                        <h3 class="text-xl font-bold text-gray-800 mb-6">3.3 เขตที่พบผู้ป่วยมากที่สุด 3 อันดับ</h3>
-                        <div id="topDistricts" class="space-y-4">
-                            <!-- จะถูกเติมข้อมูลโดย JavaScript -->
-                        </div>
-                    </div>
-
-                    <!-- 3.4 Epidemic Curve -->
-                    <div class="mb-8">
-                        <h3 class="text-xl font-bold text-gray-800 mb-6">3.4 Epidemic Curve</h3>
-                        <div class="bg-gray-50 p-6 rounded-lg">
-                            <div class="relative" style="height: 400px;">
-                                <canvas id="epidemicCurve"></canvas>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <!-- จำนวนโรคที่เฝ้าระวัง -->
+                        <div class="stat-card floating-animation" style="animation-delay: 0.1s;">
+                            <div class="w-20 h-20 icon-gradient-blue rounded-2xl mx-auto mb-6 flex items-center justify-center">
+                                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
                             </div>
+                            <div id="diseaseCount" class="text-4xl font-bold text-gray-900 mb-3">-</div>
+                            <div class="text-base text-gray-700 font-semibold mb-2">จำนวนโรคที่เฝ้าระวัง</div>
+                            <div class="text-sm text-gray-500">โรคที่อยู่ในระบบ</div>
                         </div>
-                    </div>
-
-                    <!-- 3.5 กราฟสถิติการระบาดเทียบกับข้อมูลในฐาน 5 ปีย้อนหลัง -->
-                    <div class="mb-8">
-                        <h3 class="text-xl font-bold text-gray-800 mb-6">3.5 กราฟสถิติการระบาดเทียบกับข้อมูลในฐาน 5 ปีย้อนหลัง</h3>
-                        <div class="bg-gray-50 p-6 rounded-lg mb-4">
-                            <div class="relative" style="height: 400px;">
-                                <canvas id="historicalComparison"></canvas>
+                        
+                        <!-- จำนวนผู้ป่วยในฐานข้อมูล -->
+                        <div class="stat-card floating-animation" style="animation-delay: 0.2s;">
+                            <div class="w-20 h-20 icon-gradient-green rounded-2xl mx-auto mb-6 flex items-center justify-center">
+                                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                                </svg>
                             </div>
+                            <div id="patientCount" class="text-4xl font-bold text-gray-900 mb-3">-</div>
+                            <div class="text-base text-gray-700 font-semibold mb-2">จำนวนผู้ป่วยในฐานข้อมูล</div>
+                            <div class="text-sm text-gray-500">ผู้ป่วยทั้งหมดในระบบ</div>
                         </div>
-                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                                <div class="ml-3">
-                                    <p class="text-sm text-yellow-700">
-                                        <strong>หมายเหตุ:</strong> ข้อมูล 4 ปีย้อนหลังเป็นข้อมูลจำลอง เนื่องจากระบบยังไม่มีข้อมูลย้อนหลัง ข้อมูลปีปัจจุบัน (แสดงเป็นสีแดง) เป็นข้อมูลจริงจากระบบ
-                                    </p>
-                                </div>
+                        
+                        <!-- สัปดาห์การระบาดปัจจุบัน -->
+                        <div class="stat-card floating-animation" style="animation-delay: 0.3s;">
+                            <div class="w-20 h-20 icon-gradient-purple rounded-2xl mx-auto mb-6 flex items-center justify-center">
+                                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                                </svg>
                             </div>
+                            <div class="mb-3">
+                                <div id="currentWeek" class="text-4xl font-bold text-gray-900 mb-1">-</div>
+                                <div class="text-sm text-gray-600" id="weekDateRange">-</div>
+                            </div>
+                            <div class="text-base text-gray-700 font-semibold mb-2">สัปดาห์การระบาดปัจจุบัน</div>
+                            <div class="text-sm text-gray-500">สัปดาห์ระบาดวิทยา</div>
                         </div>
                     </div>
                 </div>
@@ -1369,34 +1253,20 @@
                 
                 // โหลดข้อมูลผู้ป่วย
                 const { database, ref, get } = window.firebaseDB;
-                let patients = [];
                 if (database && ref && get) {
                     const patientSnapshot = await get(ref(database, 'patients'));
-                    if (patientSnapshot.exists()) {
-                        const patientData = patientSnapshot.val();
-                        patients = Object.values(patientData);
-                        console.log('System overview: Loaded patients data:', patients.length, 'patients');
-                        console.log('Sample patient:', patients[0]);
-                    } else {
-                        console.log('System overview: No patient data found');
-                    }
-                } else {
-                    console.log('System overview: Firebase not available');
+                    const patientCount = patientSnapshot.exists() ? Object.keys(patientSnapshot.val()).length : 0;
+                    document.getElementById('patientCount').textContent = patientCount.toLocaleString();
                 }
                 
-                const patientCount = patients.length;
-                document.getElementById('patientCount').textContent = patientCount.toLocaleString();
+                // คำนวณจำนวนรายงาน (จำลองข้อมูล)
+                const reportCount = diseaseCount * 12; // สมมติว่ามีรายงานรายเดือนสำหรับแต่ละโรค
+                document.getElementById('reportCount').textContent = reportCount.toLocaleString();
                 
-                // คำนวณสัปดาห์ระบาดวิทยาปัจจุบันและช่วงวันที่
-                const { week, dateRange } = getCurrentEpiWeekWithDates();
-                document.getElementById('currentWeek').textContent = week;
-                document.getElementById('weekDateRange').textContent = dateRange;
-                
-                // โหลดข้อมูลภาพรวมผู้ป่วยแต่ละโรค
-                await loadDiseasePatientStats(diseases, patients);
-                
-                // โหลด dropdown สำหรับเลือกโรค
-                await loadDiseaseDropdown(diseases);
+                // คำนวณสัปดาห์ระบาดวิทยาปัจจุบัน
+                const { weekNumber, weekDateRange } = getCurrentEpiWeek();
+                document.getElementById('currentWeek').textContent = weekNumber;
+                document.getElementById('weekDateRange').textContent = weekDateRange;
                 
                 console.log('System overview loaded successfully');
             } catch (error) {
@@ -1409,8 +1279,8 @@
             }
         }
 
-        // คำนวณสัปดาห์ระบาดวิทยาปัจจุบันพร้อมช่วงวันที่
-        function getCurrentEpiWeekWithDates() {
+        // คำนวณสัปดาห์ระบาดวิทยาปัจจุบัน
+        function getCurrentEpiWeek() {
             const today = new Date();
             const year = today.getFullYear();
             
@@ -1420,516 +1290,33 @@
             
             // คำนวณจำนวนสัปดาห์
             const weekNumber = Math.ceil(((today.getTime() - firstThursday.getTime()) / (24 * 60 * 60 * 1000) + 1) / 7);
-            const week = Math.max(1, Math.min(52, weekNumber));
+            const finalWeekNumber = Math.max(1, Math.min(52, weekNumber));
             
             // คำนวณช่วงวันที่ของสัปดาห์ปัจจุบัน
-            const currentWeekStart = new Date(firstThursday.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
-            const currentWeekEnd = new Date(currentWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
+            const currentDate = new Date();
+            const dayOfWeek = currentDate.getDay(); // 0 = อาทิตย์, 1 = จันทร์, ...
+            const startOfWeek = new Date(currentDate);
+            const endOfWeek = new Date(currentDate);
             
+            // ปรับให้เริ่มต้นที่วันอาทิตย์ (สัปดาห์ระบาดวิทยา)
+            startOfWeek.setDate(currentDate.getDate() - dayOfWeek);
+            endOfWeek.setDate(currentDate.getDate() + (6 - dayOfWeek));
+            
+            // จัดรูปแบบวันที่ (dd/mm/yyyy)
             const formatDate = (date) => {
-                return date.toLocaleDateString('th-TH', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                });
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
             };
             
-            const dateRange = `${formatDate(currentWeekStart)} - ${formatDate(currentWeekEnd)}`;
+            const weekDateRange = `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
             
-            return { week, dateRange };
+            return { 
+                weekNumber: finalWeekNumber,
+                weekDateRange: weekDateRange
+            };
         }
-
-        // โหลดข้อมูลภาพรวมผู้ป่วยแต่ละโรค
-        async function loadDiseasePatientStats(diseases, patients) {
-            const container = document.getElementById('diseasePatientStats');
-            container.innerHTML = '';
-            
-            if (!diseases || diseases.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center text-gray-500">ไม่มีข้อมูลโรค</div>';
-                return;
-            }
-            
-            // นับจำนวนผู้ป่วยแต่ละโรค
-            const diseaseStats = {};
-            diseases.forEach(disease => {
-                diseaseStats[disease.code] = {
-                    name: disease.name,
-                    count: 0
-                };
-            });
-            
-            patients.forEach(patient => {
-                if (diseaseStats[patient.diseaseCode]) {
-                    diseaseStats[patient.diseaseCode].count++;
-                }
-            });
-            
-            // กรองเฉพาะโรคที่มีผู้ป่วย
-            const diseasesWithPatients = Object.entries(diseaseStats).filter(([code, data]) => data.count > 0);
-            
-            if (diseasesWithPatients.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center text-gray-500">ไม่มีข้อมูลผู้ป่วยในระบบ</div>';
-                return;
-            }
-            
-            // แสดงผลเฉพาะโรคที่มีผู้ป่วย
-            diseasesWithPatients.forEach(([code, data]) => {
-                const card = document.createElement('div');
-                card.className = 'stat-card text-center';
-                card.innerHTML = `
-                    <div class="text-2xl font-bold text-green-700 mb-2">${data.count.toLocaleString()}</div>
-                    <div class="text-sm font-medium text-gray-800 mb-1">${data.name}</div>
-                    <div class="text-xs text-gray-500">รหัส: ${code}</div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // โหลด dropdown สำหรับเลือกโรค
-        async function loadDiseaseDropdown(diseases) {
-            const select = document.getElementById('selectedDisease');
-            select.innerHTML = '<option value="">-- กรุณาเลือกโรค --</option>';
-            
-            if (!diseases || diseases.length === 0) {
-                return;
-            }
-            
-            // โหลดข้อมูลผู้ป่วยเพื่อตรวจสอบว่าโรคไหนมีผู้ป่วย
-            const { database, ref, get } = window.firebaseDB;
-            let patients = [];
-            if (database && ref && get) {
-                const patientSnapshot = await get(ref(database, 'patients'));
-                if (patientSnapshot.exists()) {
-                    const patientData = patientSnapshot.val();
-                    patients = Object.values(patientData);
-                }
-            }
-            
-            // นับจำนวนผู้ป่วยแต่ละโรค
-            const diseasePatientCount = {};
-            patients.forEach(patient => {
-                if (patient.diseaseCode) {
-                    diseasePatientCount[patient.diseaseCode] = (diseasePatientCount[patient.diseaseCode] || 0) + 1;
-                }
-            });
-            
-            // แสดงเฉพาะโรคที่มีผู้ป่วย
-            diseases.forEach(disease => {
-                if (diseasePatientCount[disease.code] && diseasePatientCount[disease.code] > 0) {
-                    const option = document.createElement('option');
-                    option.value = disease.code;
-                    option.textContent = `${disease.name} (${disease.code}) - ${diseasePatientCount[disease.code]} ราย`;
-                    select.appendChild(option);
-                }
-            });
-            
-            // หากไม่มีโรคที่มีผู้ป่วย
-            if (select.children.length === 1) {
-                const option = document.createElement('option');
-                option.value = '';
-                option.textContent = '-- ไม่มีโรคที่มีผู้ป่วยในระบบ --';
-                option.disabled = true;
-                select.appendChild(option);
-            }
-        }
-
-        // โหลดรายละเอียดโรคที่เลือก
-        async function loadDiseaseDetails() {
-            const selectedCode = document.getElementById('selectedDisease').value;
-            const detailsContainer = document.getElementById('diseaseDetails');
-            
-            if (!selectedCode) {
-                detailsContainer.classList.add('hidden');
-                return;
-            }
-            
-            try {
-                console.log('Loading disease details for code:', selectedCode);
-                
-                // โหลดข้อมูลผู้ป่วยของโรคที่เลือก
-                const { database, ref, get } = window.firebaseDB;
-                let patients = [];
-                if (database && ref && get) {
-                    const patientSnapshot = await get(ref(database, 'patients'));
-                    if (patientSnapshot.exists()) {
-                        const patientData = patientSnapshot.val();
-                        const allPatients = Object.values(patientData);
-                        patients = allPatients.filter(p => p.diseaseCode === selectedCode);
-                        console.log('All patients:', allPatients.length);
-                        console.log('Filtered patients for disease', selectedCode, ':', patients.length);
-                        console.log('Sample patient data:', patients[0]);
-                    } else {
-                        console.log('No patient data found in database');
-                    }
-                } else {
-                    console.log('Firebase database not available');
-                }
-                
-                // คำนวณสถิติผู้ป่วย
-                const totalPatients = patients.length;
-                const malePatients = patients.filter(p => p.gender === 'ชาย' || p.gender === 'male' || p.gender === 'M').length;
-                const femalePatients = patients.filter(p => p.gender === 'หญิง' || p.gender === 'female' || p.gender === 'F').length;
-                
-                console.log('Patient stats:', {
-                    total: totalPatients,
-                    male: malePatients,
-                    female: femalePatients,
-                    sampleGenders: patients.slice(0, 5).map(p => p.gender)
-                });
-                
-                // คำนวณสัดส่วนชาย:หญิง
-                let genderRatio = '-';
-                if (malePatients > 0 && femalePatients > 0) {
-                    const ratio = (malePatients / femalePatients).toFixed(1);
-                    genderRatio = `${ratio}:1`;
-                } else if (malePatients > 0 && femalePatients === 0) {
-                    genderRatio = `${malePatients}:0`;
-                } else if (malePatients === 0 && femalePatients > 0) {
-                    genderRatio = `0:${femalePatients}`;
-                } else {
-                    genderRatio = '0:0';
-                }
-                
-                // คำนวณจำนวนผู้เสียชีวิต
-                const deathCount = patients.filter(p => 
-                    p.outcome === 'เสียชีวิต' || 
-                    p.outcome === 'ตาย' || 
-                    p.outcome === 'death' || 
-                    p.outcome === 'Dead' ||
-                    p.status === 'เสียชีวิต' ||
-                    p.status === 'ตาย' ||
-                    p.status === 'death' ||
-                    p.status === 'Dead'
-                ).length;
-                
-                // คำนวณเขตที่พบผู้ป่วยมากที่สุด
-                const districtStats = {};
-                patients.forEach(patient => {
-                    // รองรับฟิลด์ที่หลากหลาย
-                    const district = patient.district || patient.subdistrict || patient.area || patient.location || 'ไม่ระบุ';
-                    districtStats[district] = (districtStats[district] || 0) + 1;
-                });
-                
-                const topDistricts = Object.entries(districtStats)
-                    .sort(([,a], [,b]) => b - a)
-                    .slice(0, 3);
-                
-                // อัพเดทข้อมูลในหน้าเว็บ
-                console.log('Updating UI elements with data:', {
-                    totalPatients,
-                    malePatients, 
-                    femalePatients,
-                    genderRatio,
-                    deathCount
-                });
-                
-                document.getElementById('totalPatients').textContent = totalPatients.toLocaleString();
-                document.getElementById('malePatients').textContent = malePatients.toLocaleString();
-                document.getElementById('femalePatients').textContent = femalePatients.toLocaleString();
-                document.getElementById('genderRatio').textContent = genderRatio;
-                document.getElementById('deathCount').textContent = deathCount.toLocaleString();
-                
-                // แสดงเขตที่พบผู้ป่วยมากที่สุด
-                const topDistrictsContainer = document.getElementById('topDistricts');
-                topDistrictsContainer.innerHTML = '';
-                
-                if (topDistricts.length === 0) {
-                    topDistrictsContainer.innerHTML = '<div class="text-gray-500">ไม่มีข้อมูล</div>';
-                } else {
-                    topDistricts.forEach(([district, count], index) => {
-                        const rankColors = ['bg-yellow-100 text-yellow-800', 'bg-gray-100 text-gray-800', 'bg-orange-100 text-orange-800'];
-                        const rankIcons = ['🥇', '🥈', '🥉'];
-                        
-                        const div = document.createElement('div');
-                        div.className = `flex items-center justify-between p-4 rounded-lg ${rankColors[index] || 'bg-gray-50 text-gray-700'}`;
-                        div.innerHTML = `
-                            <div class="flex items-center">
-                                <span class="text-2xl mr-3">${rankIcons[index] || '🏆'}</span>
-                                <div>
-                                    <div class="font-semibold">อันดับที่ ${index + 1}: ${district}</div>
-                                    <div class="text-sm opacity-75">จำนวน ${count.toLocaleString()} ราย</div>
-                                </div>
-                            </div>
-                            <div class="text-2xl font-bold">${count}</div>
-                        `;
-                        topDistrictsContainer.appendChild(div);
-                    });
-                }
-                
-                // สร้างกราฟ Epidemic Curve และ Historical Comparison
-                createEpidemicCurve(patients);
-                createHistoricalComparison(selectedCode, patients);
-                
-                detailsContainer.classList.remove('hidden');
-                
-                console.log('Disease details loaded successfully');
-                
-            } catch (error) {
-                console.error('Error loading disease details:', error);
-                console.error('Error stack:', error.stack);
-                detailsContainer.classList.add('hidden');
-                
-                // แสดงข้อมูลเริ่มต้นเมื่อเกิดข้อผิดพลาด
-                document.getElementById('totalPatients').textContent = '0';
-                document.getElementById('malePatients').textContent = '0';
-                document.getElementById('femalePatients').textContent = '0';
-                document.getElementById('genderRatio').textContent = '0:0';
-                document.getElementById('deathCount').textContent = '0';
-            }
-        }
-
-        // สร้างกราฟ Epidemic Curve
-        function createEpidemicCurve(patients) {
-            const canvas = document.getElementById('epidemicCurve');
-            const ctx = canvas.getContext('2d');
-            
-            // ทำลายกราฟเดิมถ้ามี
-            if (window.epidemicChart) {
-                window.epidemicChart.destroy();
-            }
-            
-            if (patients.length === 0) {
-                // แสดงข้อความเมื่อไม่มีข้อมูล
-                const chart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['ไม่มีข้อมูล'],
-                        datasets: [{
-                            label: 'จำนวนผู้ป่วย',
-                            data: [0],
-                            backgroundColor: '#E5E7EB',
-                            borderColor: '#9CA3AF',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Epidemic Curve - ไม่มีข้อมูลสำหรับแสดงผล',
-                                font: { size: 16, weight: 'bold' }
-                            },
-                            legend: { display: false }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: 'จำนวนผู้ป่วย'
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: 'วันที่'
-                                }
-                            }
-                        }
-                    }
-                });
-                window.epidemicChart = chart;
-                return;
-            }
-            
-            // จัดกลุ่มข้อมูลตามวันที่
-            const dateGroups = {};
-            patients.forEach(patient => {
-                if (patient.dateOnset) {
-                    const date = new Date(patient.dateOnset).toLocaleDateString('th-TH', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: '2-digit'
-                    });
-                    dateGroups[date] = (dateGroups[date] || 0) + 1;
-                }
-            });
-            
-            const dates = Object.keys(dateGroups).sort();
-            const counts = dates.map(date => dateGroups[date]);
-            
-            if (dates.length === 0) {
-                // แสดงข้อความเมื่อไม่มีข้อมูลวันที่
-                const chart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['ไม่มีข้อมูลวันที่'],
-                        datasets: [{
-                            label: 'จำนวนผู้ป่วย',
-                            data: [0],
-                            backgroundColor: '#F3F4F6',
-                            borderColor: '#D1D5DB',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Epidemic Curve - ไม่มีข้อมูลวันที่เริ่มป่วย',
-                                font: { size: 16, weight: 'bold' }
-                            },
-                            legend: { display: false }
-                        }
-                    }
-                });
-                window.epidemicChart = chart;
-                return;
-            }
-            
-            // สร้างกราฟจริง
-            const chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: dates,
-                    datasets: [{
-                        label: 'จำนวนผู้ป่วย',
-                        data: counts,
-                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                        borderColor: 'rgba(59, 130, 246, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Epidemic Curve - จำนวนผู้ป่วยตามวันที่เริ่มป่วย',
-                            font: { size: 16, weight: 'bold' }
-                        },
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'จำนวนผู้ป่วย (ราย)'
-                            },
-                            ticks: {
-                                stepSize: 1
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'วันที่เริ่มป่วย'
-                            }
-                        }
-                    }
-                }
-            });
-            
-            window.epidemicChart = chart;
-        }
-
-        // สร้างกราฟเปรียบเทียบข้อมูล 5 ปีย้อนหลัง
-        function createHistoricalComparison(diseaseCode, currentPatients) {
-            const canvas = document.getElementById('historicalComparison');
-            const ctx = canvas.getContext('2d');
-            
-            // ทำลายกราฟเดิมถ้ามี
-            if (window.historicalChart) {
-                window.historicalChart.destroy();
-            }
-            
-            // สร้างข้อมูลจำลองสำหรับ 5 ปีย้อนหลัง
-            const currentYear = new Date().getFullYear();
-            const years = [];
-            const patientCounts = [];
-            
-            for (let i = 4; i >= 0; i--) {
-                const year = currentYear - i;
-                years.push((year + 543).toString()); // แปลงเป็น พ.ศ.
-                
-                if (i === 0) {
-                    // ปีปัจจุบัน - ใช้ข้อมูลจริง
-                    patientCounts.push(currentPatients.length);
-                } else {
-                    // ปีที่ผ่านมา - สร้างข้อมูลจำลอง
-                    const baseCount = currentPatients.length || 10;
-                    const variation = Math.floor(Math.random() * baseCount) + Math.floor(baseCount * 0.3);
-                    patientCounts.push(variation);
-                }
-            }
-            
-            // สร้างกราฟ
-            const chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: years,
-                    datasets: [{
-                        label: 'จำนวนผู้ป่วย',
-                        data: patientCounts,
-                        backgroundColor: years.map((year, index) => 
-                            index === years.length - 1 ? 'rgba(239, 68, 68, 0.8)' : 'rgba(107, 114, 128, 0.8)'
-                        ),
-                        borderColor: years.map((year, index) => 
-                            index === years.length - 1 ? 'rgba(239, 68, 68, 1)' : 'rgba(107, 114, 128, 1)'
-                        ),
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'เปรียบเทียบจำนวนผู้ป่วย 5 ปีย้อนหลัง',
-                            font: { size: 16, weight: 'bold' }
-                        },
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const isCurrentYear = context.dataIndex === years.length - 1;
-                                    const suffix = isCurrentYear ? ' (ปีปัจจุบัน)' : ' (ข้อมูลจำลอง)';
-                                    return `จำนวนผู้ป่วย: ${context.parsed.y.toLocaleString()} ราย${suffix}`;
-                                },
-                                title: function(context) {
-                                    return `ปี พ.ศ. ${context[0].label}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'จำนวนผู้ป่วย (ราย)'
-                            },
-                            ticks: {
-                                stepSize: 1
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'ปี พ.ศ.'
-                            }
-                        }
-                    }
-                }
-            });
-            
-            window.historicalChart = chart;
-        }
-
-        // Make functions globally available
-        window.loadDiseaseDetails = loadDiseaseDetails;
 
         // Firebase data management functions
         async function saveToFirebase(path, data) {
