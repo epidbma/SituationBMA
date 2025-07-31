@@ -1788,19 +1788,24 @@
                     return;
                 }
                 
-                console.log('Selected disease:', selectedDisease);
+                console.log('Selected disease CODE:', selectedDisease);
                 console.log('Total patients in database:', Object.keys(patients).length);
                 
-                // กรองผู้ป่วยตามโรคที่เลือก - ใช้วิธีง่ายๆ
+                // กรองผู้ป่วยตามรหัสโรคที่เลือก - เอาแค่รหัสโรคเท่านั้น
                 const allPatients = Object.values(patients);
                 let totalCount = 0;
                 let maleCount = 0;
                 let femaleCount = 0;
                 
                 allPatients.forEach(patient => {
-                    // ตรวจสอบว่ารหัสโรคตรงกันไหม
-                    if (patient.diseaseCode === selectedDisease) {
+                    // ตรวจสอบว่ารหัสโรคตรงกันไหม (เฉพาะรหัส ไม่เกี่ยวชื่อ)
+                    if (patient.diseaseCode && patient.diseaseCode.toString().trim() === selectedDisease.toString().trim()) {
                         totalCount++;
+                        
+                        console.log('Found matching patient:', {
+                            diseaseCode: patient.diseaseCode,
+                            gender: patient.gender
+                        });
                         
                         // นับตามเพศ
                         const gender = patient.gender;
