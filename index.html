@@ -1390,7 +1390,7 @@
                 await loadDiseasePatientStats(diseases, patients);
                 
                 // โหลด dropdown สำหรับเลือกโรค
-                loadDiseaseDropdown(diseases);
+                await loadDiseaseDropdown(diseases);
                 
                 console.log('System overview loaded successfully');
             } catch (error) {
@@ -1480,17 +1480,50 @@
         }
 
         // โหลด dropdown สำหรับเลือกโรค
-        function loadDiseaseDropdown(diseases) {
+        async function loadDiseaseDropdown(diseases) {
             const select = document.getElementById('selectedDisease');
             select.innerHTML = '<option value="">-- กรุณาเลือกโรค --</option>';
             
-            if (diseases && diseases.length > 0) {
-                diseases.forEach(disease => {
+            if (!diseases || diseases.length === 0) {
+                return;
+            }
+            
+            // โหลดข้อมูลผู้ป่วยเพื่อตรวจสอบว่าโรคไหนมีผู้ป่วย
+            const { database, ref, get } = window.firebaseDB;
+            let patients = [];
+            if (database && ref && get) {
+                const patientSnapshot = await get(ref(database, 'patients'));
+                if (patientSnapshot.exists()) {
+                    const patientData = patientSnapshot.val();
+                    patients = Object.values(patientData);
+                }
+            }
+            
+            // นับจำนวนผู้ป่วยแต่ละโรค
+            const diseasePatientCount = {};
+            patients.forEach(patient => {
+                if (patient.diseaseCode) {
+                    diseasePatientCount[patient.diseaseCode] = (diseasePatientCount[patient.diseaseCode] || 0) + 1;
+                }
+            });
+            
+            // แสดงเฉพาะโรคที่มีผู้ป่วย
+            diseases.forEach(disease => {
+                if (diseasePatientCount[disease.code] && diseasePatientCount[disease.code] > 0) {
                     const option = document.createElement('option');
                     option.value = disease.code;
-                    option.textContent = `${disease.name} (${disease.code})`;
+                    option.textContent = `${disease.name} (${disease.code}) - ${diseasePatientCount[disease.code]} ราย`;
                     select.appendChild(option);
-                });
+                }
+            });
+            
+            // หากไม่มีโรคที่มีผู้ป่วย
+            if (select.children.length === 1) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '-- ไม่มีโรคที่มีผู้ป่วยในระบบ --';
+                option.disabled = true;
+                select.appendChild(option);
             }
         }
 
