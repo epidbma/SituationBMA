@@ -734,35 +734,39 @@
                 const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
                 // Transform data to match our schema
-                const patients = jsonData.map(row => {
-                    // แปลงวันที่จาก Excel ให้อยู่ในรูปแบบที่ถูกต้อง
-                    let onsetDate = row['วันที่เริ่มป่วย'] || '';
-                    let deathDate = row['วันที่เสียชีวิต'] || '';
-
-                    // ถ้าวันที่เป็นตัวเลข (Excel serial date) ให้แปลงเป็น dd/mm/yyyy
-                    if (typeof onsetDate === 'number') {
-                        const date = new Date((onsetDate - 25569) * 86400 * 1000);
-                        onsetDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                // ฟังก์ชันสำหรับตรวจสอบและแปลงรูปแบบวันที่จาก Excel
+                function validateAndFormatDate(dateValue) {
+                    if (!dateValue) return '';
+                    
+                    // ถ้าเป็น Excel date number
+                    if (typeof dateValue === 'number') {
+                        const date = new Date(Math.round((dateValue - 25569) * 86400 * 1000));
+                        if (!isNaN(date.getTime())) {
+                            return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                        }
                     }
-                    if (typeof deathDate === 'number') {
-                        const date = new Date((deathDate - 25569) * 86400 * 1000);
-                        deathDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                    
+                    // ถ้าเป็น string ในรูปแบบ dd/mm/yyyy
+                    if (typeof dateValue === 'string' && dateValue.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                        return dateValue;
                     }
+                    
+                    return '';
+                }
 
-                    return {
-                        diseaseCode: row['รหัสโรค'] || '',
-                        diseaseName: row['ชื่อโรค'] || '',
-                        gender: row['เพศ'] || '',
-                        ageYears: parseInt(row['อายุปี']) || 0,
-                        ageMonths: parseInt(row['อายุเดือน']) || 0,
-                        ageDays: parseInt(row['อายุวัน']) || 0,
-                        subdistrict: row['แขวง'] || '',
-                        district: row['เขต'] || '',
-                        province: row['จังหวัด'] || '',
-                        onsetDate: onsetDate,
-                        patientCondition: row['สภาพผู้ป่วย'] || '',
-                        deathDate: deathDate
-                    };
+                const patients = jsonData.map(row => ({
+                    diseaseCode: row['รหัสโรค'] || '',
+                    diseaseName: row['ชื่อโรค'] || '',
+                    gender: row['เพศ'] || '',
+                    ageYears: parseInt(row['อายุปี']) || 0,
+                    ageMonths: parseInt(row['อายุเดือน']) || 0,
+                    ageDays: parseInt(row['อายุวัน']) || 0,
+                    subdistrict: row['แขวง'] || '',
+                    district: row['เขต'] || '',
+                    province: row['จังหวัด'] || '',
+                    onsetDate: validateAndFormatDate(row['วันที่เริ่มป่วย']),
+                    patientCondition: row['สภาพผู้ป่วย'] || '',
+                    deathDate: validateAndFormatDate(row['วันที่เสียชีวิต'])
                 }));
 
                 // Save to Firebase
@@ -784,30 +788,23 @@
             }
         }
 
-        function formatDate(dateStr) {
+        // ฟังก์ชันสำหรับแปลงรูปแบบวันที่จาก dd/mm/yyyy เป็น Date object
+        function parseThaiDate(dateStr) {
+            if (!dateStr) return null;
+            const [day, month, year] = dateStr.split('/').map(num => parseInt(num, 10));
+            if (!day || !month || !year) return null;
+            return new Date(year, month - 1, day);
+        }
+
+        // ฟังก์ชันสำหรับแปลงวันที่เป็นรูปแบบ dd/mm/yyyy
+        function formatThaiDate(dateStr) {
             if (!dateStr) return '-';
-            
-            // รับค่าวันที่ในรูปแบบ dd/mm/yyyy
-            const parts = dateStr.split('/');
-            if (parts.length === 3) {
-                // ถ้าเป็นรูปแบบ dd/mm/yyyy อยู่แล้ว ให้ return ค่าเดิม
-                return dateStr;
-            }
-            
-            // แปลงจากตัวเลข timestamp หรือรูปแบบอื่นๆ เป็น dd/mm/yyyy
-            try {
-                const date = new Date(dateStr);
-                if (isNaN(date.getTime())) {
-                    return dateStr; // ถ้าแปลงไม่ได้ ให้แสดงค่าเดิม
-                }
-                const day = date.getDate().toString().padStart(2, '0');
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                const year = date.getFullYear();
-                return `${day}/${month}/${year}`;
-            } catch (e) {
-                console.error('Error formatting date:', e);
-                return dateStr;
-            }
+            const date = parseThaiDate(dateStr);
+            if (!date || isNaN(date.getTime())) return dateStr; // ถ้าแปลงไม่ได้ให้แสดงค่าเดิม
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
         }
 
         function displayPatients() {
@@ -850,9 +847,9 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.subdistrict}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.district}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.province}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatDate(patient.onsetDate)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatThaiDate(patient.onsetDate)}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.patientCondition}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.deathDate ? formatDate(patient.deathDate) : '-'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatThaiDate(patient.deathDate)}</td>
                         `;
                         tableBody.appendChild(row);
                     });
