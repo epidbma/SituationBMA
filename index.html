@@ -1769,8 +1769,6 @@
             const detailsContainer = document.getElementById('diseaseDetailsContainer');
             const noSelectionDiv = document.getElementById('noDiseaseSelected');
             
-            console.log('Selected disease:', selectedDisease);
-            
             if (!selectedDisease) {
                 detailsContainer.classList.add('hidden');
                 noSelectionDiv.classList.remove('hidden');
@@ -1785,17 +1783,20 @@
                 const snapshot = await get(ref(database, 'patients'));
                 const patients = snapshot.val();
                 
-                console.log('Total patients loaded:', patients ? Object.keys(patients).length : 0);
+                if (!patients) {
+                    console.log('No patient data found');
+                    return;
+                }
                 
-                if (!patients) return;
+                console.log('Selected disease:', selectedDisease);
+                console.log('Total patients in database:', Object.keys(patients).length);
                 
                 // กรองผู้ป่วยตามโรคที่เลือก
-                const diseasePatients = Object.values(patients).filter(patient => {
-                    console.log('Checking patient:', patient.diseaseCode, 'vs selected:', selectedDisease);
-                    return patient.diseaseCode === selectedDisease;
-                });
+                const diseasePatients = Object.values(patients).filter(patient => 
+                    patient.diseaseCode === selectedDisease
+                );
                 
-                console.log('Filtered patients for disease', selectedDisease + ':', diseasePatients.length);
+                console.log('Patients with selected disease:', diseasePatients.length);
                 
                 // นับจำนวนตามเพศ
                 let maleCount = 0;
@@ -1804,7 +1805,6 @@
                 
                 diseasePatients.forEach(patient => {
                     const gender = patient.gender;
-                    console.log('Patient gender:', gender);
                     if (gender === 'ชาย' || gender === 'Male' || gender === 'M') {
                         maleCount++;
                     } else if (gender === 'หญิง' || gender === 'Female' || gender === 'F') {
@@ -1812,7 +1812,7 @@
                     }
                 });
                 
-                console.log('Counts - Total:', totalCount, 'Male:', maleCount, 'Female:', femaleCount);
+                console.log('Gender breakdown - Male:', maleCount, 'Female:', femaleCount, 'Total:', totalCount);
                 
                 // คำนวณสัดส่วน
                 const malePercentage = totalCount > 0 ? (maleCount / totalCount * 100).toFixed(1) : 0;
