@@ -1549,19 +1549,26 @@
                     }
                 }
                 
-                // คำนวณสถิติผู้ป่วย
+                // 3.1 คำนวณสถิติผู้ป่วยจากข้อมูลจริง
                 const totalPatients = patients.length;
-                const malePatients = patients.filter(p => p.gender === 'ชาย').length;
-                const femalePatients = patients.filter(p => p.gender === 'หญิง').length;
+                const malePatients = patients.filter(p => p.gender === 'ชาย' || p.gender === 'Male' || p.gender === 'M').length;
+                const femalePatients = patients.filter(p => p.gender === 'หญิง' || p.gender === 'Female' || p.gender === 'F').length;
                 const genderRatio = femalePatients > 0 ? `${(malePatients/femalePatients).toFixed(1)}:1` : `${malePatients}:0`;
                 
-                // คำนวณจำนวนผู้เสียชีวิต
-                const deathCount = patients.filter(p => p.outcome === 'เสียชีวิต').length;
+                // 3.2 คำนวณจำนวนผู้เสียชีวิตจากข้อมูลจริง
+                const deathCount = patients.filter(p => 
+                    p.outcome === 'เสียชีวิต' || 
+                    p.outcome === 'Death' || 
+                    p.outcome === 'ตาย' ||
+                    p.status === 'เสียชีวิต' ||
+                    p.status === 'Death' ||
+                    p.status === 'ตาย'
+                ).length;
                 
-                // คำนวณเขตที่พบผู้ป่วยมากที่สุด
+                // 3.3 คำนวณเขตที่พบผู้ป่วยมากที่สุดจากข้อมูลจริง
                 const districtStats = {};
                 patients.forEach(patient => {
-                    const district = patient.district || 'ไม่ระบุ';
+                    const district = patient.district || patient.subdistrict || patient.province || 'ไม่ระบุ';
                     districtStats[district] = (districtStats[district] || 0) + 1;
                 });
                 
@@ -1581,7 +1588,7 @@
                 topDistrictsContainer.innerHTML = '';
                 
                 if (topDistricts.length === 0) {
-                    topDistrictsContainer.innerHTML = '<div class="text-gray-500">ไม่มีข้อมูล</div>';
+                    topDistrictsContainer.innerHTML = '<div class="text-gray-500">ไม่มีข้อมูลเขต/อำเภอ</div>';
                 } else {
                     topDistricts.forEach(([district, count], index) => {
                         const rankColors = ['bg-yellow-100 text-yellow-800', 'bg-gray-100 text-gray-800', 'bg-orange-100 text-orange-800'];
@@ -1603,8 +1610,10 @@
                     });
                 }
                 
-                // สร้างกราฟ Epidemic Curve และ Historical Comparison
+                // 3.4 สร้างกราฟ Epidemic Curve ตามสัปดาห์การระบาด
                 createEpidemicCurve(patients);
+                
+                // 3.5 สร้างกราฟ Historical Comparison
                 createHistoricalComparison(selectedCode, patients);
                 
                 detailsContainer.classList.remove('hidden');
@@ -1615,7 +1624,7 @@
             }
         }
 
-        // สร้างกราฟ Epidemic Curve
+        // สร้างกราฟ Epidemic Curve ตามสัปดาห์การระบาด
         function createEpidemicCurve(patients) {
             const canvas = document.getElementById('epidemicCurve');
             const ctx = canvas.getContext('2d');
@@ -1661,7 +1670,7 @@
                             x: {
                                 title: {
                                     display: true,
-                                    text: 'วันที่'
+                                    text: 'สัปดาห์การระบาด'
                                 }
                             }
                         }
@@ -1671,28 +1680,39 @@
                 return;
             }
             
-            // จัดกลุ่มข้อมูลตามวันที่
-            const dateGroups = {};
+            // จัดกลุ่มข้อมูลตามสัปดาห์การระบาด
+            const weekGroups = {};
             patients.forEach(patient => {
-                if (patient.dateOnset) {
-                    const date = new Date(patient.dateOnset).toLocaleDateString('th-TH', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: '2-digit'
-                    });
-                    dateGroups[date] = (dateGroups[date] || 0) + 1;
+                // ใช้สัปดาห์การระบาดจากข้อมูลผู้ป่วย
+                let epiWeek = patient.epiWeek || patient.epidemiologicalWeek || patient.week;
+                
+                // หากไม่มีข้อมูลสัปดาห์การระบาด ให้คำนวณจากวันที่เริ่มป่วย
+                if (!epiWeek && patient.dateOnset) {
+                    const onsetDate = new Date(patient.dateOnset);
+                    if (!isNaN(onsetDate.getTime())) {
+                        epiWeek = calculateEpiWeek(onsetDate);
+                    }
+                }
+                
+                if (epiWeek) {
+                    const weekKey = `สัปดาห์ที่ ${epiWeek}`;
+                    weekGroups[weekKey] = (weekGroups[weekKey] || 0) + 1;
                 }
             });
             
-            const dates = Object.keys(dateGroups).sort();
-            const counts = dates.map(date => dateGroups[date]);
+            const weeks = Object.keys(weekGroups).sort((a, b) => {
+                const weekA = parseInt(a.match(/\d+/)[0]);
+                const weekB = parseInt(b.match(/\d+/)[0]);
+                return weekA - weekB;
+            });
+            const counts = weeks.map(week => weekGroups[week]);
             
-            if (dates.length === 0) {
-                // แสดงข้อความเมื่อไม่มีข้อมูลวันที่
+            if (weeks.length === 0) {
+                // แสดงข้อความเมื่อไม่มีข้อมูลสัปดาห์การระบาด
                 const chart = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: ['ไม่มีข้อมูลวันที่'],
+                        labels: ['ไม่มีข้อมูลสัปดาห์การระบาด'],
                         datasets: [{
                             label: 'จำนวนผู้ป่วย',
                             data: [0],
@@ -1707,7 +1727,7 @@
                         plugins: {
                             title: {
                                 display: true,
-                                text: 'Epidemic Curve - ไม่มีข้อมูลวันที่เริ่มป่วย',
+                                text: 'Epidemic Curve - ไม่มีข้อมูลสัปดาห์การระบาด',
                                 font: { size: 16, weight: 'bold' }
                             },
                             legend: { display: false }
@@ -1722,12 +1742,12 @@
             const chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: dates,
+                    labels: weeks,
                     datasets: [{
                         label: 'จำนวนผู้ป่วย',
                         data: counts,
-                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                        borderColor: 'rgba(59, 130, 246, 1)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
                         borderWidth: 1
                     }]
                 },
@@ -1737,7 +1757,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Epidemic Curve - จำนวนผู้ป่วยตามวันที่เริ่มป่วย',
+                            text: 'Epidemic Curve - จำนวนผู้ป่วยตามสัปดาห์การระบาด',
                             font: { size: 16, weight: 'bold' }
                         },
                         legend: {
@@ -1759,7 +1779,7 @@
                         x: {
                             title: {
                                 display: true,
-                                text: 'วันที่เริ่มป่วย'
+                                text: 'สัปดาห์การระบาด'
                             }
                         }
                     }
@@ -1767,6 +1787,15 @@
             });
             
             window.epidemicChart = chart;
+        }
+
+        // ฟังก์ชันคำนวณสัปดาห์การระบาดจากวันที่
+        function calculateEpiWeek(date) {
+            const year = date.getFullYear();
+            const jan4 = new Date(year, 0, 4);
+            const firstThursday = new Date(jan4.getTime() - (jan4.getDay() - 4) * 24 * 60 * 60 * 1000);
+            const weekNumber = Math.ceil(((date.getTime() - firstThursday.getTime()) / (24 * 60 * 60 * 1000) + 1) / 7);
+            return Math.max(1, Math.min(52, weekNumber));
         }
 
         // สร้างกราฟเปรียบเทียบข้อมูล 5 ปีย้อนหลัง
