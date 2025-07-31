@@ -867,7 +867,6 @@
 
                 const patients = jsonData.map(row => ({
                     diseaseCode: row['รหัสโรค'] || '',
-                    diseaseName: row['ชื่อโรค'] || '',
                     gender: row['เพศ'] || '',
                     ageYears: parseInt(row['อายุปี']) || 0,
                     ageMonths: parseInt(row['อายุเดือน']) || 0,
@@ -927,12 +926,47 @@
             return `${day}/${month}/${year}`;
         }
 
+        // เก็บข้อมูลโรคไว้ใน Cache
+        let diseaseCache = {};
+
+        async function loadDiseases() {
+            try {
+                const { database, ref, get } = window.firebaseDB;
+                const diseaseRef = ref(database, 'diseases');
+                const snapshot = await get(diseaseRef);
+                
+                if (snapshot.exists()) {
+                    const diseases = snapshot.val();
+                    diseaseCache = {};
+                    // แปลงข้อมูลให้อยู่ในรูปแบบ Map โดยใช้ disease code เป็น key
+                    Object.entries(diseases).forEach(([key, disease]) => {
+                        if (disease.code) {
+                            diseaseCache[disease.code] = disease.name;
+                        }
+                    });
+                    console.log('Loaded diseases:', Object.keys(diseaseCache).length);
+                } else {
+                    console.log('No diseases data available');
+                }
+            } catch (error) {
+                console.error('Error loading diseases:', error);
+            }
+        }
+
+        // ฟังก์ชันสำหรับแปลงรหัสโรคเป็นชื่อโรค
+        function getDiseaseName(diseaseCode) {
+            return diseaseCache[diseaseCode] || diseaseCode || '-';
+        }
+
         function displayPatients() {
             console.log('Starting to display patients...');
             if (!window.firebaseDB) {
                 console.error('Firebase not initialized');
                 return;
             }
+            
+            // โหลดข้อมูลโรคก่อนแสดงข้อมูลผู้ป่วย
+            loadDiseases();
 
             const { database, ref, onValue } = window.firebaseDB;
             if (!database || !ref || !onValue) {
@@ -959,7 +993,7 @@
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.diseaseCode}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.diseaseName}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${getDiseaseName(patient.diseaseCode)}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.gender}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageYears}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageMonths}</td>
