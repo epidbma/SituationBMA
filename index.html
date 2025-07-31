@@ -589,16 +589,8 @@
                         </div>
                     </div>
 
-                    <!-- Epidemic Curve -->
-                    <div class="glass-card p-6 mb-8">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Epidemic Curve - เส้นโค้งการระบาด</h3>
-                        <div class="relative h-96">
-                            <canvas id="epidemicCurveChart"></canvas>
-                        </div>
-                    </div>
-
                     <!-- กราฟแสดงสัดส่วน -->
-                    <div class="glass-card p-6">
+                    <div class="glass-card p-6 mb-8">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">สัดส่วนเพศ</h3>
                         <div class="flex items-center space-x-4">
                             <div class="flex-1">
@@ -619,6 +611,14 @@
                                     <div id="femaleBar" class="bg-pink-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Epidemic Curve -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Epidemic Curve - เส้นโค้งการระบาด</h3>
+                        <div class="relative h-96">
+                            <canvas id="epidemicCurveChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -1917,6 +1917,18 @@
                     console.error('Epidemic weeks data not found');
                     return;
                 }
+
+                // โหลดข้อมูลโรคเพื่อหาชื่อโรค
+                const diseasesSnapshot = await get(ref(database, 'diseases'));
+                const diseases = diseasesSnapshot.val();
+                let diseaseName = diseaseCode; // fallback ถ้าหาชื่อโรคไม่เจอ
+                
+                if (diseases && Array.isArray(diseases)) {
+                    const disease = diseases.find(d => d.code === diseaseCode);
+                    if (disease) {
+                        diseaseName = disease.name;
+                    }
+                }
                 
                 // กรองผู้ป่วยตามโรคที่เลือก
                 const diseasePatients = allPatients.filter(patient => 
@@ -1948,7 +1960,7 @@
                     });
                     
                     weeklyData.push(weeklyCount);
-                    labels.push(`สัปดาห์ ${week.weekNumber}/${week.year}`);
+                    labels.push(`${week.weekNumber}/${week.year}`);
                 });
                 
                 console.log('Epidemic curve data:', { labels, data: weeklyData });
@@ -1978,7 +1990,7 @@
                         plugins: {
                             title: {
                                 display: true,
-                                text: `Epidemic Curve - ${diseaseCode}`,
+                                text: `Epidemic Curve - ${diseaseName}`,
                                 font: {
                                     size: 16,
                                     weight: 'bold'
@@ -2008,7 +2020,9 @@
                                 ticks: {
                                     maxRotation: 45,
                                     minRotation: 45
-                                }
+                                },
+                                categoryPercentage: 1.0,
+                                barPercentage: 1.0
                             }
                         },
                         interaction: {
