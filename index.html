@@ -414,7 +414,7 @@
 
                 <!-- ส่วนข้อมูลหลัก -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-                    <!-- จำนวนโรคที่เฝ้าระวัง -->
+                    <!-- จำนวนโรคในฐานข้อมูลผู้ป่วย -->
                     <div class="glass-card p-6 floating-animation" style="animation-delay: 0.1s;">
                         <div class="flex items-center mb-6">
                             <div class="w-12 h-12 icon-gradient-blue rounded-xl flex items-center justify-center mr-4">
@@ -424,11 +424,11 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนโรคที่เฝ้าระวัง</h3>
+                                <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนโรคในฐานข้อมูลผู้ป่วย</h3>
                                 <div id="diseaseCount" class="text-2xl font-bold text-gray-900">-</div>
                             </div>
                         </div>
-                        <div class="text-xs text-gray-500">โรคติดต่อที่อยู่ในระบบเฝ้าระวัง</div>
+                        <div class="text-xs text-gray-500">โรคที่มีผู้ป่วยจริงในระบบ</div>
                     </div>
 
                     <!-- จำนวนผู้ป่วยในฐานข้อมูล -->
@@ -1443,18 +1443,31 @@
             try {
                 console.log('Loading system overview data...');
                 
-                // โหลดข้อมูลโรค
-                const diseases = await loadFromFirebase('diseases');
-                const diseaseCount = diseases ? diseases.length : 0;
-                document.getElementById('diseaseCount').textContent = diseaseCount.toLocaleString();
-                
-                // โหลดข้อมูลผู้ป่วย
+                // โหลดข้อมูลผู้ป่วยเพื่อนับจำนวนโรคที่มีผู้ป่วยจริง
                 const { database, ref, get } = window.firebaseDB;
+                let diseaseCount = 0;
+                let patientCount = 0;
+                
                 if (database && ref && get) {
                     const patientSnapshot = await get(ref(database, 'patients'));
-                    const patientCount = patientSnapshot.exists() ? Object.keys(patientSnapshot.val()).length : 0;
-                    document.getElementById('patientCount').textContent = patientCount.toLocaleString();
+                    if (patientSnapshot.exists()) {
+                        const patients = patientSnapshot.val();
+                        const patientsArray = Object.values(patients);
+                        patientCount = patientsArray.length;
+                        
+                        // นับจำนวนโรคที่ไม่ซ้ำกันจากข้อมูลผู้ป่วย
+                        const uniqueDiseases = new Set();
+                        patientsArray.forEach(patient => {
+                            if (patient.diseaseCode) {
+                                uniqueDiseases.add(patient.diseaseCode);
+                            }
+                        });
+                        diseaseCount = uniqueDiseases.size;
+                    }
                 }
+                
+                document.getElementById('diseaseCount').textContent = diseaseCount.toLocaleString();
+                document.getElementById('patientCount').textContent = patientCount.toLocaleString();
                 
                 // ดึงข้อมูลสัปดาห์การระบาดล่าสุดจากฐานข้อมูล
                 const latestEpiWeek = await getLatestEpidemicWeekFromDatabase();
