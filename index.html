@@ -1696,6 +1696,10 @@
                     return;
                 }
                 
+                // โหลดข้อมูลโรคจาก master data
+                const diseaseSnapshot = await get(ref(database, 'diseases'));
+                const diseases = diseaseSnapshot.val() || {};
+                
                 // สร้าง Set เพื่อเก็บโรคที่ไม่ซ้ำ พร้อมนับจำนวนผู้ป่วย
                 const diseaseCount = {};
                 
@@ -1721,7 +1725,9 @@
                 sortedDiseases.forEach(([diseaseCode, count]) => {
                     const option = document.createElement('option');
                     option.value = diseaseCode;
-                    option.textContent = `${diseaseCode} (${count} ราย)`;
+                    // แสดงเป็น "ชื่อโรค (รหัสโรค)" หรือ "รหัสโรค" ถ้าไม่มีชื่อ
+                    const diseaseName = diseases[diseaseCode] || diseaseCode;
+                    option.textContent = `${diseaseName} (${diseaseCode})`;
                     select.appendChild(option);
                 });
                 
