@@ -8,6 +8,7 @@
     <title>ระบบสรุปสถานการณ์โรค - กลุ่มงานระบาดวิทยา</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Firebase SDK -->
     <script type="module">
@@ -590,21 +591,13 @@
 
                     <!-- Epidemic Curve -->
                     <div class="glass-card p-6 mb-8">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">📈 Epidemic Curve - แนวโน้มการระบาด</h3>
-                        <div class="mb-4">
-                            <div class="flex space-x-4 mb-4">
-                                <button id="weeklyBtn" onclick="changeEpiCurveView('weekly')" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm">รายสัปดาห์</button>
-                                <button id="monthlyBtn" onclick="changeEpiCurveView('monthly')" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm">รายเดือน</button>
-                            </div>
-                        </div>
-                        <div id="epidemicCurveContainer" class="relative" style="height: 400px;">
-                            <canvas id="epidemicCurveChart" width="800" height="400"></canvas>
-                        </div>
-                        <div class="mt-4 text-sm text-gray-600">
-                            <p>กราฟแสดงจำนวนผู้ป่วยตามช่วงเวลา เพื่อติดตามแนวโน้มการระบาดของโรค</p>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Epidemic Curve</h3>
+                        <p class="text-sm text-gray-600 mb-6">กราฟแสดงจำนวนผู้ป่วยตามสัปดาห์การระบาด</p>
+                        <div class="relative" style="height: 400px;">
+                            <canvas id="epidemicCurveChart"></canvas>
                         </div>
                     </div>
-                    
+
                     <!-- กราฟแสดงสัดส่วน -->
                     <div class="glass-card p-6">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">สัดส่วนเพศ</h3>
@@ -1904,212 +1897,144 @@
                 console.log('UI updated successfully');
                 
                 // สร้าง Epidemic Curve
-                createEpidemicCurve(diseasePatients);
+                await createEpidemicCurve(selectedDisease, allPatients);
                 
             } catch (error) {
                 console.error('Error loading disease details:', error);
             }
         }
 
-        // ตัวแปรสำหรับเก็บ chart instance และข้อมูล
-        let epidemicChart = null;
-        let currentEpiData = [];
-        let currentEpiView = 'weekly';
+        // ฟังก์ชันสำหรับสร้าง Epidemic Curve
+        async function createEpidemicCurve(diseaseCode, allPatients) {
+            try {
+                // กรองผู้ป่วยตามโรคที่เลือก
+                const diseasePatients = allPatients.filter(patient => 
+                    patient.diseaseCode && patient.diseaseCode.toString().trim() === diseaseCode.toString().trim()
+                );
 
-        // ฟังก์ชันสร้าง Epidemic Curve
-        function createEpidemicCurve(diseasePatients) {
-            if (!diseasePatients || diseasePatients.length === 0) {
-                const canvas = document.getElementById('epidemicCurveChart');
-                const ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.font = '16px Arial';
-                ctx.fillStyle = '#666';
-                ctx.textAlign = 'center';
-                ctx.fillText('ไม่มีข้อมูลสำหรับสร้างกราฟ', canvas.width / 2, canvas.height / 2);
-                return;
-            }
+                // โหลดข้อมูลสัปดาห์การระบาด
+                const { database, ref, get } = window.firebaseDB;
+                const epidemicWeeksSnapshot = await get(ref(database, 'epidemicWeeks'));
+                const epidemicWeeks = epidemicWeeksSnapshot.val();
 
-            currentEpiData = diseasePatients;
-            drawEpidemicCurve(currentEpiView);
-        }
-
-        // ฟังก์ชันวาดกราฟ Epidemic Curve
-        function drawEpidemicCurve(viewType) {
-            const canvas = document.getElementById('epidemicCurveChart');
-            const ctx = canvas.getContext('2d');
-            
-            // ล้างกราฟเก่า
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            if (!currentEpiData || currentEpiData.length === 0) return;
-
-            // จัดกลุ่มข้อมูลตามช่วงเวลา
-            const groupedData = groupDataByPeriod(currentEpiData, viewType);
-            
-            if (Object.keys(groupedData).length === 0) {
-                ctx.font = '16px Arial';
-                ctx.fillStyle = '#666';
-                ctx.textAlign = 'center';
-                ctx.fillText('ไม่มีข้อมูลวันที่เริ่มป่วยที่ถูกต้อง', canvas.width / 2, canvas.height / 2);
-                return;
-            }
-
-            // เตรียมข้อมูลสำหรับวาดกราฟ
-            const periods = Object.keys(groupedData).sort();
-            const counts = periods.map(period => groupedData[period]);
-            const maxCount = Math.max(...counts);
-
-            // กำหนดขนาดและตำแหน่งกราฟ
-            const margin = { top: 40, right: 40, bottom: 80, left: 60 };
-            const chartWidth = canvas.width - margin.left - margin.right;
-            const chartHeight = canvas.height - margin.top - margin.bottom;
-            const barWidth = chartWidth / periods.length * 0.8;
-            const barSpacing = chartWidth / periods.length * 0.2;
-
-            // วาดแกน Y
-            ctx.strokeStyle = '#666';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(margin.left, margin.top);
-            ctx.lineTo(margin.left, margin.top + chartHeight);
-            ctx.stroke();
-
-            // วาดแกน X
-            ctx.beginPath();
-            ctx.moveTo(margin.left, margin.top + chartHeight);
-            ctx.lineTo(margin.left + chartWidth, margin.top + chartHeight);
-            ctx.stroke();
-
-            // วาดแถบกราฟ
-            ctx.fillStyle = '#10b981'; // สีเขียว
-            periods.forEach((period, index) => {
-                const count = counts[index];
-                const barHeight = (count / maxCount) * chartHeight;
-                const x = margin.left + (index * (barWidth + barSpacing)) + barSpacing / 2;
-                const y = margin.top + chartHeight - barHeight;
-
-                // วาดแถบ
-                ctx.fillRect(x, y, barWidth, barHeight);
-
-                // แสดงจำนวน
-                ctx.fillStyle = '#374151';
-                ctx.font = '12px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(count.toString(), x + barWidth / 2, y - 5);
-
-                // แสดงป้ายช่วงเวลา
-                ctx.save();
-                ctx.translate(x + barWidth / 2, margin.top + chartHeight + 20);
-                ctx.rotate(-Math.PI / 4);
-                ctx.textAlign = 'right';
-                ctx.fillText(formatPeriodLabel(period, viewType), 0, 0);
-                ctx.restore();
-
-                ctx.fillStyle = '#10b981';
-            });
-
-            // วาดป้าย Y axis
-            const ySteps = 5;
-            const yStepValue = Math.ceil(maxCount / ySteps);
-            ctx.fillStyle = '#666';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'right';
-            for (let i = 0; i <= ySteps; i++) {
-                const value = i * yStepValue;
-                const y = margin.top + chartHeight - (i * (chartHeight / ySteps));
-                ctx.fillText(value.toString(), margin.left - 10, y + 4);
-                
-                // วาดเส้นตาราง
-                if (i > 0) {
-                    ctx.strokeStyle = '#e5e7eb';
-                    ctx.lineWidth = 0.5;
-                    ctx.beginPath();
-                    ctx.moveTo(margin.left, y);
-                    ctx.lineTo(margin.left + chartWidth, y);
-                    ctx.stroke();
+                if (!epidemicWeeks || !Array.isArray(epidemicWeeks)) {
+                    console.log('No epidemic weeks data found');
+                    return;
                 }
-            }
 
-            // วาดชื่อกราฟ
-            ctx.fillStyle = '#1f2937';
-            ctx.font = 'bold 16px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(`จำนวนผู้ป่วย${viewType === 'weekly' ? 'รายสัปดาห์' : 'รายเดือน'}`, canvas.width / 2, 25);
-        }
+                // สร้าง Map สำหรับ epidemic weeks
+                const weekMap = new Map();
+                epidemicWeeks.forEach(week => {
+                    if (week.week && week.startDate && week.endDate) {
+                        weekMap.set(week.week, {
+                            startDate: new Date(week.startDate),
+                            endDate: new Date(week.endDate),
+                            label: `สัปดาห์ ${week.week}`
+                        });
+                    }
+                });
 
-        // ฟังก์ชันจัดกลุ่มข้อมูลตามช่วงเวลา
-        function groupDataByPeriod(patients, viewType) {
-            const grouped = {};
-            
-            patients.forEach(patient => {
-                const onsetDate = patient.onsetDate || patient.diseaseOnsetDate;
-                if (!onsetDate || onsetDate === '' || onsetDate === '-') return;
+                // นับจำนวนผู้ป่วยในแต่ละสัปดาห์
+                const weekCounts = new Map();
                 
-                try {
-                    // แปลงวันที่ (รองรับหลายรูปแบบ)
-                    let date;
-                    if (onsetDate.includes('/')) {
-                        const [day, month, year] = onsetDate.split('/');
-                        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                diseasePatients.forEach(patient => {
+                    const onsetDate = patient.onsetDate || patient.illnessDate;
+                    if (!onsetDate) return;
+
+                    // แปลงวันที่เริ่มป่วยเป็น Date object
+                    let patientOnsetDate;
+                    if (typeof onsetDate === 'string') {
+                        // ลองแปลงรูปแบบ dd/mm/yyyy
+                        const parts = onsetDate.split('/');
+                        if (parts.length === 3) {
+                            const day = parseInt(parts[0]);
+                            const month = parseInt(parts[1]) - 1; // JavaScript month เริ่มจาก 0
+                            const year = parseInt(parts[2]);
+                            patientOnsetDate = new Date(year, month, day);
+                        } else {
+                            patientOnsetDate = new Date(onsetDate);
+                        }
                     } else {
-                        date = new Date(onsetDate);
+                        patientOnsetDate = new Date(onsetDate);
                     }
-                    
-                    if (isNaN(date.getTime())) return;
-                    
-                    let period;
-                    if (viewType === 'weekly') {
-                        // กลุ่มตามสัปดาห์ (วันจันทร์เป็นจุดเริ่มต้น)
-                        const monday = new Date(date);
-                        monday.setDate(date.getDate() - date.getDay() + 1);
-                        period = formatDate(monday);
-                    } else {
-                        // กลุ่มตามเดือน
-                        period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+                    if (isNaN(patientOnsetDate.getTime())) return; // วันที่ไม่ถูกต้อง
+
+                    // หาสัปดาห์การระบาดที่วันที่เริ่มป่วยอยู่ในช่วง
+                    for (const [weekNum, weekData] of weekMap) {
+                        if (patientOnsetDate >= weekData.startDate && patientOnsetDate <= weekData.endDate) {
+                            weekCounts.set(weekNum, (weekCounts.get(weekNum) || 0) + 1);
+                            break;
+                        }
                     }
-                    
-                    grouped[period] = (grouped[period] || 0) + 1;
-                } catch (error) {
-                    console.warn('Invalid date format:', onsetDate);
+                });
+
+                // เรียงลำดับสัปดาห์และสร้างข้อมูลสำหรับกราฟ
+                const sortedWeeks = Array.from(weekMap.keys()).sort((a, b) => a - b);
+                const labels = sortedWeeks.map(week => `สัปดาห์ ${week}`);
+                const data = sortedWeeks.map(week => weekCounts.get(week) || 0);
+
+                console.log('Epidemic curve data:', { labels, data });
+
+                // สร้างกราฟ
+                const ctx = document.getElementById('epidemicCurveChart').getContext('2d');
+                
+                // ลบกราฟเก่า (ถ้ามี)
+                if (window.epidemicChart) {
+                    window.epidemicChart.destroy();
                 }
-            });
-            
-            return grouped;
-        }
 
-        // ฟังก์ชันจัดรูปแบบวันที่
-        function formatDate(date) {
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}/${month}/${year}`;
-        }
+                window.epidemicChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'จำนวนผู้ป่วย',
+                            data: data,
+                            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Epidemic Curve - ${diseaseCode}`,
+                                font: {
+                                    size: 16
+                                }
+                            },
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'จำนวนผู้ป่วย'
+                                },
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'สัปดาห์การระบาด'
+                                }
+                            }
+                        }
+                    }
+                });
 
-        // ฟังก์ชันจัดรูปแบบป้ายช่วงเวลา
-        function formatPeriodLabel(period, viewType) {
-            if (viewType === 'weekly') {
-                return `สัปดาห์ ${period}`;
-            } else {
-                const [year, month] = period.split('-');
-                const monthNames = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-                return `${monthNames[parseInt(month) - 1]} ${year}`;
+            } catch (error) {
+                console.error('Error creating epidemic curve:', error);
             }
-        }
-
-        // ฟังก์ชันเปลี่ยนมุมมองกราฟ
-        function changeEpiCurveView(viewType) {
-            currentEpiView = viewType;
-            
-            // อัปเดตปุ่ม
-            document.getElementById('weeklyBtn').className = viewType === 'weekly' 
-                ? 'px-4 py-2 bg-green-500 text-white rounded-lg text-sm'
-                : 'px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm';
-            document.getElementById('monthlyBtn').className = viewType === 'monthly'
-                ? 'px-4 py-2 bg-green-500 text-white rounded-lg text-sm'
-                : 'px-4 py-2 bg-gray-300 text-gray-700 rounded-lg text-sm';
-            
-            // วาดกราฟใหม่
-            drawEpidemicCurve(viewType);
         }
 
         // คำนวณสัปดาห์ระบาดวิทยาปัจจุบัน
