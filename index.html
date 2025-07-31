@@ -738,45 +738,59 @@
             if (!dateValue) return '';
             
             let date;
+            let year, month, day;
             
             // ถ้าเป็นสตริงที่มี / (รูปแบบ dd/mm/yyyy)
             if (typeof dateValue === 'string' && dateValue.includes('/')) {
                 const parts = dateValue.split('/');
                 if (parts.length === 3) {
-                    const day = parseInt(parts[0]);
-                    const month = parseInt(parts[1]);
-                    let year = parseInt(parts[2]);
+                    day = parseInt(parts[0]);
+                    month = parseInt(parts[1]);
+                    year = parseInt(parts[2]);
                     
                     // แปลง พ.ศ. เป็น ค.ศ.
                     if (year > 2400) {
                         year -= 543;
                     }
-                    
-                    date = new Date(year, month - 1, day);
-                    if (!isNaN(date.getTime())) {
-                        return `${parts[0]}/${parts[1]}/${year}`;
-                    }
                 }
             }
-            
             // ถ้าเป็นตัวเลข (Excel serial date)
-            if (typeof dateValue === 'number') {
+            else if (typeof dateValue === 'number') {
                 try {
                     date = parseExcelDate(dateValue);
                     if (!isNaN(date.getTime())) {
-                        const day = date.getDate().toString().padStart(2, '0');
-                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                        const year = date.getFullYear();
-                        return `${day}/${month}/${year}`;
+                        day = date.getDate();
+                        month = date.getMonth() + 1;
+                        year = date.getFullYear();
                     }
                 } catch (e) {
                     console.error('Error parsing Excel date:', e);
+                    return '';
                 }
             }
-            
-            // ถ้าเป็นสตริงรูปแบบอื่น
-            if (typeof dateValue === 'string' && dateValue.trim() !== '') {
-                return dateValue; // ส่งคืนค่าเดิมถ้าเป็นสตริงที่ไม่ใช่รูปแบบ dd/mm/yyyy
+            // ถ้าเป็นสตริงรูปแบบอื่น ลองแปลงเป็นวันที่
+            else if (typeof dateValue === 'string' && dateValue.trim() !== '') {
+                try {
+                    date = new Date(dateValue);
+                    if (!isNaN(date.getTime())) {
+                        day = date.getDate();
+                        month = date.getMonth() + 1;
+                        year = date.getFullYear();
+                    } else {
+                        return dateValue; // ถ้าแปลงไม่ได้ ส่งคืนค่าเดิม
+                    }
+                } catch (e) {
+                    return dateValue;
+                }
+            }
+
+            // ถ้ามีข้อมูลวันที่ครบถ้วน
+            if (day && month && year) {
+                // ถ้ายังเป็น พ.ศ. อยู่ (กรณีข้อมูลจาก string หรือ date object)
+                if (year > 2400) {
+                    year -= 543;
+                }
+                return `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${year}`;
             }
             
             return '';
