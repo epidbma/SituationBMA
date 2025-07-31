@@ -678,6 +678,17 @@
                         </div>
                     </div>
 
+                    <!-- Disease Summary Section -->
+                    <div class="glass-card p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">สรุปข้อมูลโรคและผู้ป่วย</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="diseaseSummaryGrid">
+                            <!-- Disease summary cards will be populated here -->
+                        </div>
+                        <div class="mt-4 text-sm text-gray-600">
+                            <span id="totalPatientCount">รวมผู้ป่วยทั้งหมด: 0 ราย</span>
+                        </div>
+                    </div>
+
                     <div class="overflow-x-auto">
                         <table id="patientTable" class="min-w-full divide-y divide-gray-200">
                             <thead>
@@ -999,6 +1010,9 @@
                     
                     // แสดงข้อมูลแบบ pagination
                     displayPaginatedPatients();
+                    
+                    // สร้างสรุปข้อมูลโรค
+                    createDiseaseSummary();
                 } else {
                     console.log('No patient data found');
                     window.allPatients = [];
@@ -1010,6 +1024,7 @@
                         </tr>
                     `;
                     updatePaginationInfo(0, 1, 1);
+                    createDiseaseSummary(); // อัพเดทสรุปข้อมูลโรค
                 }
             }, (error) => {
                 console.error('Error fetching patient data:', error);
@@ -1024,6 +1039,55 @@
                     `;
                 }
             });
+        }
+
+        function createDiseaseSummary() {
+            if (!window.allPatients || window.allPatients.length === 0) {
+                document.getElementById('diseaseSummaryGrid').innerHTML = '<p class="text-gray-500 col-span-full text-center">ไม่มีข้อมูลผู้ป่วย</p>';
+                document.getElementById('totalPatientCount').textContent = 'รวมผู้ป่วยทั้งหมด: 0 ราย';
+                return;
+            }
+
+            // นับจำนวนผู้ป่วยแต่ละโรค
+            const diseaseCount = {};
+            window.allPatients.forEach(patient => {
+                const diseaseCode = patient.diseaseCode;
+                if (diseaseCode) {
+                    diseaseCount[diseaseCode] = (diseaseCount[diseaseCode] || 0) + 1;
+                }
+            });
+
+            // เรียงลำดับตามจำนวนผู้ป่วย (มากไปน้อย)
+            const sortedDiseases = Object.entries(diseaseCount)
+                .sort(([,a], [,b]) => b - a);
+
+            const summaryGrid = document.getElementById('diseaseSummaryGrid');
+            const totalPatients = window.allPatients.length;
+
+            // สร้าง cards สำหรับแต่ละโรค
+            const diseaseCards = sortedDiseases.map(([diseaseCode, count]) => {
+                const diseaseName = getDiseaseName(diseaseCode);
+                const percentage = ((count / totalPatients) * 100).toFixed(1);
+                
+                return `
+                    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-sm font-medium text-gray-900 truncate">${diseaseName}</h4>
+                            <span class="text-xs text-gray-500">${diseaseCode}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl font-bold text-emerald-600">${count}</span>
+                            <span class="text-sm text-gray-500">ราย (${percentage}%)</span>
+                        </div>
+                        <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-emerald-600 h-2 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            summaryGrid.innerHTML = diseaseCards;
+            document.getElementById('totalPatientCount').textContent = `รวมผู้ป่วยทั้งหมด: ${totalPatients} ราย`;
         }
 
         function displayPaginatedPatients() {
@@ -1171,6 +1235,9 @@
                 
                 // Refresh the table
                 displayPatients();
+                
+                // Reset summary
+                createDiseaseSummary();
             } catch (error) {
                 console.error('Error deleting patients:', error);
                 alert('เกิดข้อผิดพลาดในการลบข้อมูล');
