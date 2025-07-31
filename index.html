@@ -223,6 +223,11 @@
             color: white;
         }
         
+        .icon-gradient-purple {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+        
         .floating-animation {
             animation: float 6s ease-in-out infinite;
         }
@@ -481,6 +486,123 @@
                         <div class="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full mx-auto mb-3"></div>
                         <p>กำลังโหลดข้อมูลภาพรวมฐานข้อมูล...</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- รายละเอียดแยกรายโรค -->
+            <div class="glass-card p-8 mb-12">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-4">
+                        📋 รายละเอียดแยกรายโรค
+                    </h2>
+                    <p class="text-gray-600 text-lg">ข้อมูลผู้ป่วยแยกตามเพศและสัดส่วนในแต่ละโรค</p>
+                </div>
+
+                <div class="mb-8">
+                    <label for="diseaseSelect" class="block text-sm font-medium text-gray-700 mb-3">เลือกโรคที่ต้องการดูข้อมูล:</label>
+                    <select id="diseaseSelect" onchange="loadDiseaseDetails()" class="w-full max-w-md px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors">
+                        <option value="">-- เลือกโรค --</option>
+                    </select>
+                </div>
+                
+                <div id="diseaseDetailsContainer" class="hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                        <!-- จำนวนผู้ป่วยรวม -->
+                        <div class="glass-card p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 icon-gradient-blue rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยรวม</h3>
+                                    <div id="totalPatients" class="text-2xl font-bold text-gray-900">-</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">ผู้ป่วยทั้งหมดของโรคนี้</div>
+                        </div>
+
+                        <!-- จำนวนผู้ป่วยเพศชาย -->
+                        <div class="glass-card p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 icon-gradient-green rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยเพศชาย</h3>
+                                    <div id="malePatients" class="text-2xl font-bold text-blue-600">-</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">ผู้ป่วยเพศชาย</div>
+                        </div>
+
+                        <!-- จำนวนผู้ป่วยเพศหญิง -->
+                        <div class="glass-card p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 icon-gradient-orange rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยเพศหญิง</h3>
+                                    <div id="femalePatients" class="text-2xl font-bold text-pink-600">-</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">ผู้ป่วยเพศหญิง</div>
+                        </div>
+
+                        <!-- สัดส่วนชายต่อหญิง -->
+                        <div class="glass-card p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 icon-gradient-purple rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">สัดส่วนชายต่อหญิง</h3>
+                                    <div id="genderRatio" class="text-2xl font-bold text-purple-600">-</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">อัตราส่วนเพศชาย : เพศหญิง</div>
+                        </div>
+                    </div>
+
+                    <!-- กราฟแสดงสัดส่วน -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">สัดส่วนเพศ</h3>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-1">
+                                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                                    <span>เพศชาย</span>
+                                    <span id="malePercentage">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    <div id="maleBar" class="bg-blue-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                                    <span>เพศหญิง</span>
+                                    <span id="femalePercentage">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    <div id="femaleBar" class="bg-pink-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="noDiseaseSelected" class="text-center text-gray-500 py-12">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
+                    </svg>
+                    <p class="text-lg">กรุณาเลือกโรคที่ต้องการดูข้อมูล</p>
                 </div>
             </div>
         </div>
@@ -1560,6 +1682,116 @@
             }
         }
 
+        // โหลดตัวเลือกโรคใน dropdown
+        async function loadDiseaseSelectOptions() {
+            try {
+                const snapshot = await window.firebaseDB.ref('patients').once('value');
+                const patients = snapshot.val();
+                
+                if (!patients) return;
+                
+                // สร้าง Set เพื่อเก็บโรคที่ไม่ซ้ำ
+                const diseases = new Set();
+                
+                Object.values(patients).forEach(patient => {
+                    if (patient.disease_code) {
+                        diseases.add(patient.disease_code);
+                    }
+                });
+                
+                // เติมข้อมูลใน select
+                const select = document.getElementById('diseaseSelect');
+                const sortedDiseases = Array.from(diseases).sort();
+                
+                // ล้างตัวเลือกเก่า (เก็บเฉพาะตัวเลือกแรก)
+                select.innerHTML = '<option value="">-- เลือกโรค --</option>';
+                
+                sortedDiseases.forEach(disease => {
+                    const option = document.createElement('option');
+                    option.value = disease;
+                    option.textContent = disease;
+                    select.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Error loading disease options:', error);
+            }
+        }
+
+        // โหลดรายละเอียดโรคที่เลือก
+        async function loadDiseaseDetails() {
+            const selectedDisease = document.getElementById('diseaseSelect').value;
+            const detailsContainer = document.getElementById('diseaseDetailsContainer');
+            const noSelectionDiv = document.getElementById('noDiseaseSelected');
+            
+            if (!selectedDisease) {
+                detailsContainer.classList.add('hidden');
+                noSelectionDiv.classList.remove('hidden');
+                return;
+            }
+            
+            noSelectionDiv.classList.add('hidden');
+            detailsContainer.classList.remove('hidden');
+            
+            try {
+                const snapshot = await window.firebaseDB.ref('patients').once('value');
+                const patients = snapshot.val();
+                
+                if (!patients) return;
+                
+                // กรองผู้ป่วยตามโรคที่เลือก
+                const diseasePatients = Object.values(patients).filter(patient => 
+                    patient.disease_code === selectedDisease
+                );
+                
+                // นับจำนวนตามเพศ
+                let maleCount = 0;
+                let femaleCount = 0;
+                let totalCount = diseasePatients.length;
+                
+                diseasePatients.forEach(patient => {
+                    const gender = patient.gender;
+                    if (gender === 'ชาย' || gender === 'Male' || gender === 'M') {
+                        maleCount++;
+                    } else if (gender === 'หญิง' || gender === 'Female' || gender === 'F') {
+                        femaleCount++;
+                    }
+                });
+                
+                // คำนวณสัดส่วน
+                const malePercentage = totalCount > 0 ? (maleCount / totalCount * 100).toFixed(1) : 0;
+                const femalePercentage = totalCount > 0 ? (femaleCount / totalCount * 100).toFixed(1) : 0;
+                
+                // คำนวณอัตราส่วนชาย:หญิง
+                let genderRatio = '';
+                if (maleCount > 0 && femaleCount > 0) {
+                    const ratio = maleCount / femaleCount;
+                    genderRatio = `${ratio.toFixed(2)} : 1`;
+                } else if (maleCount > 0 && femaleCount === 0) {
+                    genderRatio = 'ชายเท่านั้น';
+                } else if (maleCount === 0 && femaleCount > 0) {
+                    genderRatio = 'หญิงเท่านั้น';
+                } else {
+                    genderRatio = 'ไม่มีข้อมูล';
+                }
+                
+                // อัปเดตข้อมูลในหน้าจอ
+                document.getElementById('totalPatients').textContent = totalCount.toLocaleString();
+                document.getElementById('malePatients').textContent = maleCount.toLocaleString();
+                document.getElementById('femalePatients').textContent = femaleCount.toLocaleString();
+                document.getElementById('genderRatio').textContent = genderRatio;
+                
+                // อัปเดตเปอร์เซ็นต์และแถบกราฟ
+                document.getElementById('malePercentage').textContent = `${malePercentage}%`;
+                document.getElementById('femalePercentage').textContent = `${femalePercentage}%`;
+                document.getElementById('maleBar').style.width = `${malePercentage}%`;
+                document.getElementById('femaleBar').style.width = `${femalePercentage}%`;
+                
+            } catch (error) {
+                console.error('Error loading disease details:', error);
+            }
+        }
+
         // คำนวณสัปดาห์ระบาดวิทยาปัจจุบัน
         function getCurrentEpiWeek() {
             const today = new Date();
@@ -1778,6 +2010,7 @@
                     if (window.firebaseDB) {
                         loadSystemOverview();
                         loadSummaryDatabaseOverview(); // เรียกใช้อัตโนมัติ
+                        loadDiseaseSelectOptions(); // โหลดตัวเลือกโรค
                     }
                 } else if (page === 'patientDb') {
                     const pageElement = document.getElementById('patientDbPage');
