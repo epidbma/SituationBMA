@@ -1791,28 +1791,28 @@
                 console.log('Selected disease:', selectedDisease);
                 console.log('Total patients in database:', Object.keys(patients).length);
                 
-                // กรองผู้ป่วยตามโรคที่เลือก
-                const diseasePatients = Object.values(patients).filter(patient => 
-                    patient.diseaseCode === selectedDisease
-                );
-                
-                console.log('Patients with selected disease:', diseasePatients.length);
-                
-                // นับจำนวนตามเพศ
+                // กรองผู้ป่วยตามโรคที่เลือก - ใช้วิธีง่ายๆ
+                const allPatients = Object.values(patients);
+                let totalCount = 0;
                 let maleCount = 0;
                 let femaleCount = 0;
-                let totalCount = diseasePatients.length;
                 
-                diseasePatients.forEach(patient => {
-                    const gender = patient.gender;
-                    if (gender === 'ชาย' || gender === 'Male' || gender === 'M') {
-                        maleCount++;
-                    } else if (gender === 'หญิง' || gender === 'Female' || gender === 'F') {
-                        femaleCount++;
+                allPatients.forEach(patient => {
+                    // ตรวจสอบว่ารหัสโรคตรงกันไหม
+                    if (patient.diseaseCode === selectedDisease) {
+                        totalCount++;
+                        
+                        // นับตามเพศ
+                        const gender = patient.gender;
+                        if (gender === 'ชาย' || gender === 'Male' || gender === 'M') {
+                            maleCount++;
+                        } else if (gender === 'หญิง' || gender === 'Female' || gender === 'F') {
+                            femaleCount++;
+                        }
                     }
                 });
                 
-                console.log('Gender breakdown - Male:', maleCount, 'Female:', femaleCount, 'Total:', totalCount);
+                console.log('Final counts - Total:', totalCount, 'Male:', maleCount, 'Female:', femaleCount);
                 
                 // คำนวณสัดส่วน
                 const malePercentage = totalCount > 0 ? (maleCount / totalCount * 100).toFixed(1) : 0;
@@ -1831,6 +1831,13 @@
                     genderRatio = 'ไม่มีข้อมูล';
                 }
                 
+                console.log('About to update UI with:', {
+                    total: totalCount,
+                    male: maleCount,
+                    female: femaleCount,
+                    ratio: genderRatio
+                });
+                
                 // อัปเดตข้อมูลในหน้าจอ
                 document.getElementById('totalPatients').textContent = totalCount.toLocaleString();
                 document.getElementById('malePatients').textContent = maleCount.toLocaleString();
@@ -1842,6 +1849,8 @@
                 document.getElementById('femalePercentage').textContent = `${femalePercentage}%`;
                 document.getElementById('maleBar').style.width = `${malePercentage}%`;
                 document.getElementById('femaleBar').style.width = `${femalePercentage}%`;
+                
+                console.log('UI updated successfully');
                 
             } catch (error) {
                 console.error('Error loading disease details:', error);
