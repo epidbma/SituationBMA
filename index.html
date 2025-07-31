@@ -405,53 +405,131 @@
         <!-- Summary Page -->
         <div id="summaryPage" class="slide-in">
             <div class="glass-card p-8">
-                <!-- ส่วนที่ 1: ภาพรวมข้อมูลปัจจุบัน -->
-                <div class="mb-12">
-                    <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-4">
-                            ส่วนที่ 1 - ภาพรวมข้อมูลปัจจุบัน
-                        </h2>
-                        <p class="text-gray-600 text-lg">ข้อมูลสำคัญในระบบสรุปสถานการณ์โรค</p>
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-4">
+                        ภาพรวมระบบ
+                    </h2>
+                    <p class="text-gray-600 text-lg">ข้อมูลสถิติการใช้งานระบบสรุปสถานการณ์โรค</p>
+                </div>
+
+                <!-- ส่วนข้อมูลหลัก -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+                    <!-- จำนวนโรคที่เฝ้าระวัง -->
+                    <div class="glass-card p-6 floating-animation" style="animation-delay: 0.1s;">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 icon-gradient-blue rounded-xl flex items-center justify-center mr-4">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3h4v1a1 1 0 102 0V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนโรคที่เฝ้าระวัง</h3>
+                                <div id="diseaseCount" class="text-2xl font-bold text-gray-900">-</div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500">โรคติดต่อที่อยู่ในระบบเฝ้าระวัง</div>
                     </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <!-- จำนวนโรคที่เฝ้าระวัง -->
-                        <div class="stat-card floating-animation" style="animation-delay: 0.1s;">
-                            <div class="w-20 h-20 icon-gradient-blue rounded-2xl mx-auto mb-6 flex items-center justify-center">
-                                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+
+                    <!-- จำนวนผู้ป่วยในฐานข้อมูล -->
+                    <div class="glass-card p-6 floating-animation" style="animation-delay: 0.2s;">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 icon-gradient-green rounded-xl flex items-center justify-center mr-4">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
                                 </svg>
                             </div>
-                            <div id="diseaseCount" class="text-4xl font-bold text-gray-900 mb-3">-</div>
-                            <div class="text-base text-gray-700 font-semibold mb-2">จำนวนโรคที่เฝ้าระวัง</div>
-                            <div class="text-sm text-gray-500">โรคที่อยู่ในระบบ</div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยในฐานข้อมูล</h3>
+                                <div id="patientCount" class="text-2xl font-bold text-gray-900">-</div>
+                            </div>
                         </div>
-                        
-                        <!-- จำนวนผู้ป่วยในฐานข้อมูล -->
-                        <div class="stat-card floating-animation" style="animation-delay: 0.2s;">
-                            <div class="w-20 h-20 icon-gradient-green rounded-2xl mx-auto mb-6 flex items-center justify-center">
-                                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                        <div class="text-xs text-gray-500">ผู้ป่วยทั้งหมดที่บันทึกในระบบ</div>
+                    </div>
+
+                    <!-- สัปดาห์การระบาดปัจจุบัน -->
+                    <div class="glass-card p-6 floating-animation" style="animation-delay: 0.3s;">
+                        <div class="flex items-center mb-6">
+                            <div class="w-12 h-12 icon-gradient-orange rounded-xl flex items-center justify-center mr-4">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
                                 </svg>
                             </div>
-                            <div id="patientCount" class="text-4xl font-bold text-gray-900 mb-3">-</div>
-                            <div class="text-base text-gray-700 font-semibold mb-2">จำนวนผู้ป่วยในฐานข้อมูล</div>
-                            <div class="text-sm text-gray-500">ผู้ป่วยทั้งหมดในระบบ</div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-600 mb-1">สัปดาห์การระบาดปัจจุบัน</h3>
+                                <div id="currentWeek" class="text-2xl font-bold text-gray-900">-</div>
+                            </div>
                         </div>
-                        
-                        <!-- สัปดาห์การระบาดปัจจุบัน -->
-                        <div class="stat-card floating-animation" style="animation-delay: 0.3s;">
-                            <div class="w-20 h-20 icon-gradient-purple rounded-2xl mx-auto mb-6 flex items-center justify-center">
-                                <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                        <div id="weekDateRange" class="text-xs text-gray-500">กำลังโหลด...</div>
+                    </div>
+                </div>
+
+                <!-- ส่วนข้อมูลเพิ่มเติม -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- ข้อมูลระบบ -->
+                    <div class="glass-card p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
                                 </svg>
                             </div>
-                            <div class="mb-3">
-                                <div id="currentWeek" class="text-4xl font-bold text-gray-900 mb-1">-</div>
-                                <div class="text-sm text-gray-600" id="weekDateRange">-</div>
+                            <h3 class="text-lg font-semibold text-gray-800">ข้อมูลระบบ</h3>
+                        </div>
+                        <ul class="space-y-2 text-sm text-gray-600">
+                            <li class="flex items-center">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                                ระบบเชื่อมต่อ Firebase แบบเรียลไทม์
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                                อัปเดตข้อมูลสถิติอัตโนมัติ
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                                รองรับการทำงานแบบออฟไลน์
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- ข้อมูลสัปดาห์ระบาดวิทยา -->
+                    <div class="glass-card p-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
+                                </svg>
                             </div>
-                            <div class="text-base text-gray-700 font-semibold mb-2">สัปดาห์การระบาดปัจจุบัน</div>
-                            <div class="text-sm text-gray-500">สัปดาห์ระบาดวิทยา</div>
+                            <h3 class="text-lg font-semibold text-gray-800">สัปดาห์ระบาดวิทยา</h3>
+                        </div>
+                        <ul class="space-y-2 text-sm text-gray-600">
+                            <li class="flex items-center">
+                                <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                                คำนวณตามมาตรฐาน ISO Week Date
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                                เริ่มนับจากวันจันทร์ถึงวันอาทิตย์
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                                ใช้สำหรับการติดตามโรคระบาด
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- คำแนะนำการใช้งาน -->
+                <div class="glass-card p-6 pulse-glow">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
+                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-gray-800 font-semibold text-lg">การใช้งานระบบ</p>
+                            <p class="text-gray-600">ใช้เมนูด้านบนเพื่อเพิ่มข้อมูลผู้ป่วย สร้างรายงาน และติดตามสถานการณ์โรคระบาด</p>
                         </div>
                     </div>
                 </div>
@@ -1259,14 +1337,10 @@
                     document.getElementById('patientCount').textContent = patientCount.toLocaleString();
                 }
                 
-                // คำนวณจำนวนรายงาน (จำลองข้อมูล)
-                const reportCount = diseaseCount * 12; // สมมติว่ามีรายงานรายเดือนสำหรับแต่ละโรค
-                document.getElementById('reportCount').textContent = reportCount.toLocaleString();
-                
-                // คำนวณสัปดาห์ระบาดวิทยาปัจจุบัน
-                const { weekNumber, weekDateRange } = getCurrentEpiWeek();
-                document.getElementById('currentWeek').textContent = weekNumber;
-                document.getElementById('weekDateRange').textContent = weekDateRange;
+                // คำนวณและแสดงสัปดาห์ระบาดวิทยาปัจจุบัน
+                const epiWeekInfo = getCurrentEpiWeekDateRange();
+                document.getElementById('currentWeek').textContent = `สัปดาห์ที่ ${epiWeekInfo.weekNumber}`;
+                document.getElementById('weekDateRange').textContent = epiWeekInfo.dateRange;
                 
                 console.log('System overview loaded successfully');
             } catch (error) {
@@ -1274,13 +1348,29 @@
                 // แสดงข้อมูลเริ่มต้นหากเกิดข้อผิดพลาด
                 document.getElementById('diseaseCount').textContent = '0';
                 document.getElementById('patientCount').textContent = '0';
-                document.getElementById('currentWeek').textContent = '0';
-                document.getElementById('weekDateRange').textContent = '-';
+                document.getElementById('currentWeek').textContent = 'สัปดาห์ที่ 0';
+                document.getElementById('weekDateRange').textContent = 'ไม่สามารถโหลดข้อมูลได้';
             }
         }
 
         // คำนวณสัปดาห์ระบาดวิทยาปัจจุบัน
         function getCurrentEpiWeek() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const startOfYear = new Date(year, 0, 1);
+            
+            // หา Thursday แรกของปี (ISO week date system)
+            const jan4 = new Date(year, 0, 4);
+            const firstThursday = new Date(jan4.getTime() - (jan4.getDay() - 4) * 24 * 60 * 60 * 1000);
+            
+            // คำนวณจำนวนสัปดาห์
+            const weekNumber = Math.ceil(((today.getTime() - firstThursday.getTime()) / (24 * 60 * 60 * 1000) + 1) / 7);
+            
+            return Math.max(1, Math.min(52, weekNumber));
+        }
+
+        // คำนวณช่วงวันที่ของสัปดาห์ระบาดวิทยา
+        function getCurrentEpiWeekDateRange() {
             const today = new Date();
             const year = today.getFullYear();
             
@@ -1290,31 +1380,33 @@
             
             // คำนวณจำนวนสัปดาห์
             const weekNumber = Math.ceil(((today.getTime() - firstThursday.getTime()) / (24 * 60 * 60 * 1000) + 1) / 7);
-            const finalWeekNumber = Math.max(1, Math.min(52, weekNumber));
+            const adjustedWeekNumber = Math.max(1, Math.min(52, weekNumber));
             
-            // คำนวณช่วงวันที่ของสัปดาห์ปัจจุบัน
-            const currentDate = new Date();
-            const dayOfWeek = currentDate.getDay(); // 0 = อาทิตย์, 1 = จันทร์, ...
-            const startOfWeek = new Date(currentDate);
-            const endOfWeek = new Date(currentDate);
+            // คำนวณวันจันทร์แรกของสัปดาห์ปัจจุบัน
+            const currentWeekStart = new Date(firstThursday.getTime() + (adjustedWeekNumber - 1) * 7 * 24 * 60 * 60 * 1000);
+            // ปรับให้เป็นวันจันทร์ (เนื่องจากเริ่มจาก Thursday)
+            currentWeekStart.setDate(currentWeekStart.getDate() - 3);
             
-            // ปรับให้เริ่มต้นที่วันอาทิตย์ (สัปดาห์ระบาดวิทยา)
-            startOfWeek.setDate(currentDate.getDate() - dayOfWeek);
-            endOfWeek.setDate(currentDate.getDate() + (6 - dayOfWeek));
+            // คำนวณวันอาทิตย์สุดท้ายของสัปดาห์
+            const currentWeekEnd = new Date(currentWeekStart);
+            currentWeekEnd.setDate(currentWeekStart.getDate() + 6);
             
-            // จัดรูปแบบวันที่ (dd/mm/yyyy)
-            const formatDate = (date) => {
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = date.getFullYear();
-                return `${day}/${month}/${year}`;
+            // จัดรูปแบบวันที่แบบไทย
+            const options = { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                locale: 'th-TH'
             };
             
-            const weekDateRange = `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
+            const startDateThai = currentWeekStart.toLocaleDateString('th-TH', options);
+            const endDateThai = currentWeekEnd.toLocaleDateString('th-TH', options);
             
-            return { 
-                weekNumber: finalWeekNumber,
-                weekDateRange: weekDateRange
+            return {
+                weekNumber: adjustedWeekNumber,
+                startDate: startDateThai,
+                endDate: endDateThai,
+                dateRange: `${startDateThai} - ${endDateThai}`
             };
         }
 
