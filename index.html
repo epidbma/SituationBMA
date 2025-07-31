@@ -1783,26 +1783,44 @@
                 const snapshot = await get(ref(database, 'patients'));
                 const patients = snapshot.val();
                 
-                if (!patients) return;
+                if (!patients) {
+                    console.log('No patient data found');
+                    return;
+                }
+                
+                console.log(`Total patients in database: ${Object.keys(patients).length}`);
+                console.log(`Selected disease code: ${selectedDisease}`);
                 
                 // กรองผู้ป่วยตามโรคที่เลือก
-                const diseasePatients = Object.values(patients).filter(patient => 
-                    patient.diseaseCode === selectedDisease
-                );
+                const diseasePatients = Object.values(patients).filter(patient => {
+                    const matches = patient.diseaseCode === selectedDisease;
+                    if (matches) {
+                        console.log(`Found patient with disease ${selectedDisease}:`, patient.diseaseCode, patient.gender);
+                    }
+                    return matches;
+                });
+                
+                console.log(`Filtered patients for disease ${selectedDisease}: ${diseasePatients.length}`);
                 
                 // นับจำนวนตามเพศ
                 let maleCount = 0;
                 let femaleCount = 0;
+                let unknownGenderCount = 0;
                 let totalCount = diseasePatients.length;
                 
                 diseasePatients.forEach(patient => {
                     const gender = patient.gender;
-                    if (gender === 'ชาย' || gender === 'Male' || gender === 'M') {
+                    if (gender === 'ชาย' || gender === 'Male' || gender === 'M' || gender === 'male') {
                         maleCount++;
-                    } else if (gender === 'หญิง' || gender === 'Female' || gender === 'F') {
+                    } else if (gender === 'หญิง' || gender === 'Female' || gender === 'F' || gender === 'female') {
                         femaleCount++;
+                    } else {
+                        unknownGenderCount++;
+                        console.log(`Unknown gender: "${gender}" for patient:`, patient);
                     }
                 });
+                
+                console.log(`Gender distribution - Male: ${maleCount}, Female: ${femaleCount}, Unknown: ${unknownGenderCount}`);
                 
                 // คำนวณสัดส่วน
                 const malePercentage = totalCount > 0 ? (maleCount / totalCount * 100).toFixed(1) : 0;
@@ -1832,6 +1850,8 @@
                 document.getElementById('femalePercentage').textContent = `${femalePercentage}%`;
                 document.getElementById('maleBar').style.width = `${malePercentage}%`;
                 document.getElementById('femaleBar').style.width = `${femalePercentage}%`;
+                
+                console.log(`Updated display - Total: ${totalCount}, Male: ${maleCount} (${malePercentage}%), Female: ${femaleCount} (${femalePercentage}%), Ratio: ${genderRatio}`);
                 
             } catch (error) {
                 console.error('Error loading disease details:', error);
