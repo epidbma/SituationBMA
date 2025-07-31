@@ -1532,8 +1532,6 @@
             const selectedCode = document.getElementById('selectedDisease').value;
             const detailsContainer = document.getElementById('diseaseDetails');
             
-            console.log('Loading disease details for code:', selectedCode);
-            
             if (!selectedCode) {
                 detailsContainer.classList.add('hidden');
                 return;
@@ -1544,45 +1542,48 @@
                 const { database, ref, get } = window.firebaseDB;
                 let patients = [];
                 if (database && ref && get) {
-                    console.log('Loading patients from Firebase...');
                     const patientSnapshot = await get(ref(database, 'patients'));
                     if (patientSnapshot.exists()) {
                         const patientData = patientSnapshot.val();
-                        const allPatients = Object.values(patientData);
-                        patients = allPatients.filter(p => p.diseaseCode === selectedCode);
-                        console.log('All patients:', allPatients.length);
-                        console.log('Filtered patients for disease', selectedCode, ':', patients.length);
-                    } else {
-                        console.log('No patient data found in Firebase');
-                    }
-                } else {
-                    console.log('Firebase not available, trying localStorage...');
-                    // Fallback to localStorage
-                    const storedPatients = localStorage.getItem('patients');
-                    if (storedPatients) {
-                        const allPatients = JSON.parse(storedPatients);
-                        patients = allPatients.filter(p => p.diseaseCode === selectedCode);
-                        console.log('Patients from localStorage:', patients.length);
+                        patients = Object.values(patientData).filter(p => p.diseaseCode === selectedCode);
                     }
                 }
                 
-                console.log('Final patient count:', patients.length);
-                
                 // คำนวณสถิติผู้ป่วย
                 const totalPatients = patients.length;
-                const malePatients = patients.filter(p => p.gender === 'ชาย').length;
-                const femalePatients = patients.filter(p => p.gender === 'หญิง').length;
-                const genderRatio = femalePatients > 0 ? `${(malePatients/femalePatients).toFixed(1)}:1` : `${malePatients}:0`;
+                const malePatients = patients.filter(p => p.gender === 'ชาย' || p.gender === 'male' || p.gender === 'M').length;
+                const femalePatients = patients.filter(p => p.gender === 'หญิง' || p.gender === 'female' || p.gender === 'F').length;
                 
-                console.log('Statistics:', { totalPatients, malePatients, femalePatients, genderRatio });
+                // คำนวณสัดส่วนชาย:หญิง
+                let genderRatio = '-';
+                if (malePatients > 0 && femalePatients > 0) {
+                    const ratio = (malePatients / femalePatients).toFixed(1);
+                    genderRatio = `${ratio}:1`;
+                } else if (malePatients > 0 && femalePatients === 0) {
+                    genderRatio = `${malePatients}:0`;
+                } else if (malePatients === 0 && femalePatients > 0) {
+                    genderRatio = `0:${femalePatients}`;
+                } else {
+                    genderRatio = '0:0';
+                }
                 
                 // คำนวณจำนวนผู้เสียชีวิต
-                const deathCount = patients.filter(p => p.outcome === 'เสียชีวิต').length;
+                const deathCount = patients.filter(p => 
+                    p.outcome === 'เสียชีวิต' || 
+                    p.outcome === 'ตาย' || 
+                    p.outcome === 'death' || 
+                    p.outcome === 'Dead' ||
+                    p.status === 'เสียชีวิต' ||
+                    p.status === 'ตาย' ||
+                    p.status === 'death' ||
+                    p.status === 'Dead'
+                ).length;
                 
                 // คำนวณเขตที่พบผู้ป่วยมากที่สุด
                 const districtStats = {};
                 patients.forEach(patient => {
-                    const district = patient.district || 'ไม่ระบุ';
+                    // รองรับฟิลด์ที่หลากหลาย
+                    const district = patient.district || patient.subdistrict || patient.area || patient.location || 'ไม่ระบุ';
                     districtStats[district] = (districtStats[district] || 0) + 1;
                 });
                 
@@ -1591,47 +1592,37 @@
                     .slice(0, 3);
                 
                 // อัพเดทข้อมูลในหน้าเว็บ
-                const totalEl = document.getElementById('totalPatients');
-                const maleEl = document.getElementById('malePatients');
-                const femaleEl = document.getElementById('femalePatients');
-                const ratioEl = document.getElementById('genderRatio');
-                const deathEl = document.getElementById('deathCount');
-                
-                if (totalEl) totalEl.textContent = totalPatients.toLocaleString();
-                if (maleEl) maleEl.textContent = malePatients.toLocaleString();
-                if (femaleEl) femaleEl.textContent = femalePatients.toLocaleString();
-                if (ratioEl) ratioEl.textContent = genderRatio;
-                if (deathEl) deathEl.textContent = deathCount.toLocaleString();
-                
-                console.log('Updated DOM elements with patient statistics');
+                document.getElementById('totalPatients').textContent = totalPatients.toLocaleString();
+                document.getElementById('malePatients').textContent = malePatients.toLocaleString();
+                document.getElementById('femalePatients').textContent = femalePatients.toLocaleString();
+                document.getElementById('genderRatio').textContent = genderRatio;
+                document.getElementById('deathCount').textContent = deathCount.toLocaleString();
                 
                 // แสดงเขตที่พบผู้ป่วยมากที่สุด
                 const topDistrictsContainer = document.getElementById('topDistricts');
-                if (topDistrictsContainer) {
-                    topDistrictsContainer.innerHTML = '';
-                    
-                    if (topDistricts.length === 0) {
-                        topDistrictsContainer.innerHTML = '<div class="text-gray-500">ไม่มีข้อมูล</div>';
-                    } else {
-                        topDistricts.forEach(([district, count], index) => {
-                            const rankColors = ['bg-yellow-100 text-yellow-800', 'bg-gray-100 text-gray-800', 'bg-orange-100 text-orange-800'];
-                            const rankIcons = ['🥇', '🥈', '🥉'];
-                            
-                            const div = document.createElement('div');
-                            div.className = `flex items-center justify-between p-4 rounded-lg ${rankColors[index] || 'bg-gray-50 text-gray-700'}`;
-                            div.innerHTML = `
-                                <div class="flex items-center">
-                                    <span class="text-2xl mr-3">${rankIcons[index] || '🏆'}</span>
-                                    <div>
-                                        <div class="font-semibold">อันดับที่ ${index + 1}: ${district}</div>
-                                        <div class="text-sm opacity-75">จำนวน ${count.toLocaleString()} ราย</div>
-                                    </div>
+                topDistrictsContainer.innerHTML = '';
+                
+                if (topDistricts.length === 0) {
+                    topDistrictsContainer.innerHTML = '<div class="text-gray-500">ไม่มีข้อมูล</div>';
+                } else {
+                    topDistricts.forEach(([district, count], index) => {
+                        const rankColors = ['bg-yellow-100 text-yellow-800', 'bg-gray-100 text-gray-800', 'bg-orange-100 text-orange-800'];
+                        const rankIcons = ['🥇', '🥈', '🥉'];
+                        
+                        const div = document.createElement('div');
+                        div.className = `flex items-center justify-between p-4 rounded-lg ${rankColors[index] || 'bg-gray-50 text-gray-700'}`;
+                        div.innerHTML = `
+                            <div class="flex items-center">
+                                <span class="text-2xl mr-3">${rankIcons[index] || '🏆'}</span>
+                                <div>
+                                    <div class="font-semibold">อันดับที่ ${index + 1}: ${district}</div>
+                                    <div class="text-sm opacity-75">จำนวน ${count.toLocaleString()} ราย</div>
                                 </div>
-                                <div class="text-2xl font-bold">${count}</div>
-                            `;
-                            topDistrictsContainer.appendChild(div);
-                        });
-                    }
+                            </div>
+                            <div class="text-2xl font-bold">${count}</div>
+                        `;
+                        topDistrictsContainer.appendChild(div);
+                    });
                 }
                 
                 // สร้างกราฟ Epidemic Curve และ Historical Comparison
@@ -1639,17 +1630,10 @@
                 createHistoricalComparison(selectedCode, patients);
                 
                 detailsContainer.classList.remove('hidden');
-                console.log('Disease details loaded and displayed');
                 
             } catch (error) {
                 console.error('Error loading disease details:', error);
                 detailsContainer.classList.add('hidden');
-                // แสดงค่าเริ่มต้นหากเกิดข้อผิดพลาด
-                const elements = ['totalPatients', 'malePatients', 'femalePatients', 'genderRatio', 'deathCount'];
-                elements.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.textContent = '0';
-                });
             }
         }
 
