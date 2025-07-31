@@ -2010,6 +2010,19 @@
                                     display: true,
                                     text: 'จำนวนผู้ป่วย (ราย)'
                                 },
+                                max: function(context) {
+                                    // หาค่าสูงสุดในข้อมูล
+                                    const maxValue = Math.max(...weeklyData);
+                                    
+                                    // ถ้าค่าสูงสุดน้อยกว่า 10 ให้ใช้ค่าสูงสุด + 1
+                                    if (maxValue < 10) {
+                                        return maxValue + 1;
+                                    }
+                                    // ถ้าค่าสูงสุดมากกว่าหรือเท่ากับ 10 ให้ปัดขึ้นเป็นเลขกลม ๆ
+                                    else {
+                                        return Math.ceil(maxValue / 5) * 5;
+                                    }
+                                },
                                 ticks: {
                                     stepSize: 1,
                                     callback: function(value, index, values) {
@@ -2018,16 +2031,14 @@
                                         
                                         // แสดงเฉพาะเลขจำนวนเต็ม
                                         if (Number.isInteger(value)) {
-                                            // ถ้าค่าสูงสุดน้อยกว่า 10 ให้แสดงทุกตัวเลข 0 ถึงค่าสูงสุด
+                                            // ถ้าค่าสูงสุดน้อยกว่า 10 ให้แสดงทุกตัวเลข
                                             if (maxValue < 10) {
                                                 return value;
                                             }
-                                            // ถ้าค่าสูงสุดมากกว่าหรือเท่ากับ 10 ให้แสดงเฉพาะเลขกลม ๆ และค่าสูงสุด
+                                            // ถ้าค่าสูงสุดมากกว่าหรือเท่ากับ 10 ให้แสดงเฉพาะเลขกลม ๆ
                                             else {
                                                 if (value === 0) return '0';
                                                 if (value % 5 === 0) return value;
-                                                // แสดงค่าสูงสุดเสมอแม้ไม่เป็นเลขกลม
-                                                if (value === Math.ceil(maxValue)) return value;
                                                 return '';
                                             }
                                         }
