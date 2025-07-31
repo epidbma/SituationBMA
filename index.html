@@ -1977,7 +1977,7 @@
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'จำนวนผู้ป่วย',
+                            label: 'จำนวนผู้ป่วย (ราย)',
                             data: weeklyData,
                             backgroundColor: 'rgba(34, 197, 94, 0.6)',
                             borderColor: 'rgba(34, 197, 94, 1)',
@@ -2008,10 +2008,19 @@
                                 beginAtZero: true,
                                 title: {
                                     display: true,
-                                    text: 'จำนวนผู้ป่วย'
+                                    text: 'จำนวนผู้ป่วย (ราย)'
                                 },
                                 ticks: {
-                                    stepSize: 1
+                                    stepSize: 1,
+                                    callback: function(value) {
+                                        // แสดงเฉพาะเลขจำนวนเต็มที่เป็นเลขกลม ๆ
+                                        if (Number.isInteger(value)) {
+                                            if (value === 0) return '0';
+                                            if (value % 5 === 0 || value <= 10) return value;
+                                            return '';
+                                        }
+                                        return '';
+                                    }
                                 }
                             },
                             x: {
