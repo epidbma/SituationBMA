@@ -2014,13 +2014,17 @@
                                     // หาค่าสูงสุดในข้อมูล
                                     const maxValue = Math.max(...weeklyData);
                                     
-                                    // ถ้าค่าสูงสุดน้อยกว่า 10 ให้ใช้ค่าสูงสุด + 1
-                                    if (maxValue < 10) {
-                                        return maxValue + 1;
+                                    // คำนวณให้ค่าสูงสุดของข้อมูลอยู่ที่ 80% ของความสูงกราฟ
+                                    // หมายความว่าแกน Y ต้องมีค่าสูงสุด = maxValue / 0.8
+                                    const targetMax = Math.ceil(maxValue / 0.8);
+                                    
+                                    // ถ้าค่าเป้าหมายน้อยกว่า 10 ให้ปัดขึ้นเป็นเลขจำนวนเต็ม
+                                    if (targetMax < 10) {
+                                        return Math.max(10, targetMax);
                                     }
-                                    // ถ้าค่าสูงสุดมากกว่าหรือเท่ากับ 10 ให้ปัดขึ้นเป็นเลขกลม ๆ
+                                    // ถ้าค่าเป้าหมายมากกว่าหรือเท่ากับ 10 ให้ปัดขึ้นเป็นเลขกลม ๆ (ทวีคูณของ 5)
                                     else {
-                                        return Math.ceil(maxValue / 5) * 5;
+                                        return Math.ceil(targetMax / 5) * 5;
                                     }
                                 },
                                 ticks: {
@@ -2028,14 +2032,15 @@
                                     callback: function(value, index, values) {
                                         // หาค่าสูงสุดในข้อมูล
                                         const maxValue = Math.max(...weeklyData);
+                                        const targetMax = Math.ceil(maxValue / 0.8);
                                         
                                         // แสดงเฉพาะเลขจำนวนเต็ม
                                         if (Number.isInteger(value)) {
-                                            // ถ้าค่าสูงสุดน้อยกว่า 10 ให้แสดงทุกตัวเลข
-                                            if (maxValue < 10) {
+                                            // ถ้าค่าเป้าหมายน้อยกว่า 10 ให้แสดงทุกตัวเลข
+                                            if (targetMax < 10) {
                                                 return value;
                                             }
-                                            // ถ้าค่าสูงสุดมากกว่าหรือเท่ากับ 10 ให้แสดงเฉพาะเลขกลม ๆ
+                                            // ถ้าค่าเป้าหมายมากกว่าหรือเท่ากับ 10 ให้แสดงเฉพาะเลขกลม ๆ
                                             else {
                                                 if (value === 0) return '0';
                                                 if (value % 5 === 0) return value;
