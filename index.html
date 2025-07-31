@@ -1941,28 +1941,9 @@
                 const weeklyData = [];
                 const labels = [];
                 
-                // หาปีปัจจุบัน
-                const currentYear = new Date().getFullYear();
-                const currentWeek = getCurrentEpiWeek();
-                
-                // กรองสัปดาห์การระบาดให้แสดงเฉพาะปีปัจจุบันและสัปดาห์ที่ผ่านมาแล้ว
-                const relevantWeeks = epidemicWeeks.filter(week => {
-                    if (!week.startDate || !week.endDate || !week.year || !week.weekNumber) return false;
+                epidemicWeeks.forEach(week => {
+                    if (!week.startDate || !week.endDate) return;
                     
-                    const weekYear = parseInt(week.year);
-                    const weekNum = parseInt(week.weekNumber);
-                    
-                    // แสดงเฉพาะปีปัจจุบันและสัปดาห์ที่ไม่เกินปัจจุบัน
-                    return weekYear === currentYear && weekNum <= currentWeek;
-                }).sort((a, b) => {
-                    // เรียงตามสัปดาห์
-                    return parseInt(a.weekNumber) - parseInt(b.weekNumber);
-                });
-                
-                console.log(`Filtering epidemic weeks: Current year ${currentYear}, Current week ${currentWeek}`);
-                console.log('Relevant weeks:', relevantWeeks.length, 'weeks');
-                
-                relevantWeeks.forEach(week => {
                     const weekStart = new Date(week.startDate);
                     const weekEnd = new Date(week.endDate);
                     
