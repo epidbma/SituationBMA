@@ -505,15 +505,15 @@
                         <ul class="space-y-2 text-sm text-gray-600">
                             <li class="flex items-center">
                                 <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                                เลือกสัปดาห์ล่าสุดที่ไม่เกินปัจจุบัน
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
                                 ใช้ข้อมูลจากฐานข้อมูลสัปดาห์การระบาด
                             </li>
                             <li class="flex items-center">
                                 <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
-                                แสดงสัปดาห์ล่าสุดที่มีข้อมูล
-                            </li>
-                            <li class="flex items-center">
-                                <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
-                                ใช้สำหรับการทำรายงานโรคระบาด
+                                สำหรับการทำรายงานโรคระบาด
                             </li>
                         </ul>
                     </div>
@@ -1319,17 +1319,19 @@
             }
         }
 
-        // ดึงข้อมูลสัปดาห์การระบาดล่าสุดจากฐานข้อมูล
+        // ดึงข้อมูลสัปดาห์การระบาดล่าสุดที่เหมาะสมจากฐานข้อมูล
         async function getLatestEpidemicWeekFromDatabase() {
             try {
                 const epidemicWeeks = await loadFromFirebase('epidemicWeeks');
+                const currentDate = new Date();
+                const currentYear = currentDate.getFullYear();
                 
                 if (!epidemicWeeks || epidemicWeeks.length === 0) {
                     // หากไม่มีข้อมูลในฐานข้อมูล ใช้การคำนวณจากวันที่ปัจจุบัน
                     const fallbackWeek = getCurrentEpiWeekDateRange();
                     return {
                         weekNumber: fallbackWeek.weekNumber,
-                        year: new Date().getFullYear(),
+                        year: currentYear,
                         startDate: fallbackWeek.startDate,
                         endDate: fallbackWeek.endDate,
                         dateRange: fallbackWeek.dateRange,
@@ -1337,28 +1339,87 @@
                     };
                 }
                 
-                // หาสัปดาห์ล่าสุด โดยเรียงตามปีและสัปดาห์ที่
-                const sortedWeeks = epidemicWeeks.sort((a, b) => {
-                    if (a.year !== b.year) {
-                        return b.year - a.year; // ปีล่าสุดก่อน
-                    }
-                    return b.weekNumber - a.weekNumber; // สัปดาห์ล่าสุดก่อน
+                // กรองเฉพาะข้อมูลในปีปัจจุบันและปีที่แล้ว (เผื่อข้ามปี)
+                const relevantWeeks = epidemicWeeks.filter(week => {
+                    const weekYear = parseInt(week.year);
+                    return weekYear >= currentYear - 1 && weekYear <= currentYear;
                 });
                 
-                const latestWeek = sortedWeeks[0];
+                if (relevantWeeks.length === 0) {
+                    // หากไม่มีข้อมูลในปีที่เกี่ยวข้อง ใช้การคำนวณจากวันที่ปัจจุบัน
+                    const fallbackWeek = getCurrentEpiWeekDateRange();
+                    return {
+                        weekNumber: fallbackWeek.weekNumber,
+                        year: currentYear,
+                        startDate: fallbackWeek.startDate,
+                        endDate: fallbackWeek.endDate,
+                        dateRange: fallbackWeek.dateRange,
+                        isFromDatabase: false
+                    };
+                }
+                
+                // หาสัปดาห์ที่เหมาะสมที่สุด
+                // 1. เรียงตามปีและสัปดาห์
+                const sortedWeeks = relevantWeeks.sort((a, b) => {
+                    if (a.year !== b.year) {
+                        return parseInt(b.year) - parseInt(a.year); // ปีล่าสุดก่อน
+                    }
+                    return parseInt(b.weekNumber) - parseInt(a.weekNumber); // สัปดาห์ล่าสุดก่อน
+                });
+                
+                // 2. เลือกสัปดาห์ที่เหมาะสม
+                let selectedWeek = null;
+                
+                // หาสัปดาห์ในปีปัจจุบันที่ไม่เกินสัปดาห์ปัจจุบัน
+                const currentWeekNumber = getCurrentEpiWeek();
+                const currentYearWeeks = sortedWeeks.filter(w => parseInt(w.year) === currentYear);
+                
+                if (currentYearWeeks.length > 0) {
+                    // เลือกสัปดาห์ในปีปัจจุบันที่ไม่เกินสัปดาห์ปัจจุบัน
+                    const validCurrentYearWeeks = currentYearWeeks.filter(w => 
+                        parseInt(w.weekNumber) <= currentWeekNumber
+                    );
+                    
+                    if (validCurrentYearWeeks.length > 0) {
+                        selectedWeek = validCurrentYearWeeks[0]; // สัปดาห์ล่าสุดที่ไม่เกินปัจจุบัน
+                    }
+                }
+                
+                // หากยังไม่เจอ ใช้สัปดาห์ล่าสุดจากปีที่แล้ว
+                if (!selectedWeek) {
+                    const lastYearWeeks = sortedWeeks.filter(w => parseInt(w.year) === currentYear - 1);
+                    if (lastYearWeeks.length > 0) {
+                        selectedWeek = lastYearWeeks[0];
+                    } else {
+                        selectedWeek = sortedWeeks[0]; // สัปดาห์ล่าสุดใดๆ
+                    }
+                }
+                
+                // หากยังไม่เจอ ใช้การคำนวณ
+                if (!selectedWeek) {
+                    const fallbackWeek = getCurrentEpiWeekDateRange();
+                    return {
+                        weekNumber: fallbackWeek.weekNumber,
+                        year: currentYear,
+                        startDate: fallbackWeek.startDate,
+                        endDate: fallbackWeek.endDate,
+                        dateRange: fallbackWeek.dateRange,
+                        isFromDatabase: false
+                    };
+                }
                 
                 // จัดรูปแบบวันที่
-                const startDate = latestWeek.startDate ? formatDateTH(latestWeek.startDate) : 'ไม่ระบุ';
-                const endDate = latestWeek.endDate ? formatDateTH(latestWeek.endDate) : 'ไม่ระบุ';
+                const startDate = selectedWeek.startDate ? formatDateTH(selectedWeek.startDate) : 'ไม่ระบุ';
+                const endDate = selectedWeek.endDate ? formatDateTH(selectedWeek.endDate) : 'ไม่ระบุ';
                 const dateRange = `${startDate} - ${endDate}`;
                 
                 return {
-                    weekNumber: latestWeek.weekNumber,
-                    year: latestWeek.year,
+                    weekNumber: selectedWeek.weekNumber,
+                    year: selectedWeek.year,
                     startDate: startDate,
                     endDate: endDate,
                     dateRange: dateRange,
-                    note: latestWeek.note,
+                    note: selectedWeek.note,
                     isFromDatabase: true
                 };
                 
