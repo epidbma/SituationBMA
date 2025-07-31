@@ -506,7 +506,7 @@
                 </div>
                 
                 <div id="diseaseDetailsContainer" class="hidden">
-                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
                         <!-- จำนวนผู้ป่วยรวม -->
                         <div class="glass-card p-6">
                             <div class="flex items-center mb-4">
@@ -553,6 +553,22 @@
                                 </div>
                             </div>
                             <div class="text-xs text-gray-500">ผู้ป่วยเพศหญิง</div>
+                        </div>
+
+                        <!-- จำนวนผู้เสียชีวิต -->
+                        <div class="glass-card p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 icon-gradient-red rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้เสียชีวิต</h3>
+                                    <div id="deathPatients" class="text-2xl font-bold text-red-600">-</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">ผู้เสียชีวิตจากโรคนี้</div>
                         </div>
 
                         <!-- สัดส่วนชายต่อหญิง -->
@@ -1796,6 +1812,7 @@
                 let totalCount = 0;
                 let maleCount = 0;
                 let femaleCount = 0;
+                let deathCount = 0;
                 
                 allPatients.forEach(patient => {
                     // ตรวจสอบว่ารหัสโรคตรงกันไหม (เฉพาะรหัส ไม่เกี่ยวชื่อ)
@@ -1804,7 +1821,9 @@
                         
                         console.log('Found matching patient:', {
                             diseaseCode: patient.diseaseCode,
-                            gender: patient.gender
+                            gender: patient.gender,
+                            status: patient.patientStatus,
+                            deathDate: patient.deathDate
                         });
                         
                         // นับตามเพศ
@@ -1814,10 +1833,18 @@
                         } else if (gender === 'หญิง' || gender === 'Female' || gender === 'F') {
                             femaleCount++;
                         }
+                        
+                        // นับผู้เสียชีวิต - ตรวจสอบสภาพผู้ป่วยหรือวันที่เสียชีวิต
+                        const status = patient.patientStatus;
+                        const deathDate = patient.deathDate;
+                        if (status === 'เสียชีวิต' || status === 'ตาย' || status === 'Dead' || 
+                            (deathDate && deathDate !== '' && deathDate !== '-')) {
+                            deathCount++;
+                        }
                     }
                 });
                 
-                console.log('Final counts - Total:', totalCount, 'Male:', maleCount, 'Female:', femaleCount);
+                console.log('Final counts - Total:', totalCount, 'Male:', maleCount, 'Female:', femaleCount, 'Deaths:', deathCount);
                 
                 // คำนวณสัดส่วน
                 const malePercentage = totalCount > 0 ? (maleCount / totalCount * 100).toFixed(1) : 0;
@@ -1840,6 +1867,7 @@
                     total: totalCount,
                     male: maleCount,
                     female: femaleCount,
+                    deaths: deathCount,
                     ratio: genderRatio
                 });
                 
@@ -1847,6 +1875,7 @@
                 document.getElementById('totalPatients').textContent = totalCount.toLocaleString();
                 document.getElementById('malePatients').textContent = maleCount.toLocaleString();
                 document.getElementById('femalePatients').textContent = femaleCount.toLocaleString();
+                document.getElementById('deathPatients').textContent = deathCount.toLocaleString();
                 document.getElementById('genderRatio').textContent = genderRatio;
                 
                 // อัปเดตเปอร์เซ็นต์และแถบกราฟ
