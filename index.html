@@ -1735,11 +1735,11 @@
                         diseaseName = diseases[diseaseCode].name || diseases[diseaseCode].diseaseName || diseaseCode;
                     }
                     
-                    // แสดงเป็น "รหัสโรค (ชื่อโรค) - จำนวนราย"
+                    // แสดงเป็น "รหัสโรค (ชื่อโรค)"
                     if (diseaseName !== diseaseCode) {
-                        option.textContent = `${diseaseCode} (${diseaseName}) - ${count} ราย`;
+                        option.textContent = `${diseaseCode} (${diseaseName})`;
                     } else {
-                        option.textContent = `${diseaseCode} - ${count} ราย`;
+                        option.textContent = diseaseCode;
                     }
                     
                     select.appendChild(option);
