@@ -1686,8 +1686,15 @@
         async function loadDiseaseSelectOptions() {
             try {
                 const { database, ref, get } = window.firebaseDB;
-                const snapshot = await get(ref(database, 'patients'));
-                const patients = snapshot.val();
+                
+                // โหลดข้อมูลผู้ป่วยและข้อมูลโรค
+                const [patientSnapshot, diseaseSnapshot] = await Promise.all([
+                    get(ref(database, 'patients')),
+                    get(ref(database, 'diseases'))
+                ]);
+                
+                const patients = patientSnapshot.val();
+                const diseases = diseaseSnapshot.val();
                 
                 if (!patients) {
                     // ถ้าไม่มีข้อมูลให้แสดงข้อความ
@@ -1696,25 +1703,17 @@
                     return;
                 }
                 
-                // โหลดข้อมูลโรคจาก master data
-                const diseaseSnapshot = await get(ref(database, 'diseases'));
-                const diseases = diseaseSnapshot.val() || {};
-                
-                // สร้าง Set เพื่อเก็บโรคที่ไม่ซ้ำ พร้อมนับจำนวนผู้ป่วย
-                const diseaseCount = {};
+                // สร้าง Set เพื่อเก็บโรคที่ไม่ซ้ำจากข้อมูลผู้ป่วย
+                const uniqueDiseases = new Set();
                 
                 Object.values(patients).forEach(patient => {
                     if (patient.diseaseCode) {
-                        diseaseCount[patient.diseaseCode] = (diseaseCount[patient.diseaseCode] || 0) + 1;
+                        uniqueDiseases.add(patient.diseaseCode);
                     }
                 });
                 
-                // เรียงลำดับตามจำนวนผู้ป่วย (มากไปน้อย) แล้วตามชื่อโรค
-                const sortedDiseases = Object.entries(diseaseCount)
-                    .sort(([a, countA], [b, countB]) => {
-                        if (countB !== countA) return countB - countA; // เรียงตามจำนวนผู้ป่วย
-                        return a.localeCompare(b); // เรียงตามชื่อโรค
-                    });
+                // แปลง Set เป็น Array และเรียงลำดับ
+                const sortedDiseases = Array.from(uniqueDiseases).sort();
                 
                 // เติมข้อมูลใน select
                 const select = document.getElementById('diseaseSelect');
@@ -1722,12 +1721,16 @@
                 // ล้างตัวเลือกเก่า (เก็บเฉพาะตัวเลือกแรก)
                 select.innerHTML = '<option value="">-- เลือกโรค --</option>';
                 
-                sortedDiseases.forEach(([diseaseCode, count]) => {
+                sortedDiseases.forEach(diseaseCode => {
                     const option = document.createElement('option');
                     option.value = diseaseCode;
-                    // แสดงเป็น "ชื่อโรค (รหัสโรค)" หรือ "รหัสโรค" ถ้าไม่มีชื่อ
-                    const diseaseName = diseases[diseaseCode] || diseaseCode;
-                    option.textContent = `${diseaseName} (${diseaseCode})`;
+                    
+                    // ดึงชื่อโรคจากข้อมูลประกอบ
+                    const diseaseName = diseases && diseases[diseaseCode] 
+                        ? diseases[diseaseCode].name || diseases[diseaseCode] 
+                        : diseaseCode;
+                    
+                    option.textContent = `${diseaseCode} (${diseaseName})`;
                     select.appendChild(option);
                 });
                 
