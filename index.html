@@ -505,15 +505,15 @@
                         <ul class="space-y-2 text-sm text-gray-600">
                             <li class="flex items-center">
                                 <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
-                                คำนวณตามมาตรฐาน ISO Week Date
+                                ใช้ข้อมูลจากฐานข้อมูลสัปดาห์การระบาด
                             </li>
                             <li class="flex items-center">
                                 <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
-                                เริ่มนับจากวันจันทร์ถึงวันอาทิตย์
+                                แสดงสัปดาห์ล่าสุดที่มีข้อมูล
                             </li>
                             <li class="flex items-center">
                                 <div class="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
-                                ใช้สำหรับการติดตามโรคระบาด
+                                ใช้สำหรับการทำรายงานโรคระบาด
                             </li>
                         </ul>
                     </div>
@@ -1319,6 +1319,64 @@
             }
         }
 
+        // ดึงข้อมูลสัปดาห์การระบาดล่าสุดจากฐานข้อมูล
+        async function getLatestEpidemicWeekFromDatabase() {
+            try {
+                const epidemicWeeks = await loadFromFirebase('epidemicWeeks');
+                
+                if (!epidemicWeeks || epidemicWeeks.length === 0) {
+                    // หากไม่มีข้อมูลในฐานข้อมูล ใช้การคำนวณจากวันที่ปัจจุบัน
+                    const fallbackWeek = getCurrentEpiWeekDateRange();
+                    return {
+                        weekNumber: fallbackWeek.weekNumber,
+                        year: new Date().getFullYear(),
+                        startDate: fallbackWeek.startDate,
+                        endDate: fallbackWeek.endDate,
+                        dateRange: fallbackWeek.dateRange,
+                        isFromDatabase: false
+                    };
+                }
+                
+                // หาสัปดาห์ล่าสุด โดยเรียงตามปีและสัปดาห์ที่
+                const sortedWeeks = epidemicWeeks.sort((a, b) => {
+                    if (a.year !== b.year) {
+                        return b.year - a.year; // ปีล่าสุดก่อน
+                    }
+                    return b.weekNumber - a.weekNumber; // สัปดาห์ล่าสุดก่อน
+                });
+                
+                const latestWeek = sortedWeeks[0];
+                
+                // จัดรูปแบบวันที่
+                const startDate = latestWeek.startDate ? formatDateTH(latestWeek.startDate) : 'ไม่ระบุ';
+                const endDate = latestWeek.endDate ? formatDateTH(latestWeek.endDate) : 'ไม่ระบุ';
+                const dateRange = `${startDate} - ${endDate}`;
+                
+                return {
+                    weekNumber: latestWeek.weekNumber,
+                    year: latestWeek.year,
+                    startDate: startDate,
+                    endDate: endDate,
+                    dateRange: dateRange,
+                    note: latestWeek.note,
+                    isFromDatabase: true
+                };
+                
+            } catch (error) {
+                console.error('Error getting latest epidemic week from database:', error);
+                // หากเกิดข้อผิดพลาด ใช้การคำนวณจากวันที่ปัจจุบัน
+                const fallbackWeek = getCurrentEpiWeekDateRange();
+                return {
+                    weekNumber: fallbackWeek.weekNumber,
+                    year: new Date().getFullYear(),
+                    startDate: fallbackWeek.startDate,
+                    endDate: fallbackWeek.endDate,
+                    dateRange: fallbackWeek.dateRange,
+                    isFromDatabase: false
+                };
+            }
+        }
+
         // System Overview Functions - แสดงข้อมูลสถิติจริง
         async function loadSystemOverview() {
             try {
@@ -1337,10 +1395,20 @@
                     document.getElementById('patientCount').textContent = patientCount.toLocaleString();
                 }
                 
-                // คำนวณและแสดงสัปดาห์ระบาดวิทยาปัจจุบัน
-                const epiWeekInfo = getCurrentEpiWeekDateRange();
-                document.getElementById('currentWeek').textContent = `สัปดาห์ที่ ${epiWeekInfo.weekNumber}`;
-                document.getElementById('weekDateRange').textContent = epiWeekInfo.dateRange;
+                // ดึงข้อมูลสัปดาห์การระบาดล่าสุดจากฐานข้อมูล
+                const latestEpiWeek = await getLatestEpidemicWeekFromDatabase();
+                document.getElementById('currentWeek').textContent = `สัปดาห์ที่ ${latestEpiWeek.weekNumber}/${latestEpiWeek.year}`;
+                document.getElementById('weekDateRange').textContent = latestEpiWeek.dateRange;
+                
+                // เพิ่มข้อมูลแสดงแหล่งที่มาของข้อมูล
+                const weekDateRangeElement = document.getElementById('weekDateRange');
+                if (latestEpiWeek.isFromDatabase) {
+                    weekDateRangeElement.title = 'ข้อมูลจากฐานข้อมูลสัปดาห์การระบาด';
+                    weekDateRangeElement.classList.add('cursor-help');
+                } else {
+                    weekDateRangeElement.title = 'คำนวณจากวันที่ปัจจุบัน (ไม่มีข้อมูลในฐานข้อมูล)';
+                    weekDateRangeElement.classList.add('cursor-help', 'text-orange-600');
+                }
                 
                 console.log('System overview loaded successfully');
             } catch (error) {
@@ -1348,7 +1416,7 @@
                 // แสดงข้อมูลเริ่มต้นหากเกิดข้อผิดพลาด
                 document.getElementById('diseaseCount').textContent = '0';
                 document.getElementById('patientCount').textContent = '0';
-                document.getElementById('currentWeek').textContent = 'สัปดาห์ที่ 0';
+                document.getElementById('currentWeek').textContent = 'ไม่สามารถโหลดได้';
                 document.getElementById('weekDateRange').textContent = 'ไม่สามารถโหลดข้อมูลได้';
             }
         }
