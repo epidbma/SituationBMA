@@ -1375,7 +1375,13 @@
                     if (patientSnapshot.exists()) {
                         const patientData = patientSnapshot.val();
                         patients = Object.values(patientData);
+                        console.log('System overview: Loaded patients data:', patients.length, 'patients');
+                        console.log('Sample patient:', patients[0]);
+                    } else {
+                        console.log('System overview: No patient data found');
                     }
+                } else {
+                    console.log('System overview: Firebase not available');
                 }
                 
                 const patientCount = patients.length;
@@ -1538,6 +1544,8 @@
             }
             
             try {
+                console.log('Loading disease details for code:', selectedCode);
+                
                 // โหลดข้อมูลผู้ป่วยของโรคที่เลือก
                 const { database, ref, get } = window.firebaseDB;
                 let patients = [];
@@ -1545,14 +1553,29 @@
                     const patientSnapshot = await get(ref(database, 'patients'));
                     if (patientSnapshot.exists()) {
                         const patientData = patientSnapshot.val();
-                        patients = Object.values(patientData).filter(p => p.diseaseCode === selectedCode);
+                        const allPatients = Object.values(patientData);
+                        patients = allPatients.filter(p => p.diseaseCode === selectedCode);
+                        console.log('All patients:', allPatients.length);
+                        console.log('Filtered patients for disease', selectedCode, ':', patients.length);
+                        console.log('Sample patient data:', patients[0]);
+                    } else {
+                        console.log('No patient data found in database');
                     }
+                } else {
+                    console.log('Firebase database not available');
                 }
                 
                 // คำนวณสถิติผู้ป่วย
                 const totalPatients = patients.length;
                 const malePatients = patients.filter(p => p.gender === 'ชาย' || p.gender === 'male' || p.gender === 'M').length;
                 const femalePatients = patients.filter(p => p.gender === 'หญิง' || p.gender === 'female' || p.gender === 'F').length;
+                
+                console.log('Patient stats:', {
+                    total: totalPatients,
+                    male: malePatients,
+                    female: femalePatients,
+                    sampleGenders: patients.slice(0, 5).map(p => p.gender)
+                });
                 
                 // คำนวณสัดส่วนชาย:หญิง
                 let genderRatio = '-';
@@ -1592,6 +1615,14 @@
                     .slice(0, 3);
                 
                 // อัพเดทข้อมูลในหน้าเว็บ
+                console.log('Updating UI elements with data:', {
+                    totalPatients,
+                    malePatients, 
+                    femalePatients,
+                    genderRatio,
+                    deathCount
+                });
+                
                 document.getElementById('totalPatients').textContent = totalPatients.toLocaleString();
                 document.getElementById('malePatients').textContent = malePatients.toLocaleString();
                 document.getElementById('femalePatients').textContent = femalePatients.toLocaleString();
@@ -1631,9 +1662,19 @@
                 
                 detailsContainer.classList.remove('hidden');
                 
+                console.log('Disease details loaded successfully');
+                
             } catch (error) {
                 console.error('Error loading disease details:', error);
+                console.error('Error stack:', error.stack);
                 detailsContainer.classList.add('hidden');
+                
+                // แสดงข้อมูลเริ่มต้นเมื่อเกิดข้อผิดพลาด
+                document.getElementById('totalPatients').textContent = '0';
+                document.getElementById('malePatients').textContent = '0';
+                document.getElementById('femalePatients').textContent = '0';
+                document.getElementById('genderRatio').textContent = '0:0';
+                document.getElementById('deathCount').textContent = '0';
             }
         }
 
