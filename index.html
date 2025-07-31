@@ -1703,6 +1703,18 @@
                     return;
                 }
                 
+                // สร้าง Map สำหรับ mapping รหัสโรคกับชื่อโรค
+                const diseaseMap = new Map();
+                if (diseases && Array.isArray(diseases)) {
+                    diseases.forEach(disease => {
+                        if (disease.code && disease.name) {
+                            diseaseMap.set(disease.code, disease.name);
+                        }
+                    });
+                }
+                
+                console.log('Disease map loaded:', diseaseMap.size, 'diseases');
+                
                 // สร้าง object เพื่อเก็บโรคที่ไม่ซ้ำ พร้อมนับจำนวนผู้ป่วย
                 const diseaseCount = {};
                 
@@ -1729,14 +1741,11 @@
                     const option = document.createElement('option');
                     option.value = diseaseCode;
                     
-                    // ดึงชื่อโรคจากฐานข้อมูลโรค
-                    let diseaseName = diseaseCode; // ค่าเริ่มต้นเป็นรหัสโรค
-                    if (diseases && diseases[diseaseCode]) {
-                        diseaseName = diseases[diseaseCode].name || diseases[diseaseCode].diseaseName || diseaseCode;
-                    }
+                    // ดึงชื่อโรคจาก Map
+                    const diseaseName = diseaseMap.get(diseaseCode);
                     
-                    // แสดงเป็น "รหัสโรค (ชื่อโรค)"
-                    if (diseaseName !== diseaseCode) {
+                    // แสดงเป็น "รหัสโรค (ชื่อโรค)" หรือเฉพาะรหัสโรคถ้าไม่มีชื่อ
+                    if (diseaseName) {
                         option.textContent = `${diseaseCode} (${diseaseName})`;
                     } else {
                         option.textContent = diseaseCode;
