@@ -737,9 +737,21 @@
         function formatDate(dateValue) {
             if (!dateValue) return '';
             
+            // ถ้าเป็น Date object
+            if (dateValue instanceof Date) {
+                const day = dateValue.getDate().toString().padStart(2, '0');
+                const month = (dateValue.getMonth() + 1).toString().padStart(2, '0');
+                const year = dateValue.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+            
             // ถ้าเป็นสตริงที่มี / (รูปแบบ dd/mm/yyyy)
             if (typeof dateValue === 'string' && dateValue.includes('/')) {
-                return dateValue; // ส่งคืนค่าตามที่มีในไฟล์เลย
+                const [day, month, year] = dateValue.split('/');
+                if (parseInt(year) > 2400) { // ถ้าเป็นปี พ.ศ.
+                    return `${day}/${month}/${parseInt(year) - 543}`;
+                }
+                return dateValue; // ส่งคืนค่าตามที่มีในไฟล์ถ้าเป็น ค.ศ.
             }
             
             // ถ้าเป็นตัวเลข (Excel serial date)
@@ -759,7 +771,7 @@
             
             // ถ้าเป็นสตริงรูปแบบอื่น
             if (typeof dateValue === 'string' && dateValue.trim() !== '') {
-                return dateValue; // ส่งคืนค่าเดิมถ้าเป็นสตริง
+                return dateValue;
             }
             
             return '';
@@ -772,20 +784,50 @@
 
             try {
                 const data = await file.arrayBuffer();
-                const workbook = XLSX.read(data);
+                const workbook = XLSX.read(data, { cellDates: true });
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // กำหนดการอ่านข้อมูลให้แสดงวันที่ในรูปแบบที่ต้องการ
+                // อ่านข้อมูลแบบ raw เพื่อให้ได้ข้อมูลตามที่มีในไฟล์จริงๆ
                 const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
-                    raw: false,  // แปลงค่าให้เป็นข้อมูลที่เหมาะสม
-                    dateNF: 'dd/mm/yyyy'  // กำหนดรูปแบบวันที่
+                    raw: true,
+                    dateNF: 'dd/mm/yyyy'
                 });
 
                 // Transform data to match our schema
                 const patients = jsonData.map(row => {
-                    // Handle raw date values from Excel
-                    const onsetDate = row['วันที่เริ่มป่วย'];
-                    const deathDate = row['วันที่เสียชีวิต'];
+                    // จัดการกับวันที่
+                    let onsetDate = row['วันที่เริ่มป่วย'];
+                    let deathDate = row['วันที่เสียชีวิต'];
+
+                    // ถ้าวันที่อยู่ในรูปแบบ Date object ให้แปลงเป็น string dd/mm/yyyy
+                    if (onsetDate instanceof Date) {
+                        const day = onsetDate.getDate().toString().padStart(2, '0');
+                        const month = (onsetDate.getMonth() + 1).toString().padStart(2, '0');
+                        const year = onsetDate.getFullYear();
+                        onsetDate = `${day}/${month}/${year}`;
+                    }
+
+                    if (deathDate instanceof Date) {
+                        const day = deathDate.getDate().toString().padStart(2, '0');
+                        const month = (deathDate.getMonth() + 1).toString().padStart(2, '0');
+                        const year = deathDate.getFullYear();
+                        deathDate = `${day}/${month}/${year}`;
+                    }
+
+                    // แปลงวันที่ถ้าอยู่ในรูปแบบสตริงที่มีปี พ.ศ.
+                    if (typeof onsetDate === 'string' && onsetDate.includes('/')) {
+                        const [day, month, year] = onsetDate.split('/');
+                        if (parseInt(year) > 2400) { // ถ้าเป็นปี พ.ศ.
+                            onsetDate = `${day}/${month}/${parseInt(year) - 543}`;
+                        }
+                    }
+
+                    if (typeof deathDate === 'string' && deathDate.includes('/')) {
+                        const [day, month, year] = deathDate.split('/');
+                        if (parseInt(year) > 2400) { // ถ้าเป็นปี พ.ศ.
+                            deathDate = `${day}/${month}/${parseInt(year) - 543}`;
+                        }
+                    }
 
                     return {
                         diseaseCode: row['รหัสโรค'] || '',
