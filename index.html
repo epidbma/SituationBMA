@@ -1703,17 +1703,21 @@
                     return;
                 }
                 
-                // สร้าง Set เพื่อเก็บโรคที่ไม่ซ้ำจากข้อมูลผู้ป่วย
-                const uniqueDiseases = new Set();
+                // สร้าง object เพื่อเก็บโรคที่ไม่ซ้ำ พร้อมนับจำนวนผู้ป่วย
+                const diseaseCount = {};
                 
                 Object.values(patients).forEach(patient => {
                     if (patient.diseaseCode) {
-                        uniqueDiseases.add(patient.diseaseCode);
+                        diseaseCount[patient.diseaseCode] = (diseaseCount[patient.diseaseCode] || 0) + 1;
                     }
                 });
                 
-                // แปลง Set เป็น Array และเรียงลำดับ
-                const sortedDiseases = Array.from(uniqueDiseases).sort();
+                // เรียงลำดับตามจำนวนผู้ป่วย (มากไปน้อย) แล้วตามชื่อโรค
+                const sortedDiseases = Object.entries(diseaseCount)
+                    .sort(([a, countA], [b, countB]) => {
+                        if (countB !== countA) return countB - countA; // เรียงตามจำนวนผู้ป่วย
+                        return a.localeCompare(b); // เรียงตามชื่อโรค
+                    });
                 
                 // เติมข้อมูลใน select
                 const select = document.getElementById('diseaseSelect');
@@ -1721,16 +1725,23 @@
                 // ล้างตัวเลือกเก่า (เก็บเฉพาะตัวเลือกแรก)
                 select.innerHTML = '<option value="">-- เลือกโรค --</option>';
                 
-                sortedDiseases.forEach(diseaseCode => {
+                sortedDiseases.forEach(([diseaseCode, count]) => {
                     const option = document.createElement('option');
                     option.value = diseaseCode;
                     
-                    // ดึงชื่อโรคจากข้อมูลประกอบ
-                    const diseaseName = diseases && diseases[diseaseCode] 
-                        ? diseases[diseaseCode].name || diseases[diseaseCode] 
-                        : diseaseCode;
+                    // ดึงชื่อโรคจากฐานข้อมูลโรค
+                    let diseaseName = diseaseCode; // ค่าเริ่มต้นเป็นรหัสโรค
+                    if (diseases && diseases[diseaseCode]) {
+                        diseaseName = diseases[diseaseCode].name || diseases[diseaseCode].diseaseName || diseaseCode;
+                    }
                     
-                    option.textContent = `${diseaseCode} (${diseaseName})`;
+                    // แสดงเป็น "รหัสโรค (ชื่อโรค) - จำนวนราย"
+                    if (diseaseName !== diseaseCode) {
+                        option.textContent = `${diseaseCode} (${diseaseName}) - ${count} ราย`;
+                    } else {
+                        option.textContent = `${diseaseCode} - ${count} ราย`;
+                    }
+                    
                     select.appendChild(option);
                 });
                 
