@@ -1458,12 +1458,20 @@
                 }
             });
             
-            // แสดงผลข้อมูล
-            Object.entries(diseaseStats).forEach(([code, data]) => {
+            // กรองเฉพาะโรคที่มีผู้ป่วย
+            const diseasesWithPatients = Object.entries(diseaseStats).filter(([code, data]) => data.count > 0);
+            
+            if (diseasesWithPatients.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-gray-500">ไม่มีข้อมูลผู้ป่วยในระบบ</div>';
+                return;
+            }
+            
+            // แสดงผลเฉพาะโรคที่มีผู้ป่วย
+            diseasesWithPatients.forEach(([code, data]) => {
                 const card = document.createElement('div');
                 card.className = 'stat-card text-center';
                 card.innerHTML = `
-                    <div class="text-2xl font-bold text-blue-600 mb-2">${data.count.toLocaleString()}</div>
+                    <div class="text-2xl font-bold text-green-700 mb-2">${data.count.toLocaleString()}</div>
                     <div class="text-sm font-medium text-gray-800 mb-1">${data.name}</div>
                     <div class="text-xs text-gray-500">รหัส: ${code}</div>
                 `;
