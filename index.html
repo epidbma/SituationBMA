@@ -487,7 +487,7 @@
                 <div id="summaryDatabaseOverviewGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     <!-- Database overview cards will be populated here -->
                     <div class="text-center text-gray-500 col-span-full py-12">
-                        <div class="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+                        <div class="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full mx-auto mb-3"></div>
                         <p>กำลังโหลดข้อมูลภาพรวมฐานข้อมูล...</p>
                     </div>
                 </div>
@@ -1529,23 +1529,23 @@
                     const percentage = ((count / totalPatients) * 100).toFixed(1);
                     
                     return `
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-blue-200 transition-all duration-300">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg hover:border-green-200 transition-all duration-300">
                             <div class="flex items-center justify-between mb-4">
                                 <div class="flex items-center">
-                                    <div class="w-4 h-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full mr-3"></div>
+                                    <div class="w-4 h-4 bg-gradient-to-r from-green-500 to-green-600 rounded-full mr-3"></div>
                                     <span class="text-sm text-gray-500 font-medium">${diseaseCode}</span>
                                 </div>
-                                <span class="text-sm text-blue-600 font-semibold">${percentage}%</span>
+                                <span class="text-sm text-green-600 font-semibold">${percentage}%</span>
                             </div>
                             <h4 class="text-base font-bold text-gray-900 mb-3 line-clamp-2" title="${diseaseName}">
                                 ${diseaseName}
                             </h4>
                             <div class="flex items-center justify-between mb-4">
-                                <span class="text-2xl font-bold text-blue-600">${count.toLocaleString()}</span>
+                                <span class="text-2xl font-bold text-green-600">${count.toLocaleString()}</span>
                                 <span class="text-sm text-gray-500">ราย</span>
                             </div>
                             <div class="w-full bg-gray-100 rounded-full h-2">
-                                <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500" 
+                                <div class="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500" 
                                      style="width: ${Math.min(percentage, 100)}%"></div>
                             </div>
                         </div>
@@ -1575,7 +1575,7 @@
             
             overviewGrid.innerHTML = `
                 <div class="text-center text-gray-500 col-span-full py-12">
-                    <div class="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+                    <div class="animate-spin w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full mx-auto mb-3"></div>
                     <p>กำลังรีเฟรชข้อมูลภาพรวมฐานข้อมูล...</p>
                 </div>
             `;
