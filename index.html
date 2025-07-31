@@ -404,7 +404,8 @@
 
         <!-- Summary Page -->
         <div id="summaryPage" class="slide-in">
-            <div class="glass-card p-8">
+            <!-- ภาพรวมระบบ -->
+            <div class="glass-card p-8 mb-12">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-4">
                         ภาพรวมระบบ
@@ -464,31 +465,31 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Database Overview Page (แยกเป็นบล็อกใหม่) -->
-        <div class="glass-card p-8 mt-12">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent mb-4">
-                    📊 ภาพรวมฐานข้อมูล
-                </h2>
-                <p class="text-gray-600 text-lg">จำนวนผู้ป่วยในแต่ละโรคที่มีข้อมูลในระบบ</p>
-            </div>
+            <!-- ภาพรวมฐานข้อมูล -->
+            <div class="glass-card p-8 mb-12">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent mb-4">
+                        📊 ภาพรวมฐานข้อมูล
+                    </h2>
+                    <p class="text-gray-600 text-lg">จำนวนผู้ป่วยในแต่ละโรคที่มีข้อมูลในระบบ</p>
+                </div>
 
-            <div class="flex justify-end mb-8">
-                <button onclick="refreshSummaryDatabaseOverview()" class="btn-primary">
-                    <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"/>
-                    </svg>
-                    รีเฟรชข้อมูล
-                </button>
-            </div>
-            
-            <div id="summaryDatabaseOverviewGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Database overview cards will be populated here -->
-                <div class="text-center text-gray-500 col-span-full py-12">
-                    <div class="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
-                    <p>กำลังโหลดข้อมูลภาพรวมฐานข้อมูล...</p>
+                <div class="flex justify-end mb-8">
+                    <button onclick="refreshSummaryDatabaseOverview()" class="btn-primary">
+                        <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"/>
+                        </svg>
+                        รีเฟรชข้อมูล
+                    </button>
+                </div>
+                
+                <div id="summaryDatabaseOverviewGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Database overview cards will be populated here -->
+                    <div class="text-center text-gray-500 col-span-full py-12">
+                        <div class="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+                        <p>กำลังโหลดข้อมูลภาพรวมฐานข้อมูล...</p>
+                    </div>
                 </div>
             </div>
         </div>
