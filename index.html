@@ -722,42 +722,6 @@
     </div>
 
     <script>
-        // Date formatting functions
-        function formatDate(dateValue) {
-            if (!dateValue) return '';
-            
-            let date;
-            
-            // Check if it's Excel serial number (5 digits)
-            if (typeof dateValue === 'number' && dateValue.toString().length === 5) {
-                // Convert Excel serial number to date
-                date = new Date((dateValue - 25569) * 86400 * 1000);
-            } 
-            // Check if it's a string in dd/mm/yyyy format
-            else if (typeof dateValue === 'string' && dateValue.includes('/')) {
-                const [day, month, year] = dateValue.split('/');
-                // Convert Buddhist year to Christian year if necessary
-                const normalizedYear = parseInt(year) > 2400 ? parseInt(year) - 543 : parseInt(year);
-                date = new Date(normalizedYear, parseInt(month) - 1, parseInt(day));
-            }
-            // Try parsing as ISO string or other formats
-            else {
-                date = new Date(dateValue);
-            }
-
-            // Check if date is valid
-            if (isNaN(date.getTime())) {
-                return '';
-            }
-
-            // Format date as dd/mm/yyyy
-            const day = date.getDate().toString().padStart(2, '0');
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const year = date.getFullYear();
-            
-            return `${day}/${month}/${year}`;
-        }
-
         // Patient Database Functions
         async function handleExcelFileUpload(event) {
             const file = event.target.files[0];
@@ -767,13 +731,23 @@
                 const data = await file.arrayBuffer();
                 const workbook = XLSX.read(data);
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: true });
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
                 // Transform data to match our schema
                 const patients = jsonData.map(row => {
-                    // Handle raw date values from Excel
-                    const onsetDate = row['วันที่เริ่มป่วย'];
-                    const deathDate = row['วันที่เสียชีวิต'];
+                    // แปลงวันที่จาก Excel ให้อยู่ในรูปแบบที่ถูกต้อง
+                    let onsetDate = row['วันที่เริ่มป่วย'] || '';
+                    let deathDate = row['วันที่เสียชีวิต'] || '';
+
+                    // ถ้าวันที่เป็นตัวเลข (Excel serial date) ให้แปลงเป็น dd/mm/yyyy
+                    if (typeof onsetDate === 'number') {
+                        const date = new Date((onsetDate - 25569) * 86400 * 1000);
+                        onsetDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                    }
+                    if (typeof deathDate === 'number') {
+                        const date = new Date((deathDate - 25569) * 86400 * 1000);
+                        deathDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                    }
 
                     return {
                         diseaseCode: row['รหัสโรค'] || '',
@@ -785,11 +759,11 @@
                         subdistrict: row['แขวง'] || '',
                         district: row['เขต'] || '',
                         province: row['จังหวัด'] || '',
-                        onsetDate: onsetDate || '',
+                        onsetDate: onsetDate,
                         patientCondition: row['สภาพผู้ป่วย'] || '',
-                        deathDate: deathDate || ''
+                        deathDate: deathDate
                     };
-                });
+                }));
 
                 // Save to Firebase
                 const { database, ref, push } = window.firebaseDB;
@@ -807,6 +781,32 @@
             } catch (error) {
                 console.error('Error processing Excel file:', error);
                 alert('เกิดข้อผิดพลาดในการนำเข้าข้อมูล');
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            
+            // รับค่าวันที่ในรูปแบบ dd/mm/yyyy
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                // ถ้าเป็นรูปแบบ dd/mm/yyyy อยู่แล้ว ให้ return ค่าเดิม
+                return dateStr;
+            }
+            
+            // แปลงจากตัวเลข timestamp หรือรูปแบบอื่นๆ เป็น dd/mm/yyyy
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) {
+                    return dateStr; // ถ้าแปลงไม่ได้ ให้แสดงค่าเดิม
+                }
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            } catch (e) {
+                console.error('Error formatting date:', e);
+                return dateStr;
             }
         }
 
