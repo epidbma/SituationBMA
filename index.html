@@ -1685,7 +1685,8 @@
         // โหลดตัวเลือกโรคใน dropdown
         async function loadDiseaseSelectOptions() {
             try {
-                const snapshot = await window.firebaseDB.ref('patients').once('value');
+                const { database, ref, get } = window.firebaseDB;
+                const snapshot = await get(ref(database, 'patients'));
                 const patients = snapshot.val();
                 
                 if (!patients) {
@@ -1749,7 +1750,8 @@
             detailsContainer.classList.remove('hidden');
             
             try {
-                const snapshot = await window.firebaseDB.ref('patients').once('value');
+                const { database, ref, get } = window.firebaseDB;
+                const snapshot = await get(ref(database, 'patients'));
                 const patients = snapshot.val();
                 
                 if (!patients) return;
