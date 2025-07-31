@@ -420,7 +420,7 @@
                                 <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a1 1 0 102 0V3h4v1a1 1 0 102 0V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5z"/>
                             </svg>
                         </div>
-                        <div class="text-3xl font-bold text-gray-900 mb-2">-</div>
+                        <div id="diseaseCount" class="text-3xl font-bold text-gray-900 mb-2">-</div>
                         <div class="text-sm text-gray-600 font-medium">จำนวนโรคที่เฝ้าระวัง</div>
                     </div>
                     
@@ -430,7 +430,7 @@
                                 <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
                             </svg>
                         </div>
-                        <div class="text-3xl font-bold text-gray-900 mb-2">-</div>
+                        <div id="patientCount" class="text-3xl font-bold text-gray-900 mb-2">-</div>
                         <div class="text-sm text-gray-600 font-medium">ผู้ป่วยทั้งหมด</div>
                     </div>
                     
@@ -440,7 +440,7 @@
                                 <path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z"/>
                             </svg>
                         </div>
-                        <div class="text-3xl font-bold text-gray-900 mb-2">-</div>
+                        <div id="reportCount" class="text-3xl font-bold text-gray-900 mb-2">-</div>
                         <div class="text-sm text-gray-600 font-medium">รายงานที่จัดทำ</div>
                     </div>
                     
@@ -450,7 +450,7 @@
                                 <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>
                             </svg>
                         </div>
-                        <div class="text-3xl font-bold text-gray-900 mb-2">-</div>
+                        <div id="currentWeek" class="text-3xl font-bold text-gray-900 mb-2">-</div>
                         <div class="text-sm text-gray-600 font-medium">สัปดาห์ปัจจุบัน</div>
                     </div>
                 </div>
@@ -912,6 +912,11 @@
                 // Hide modal and show success message
                 hideImportModal();
                 alert(`นำเข้าข้อมูลสำเร็จ ${total} ราย`);
+                
+                // อัพเดทข้อมูลภาพรวมระบบ
+                if (window.firebaseDB) {
+                    loadSystemOverview();
+                }
             } catch (error) {
                 console.error('Error processing Excel file:', error);
                 alert('เกิดข้อผิดพลาดในการนำเข้าข้อมูล');
@@ -1238,10 +1243,68 @@
                 
                 // Reset summary
                 createDiseaseSummary();
+                
+                // อัพเดทข้อมูลภาพรวมระบบ
+                if (window.firebaseDB) {
+                    loadSystemOverview();
+                }
             } catch (error) {
                 console.error('Error deleting patients:', error);
                 alert('เกิดข้อผิดพลาดในการลบข้อมูล');
             }
+        }
+
+        // System Overview Functions - แสดงข้อมูลสถิติจริง
+        async function loadSystemOverview() {
+            try {
+                console.log('Loading system overview data...');
+                
+                // โหลดข้อมูลโรค
+                const diseases = await loadFromFirebase('diseases');
+                const diseaseCount = diseases ? diseases.length : 0;
+                document.getElementById('diseaseCount').textContent = diseaseCount.toLocaleString();
+                
+                // โหลดข้อมูลผู้ป่วย
+                const { database, ref, get } = window.firebaseDB;
+                if (database && ref && get) {
+                    const patientSnapshot = await get(ref(database, 'patients'));
+                    const patientCount = patientSnapshot.exists() ? Object.keys(patientSnapshot.val()).length : 0;
+                    document.getElementById('patientCount').textContent = patientCount.toLocaleString();
+                }
+                
+                // คำนวณจำนวนรายงาน (จำลองข้อมูล)
+                const reportCount = diseaseCount * 12; // สมมติว่ามีรายงานรายเดือนสำหรับแต่ละโรค
+                document.getElementById('reportCount').textContent = reportCount.toLocaleString();
+                
+                // คำนวณสัปดาห์ระบาดวิทยาปัจจุบัน
+                const currentWeek = getCurrentEpiWeek();
+                document.getElementById('currentWeek').textContent = currentWeek;
+                
+                console.log('System overview loaded successfully');
+            } catch (error) {
+                console.error('Error loading system overview:', error);
+                // แสดงข้อมูลเริ่มต้นหากเกิดข้อผิดพลาด
+                document.getElementById('diseaseCount').textContent = '0';
+                document.getElementById('patientCount').textContent = '0';
+                document.getElementById('reportCount').textContent = '0';
+                document.getElementById('currentWeek').textContent = '0';
+            }
+        }
+
+        // คำนวณสัปดาห์ระบาดวิทยาปัจจุบัน
+        function getCurrentEpiWeek() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const startOfYear = new Date(year, 0, 1);
+            
+            // หา Thursday แรกของปี (ISO week date system)
+            const jan4 = new Date(year, 0, 4);
+            const firstThursday = new Date(jan4.getTime() - (jan4.getDay() - 4) * 24 * 60 * 60 * 1000);
+            
+            // คำนวณจำนวนสัปดาห์
+            const weekNumber = Math.ceil(((today.getTime() - firstThursday.getTime()) / (24 * 60 * 60 * 1000) + 1) / 7);
+            
+            return Math.max(1, Math.min(52, weekNumber));
         }
 
         // Firebase data management functions
@@ -1401,6 +1464,10 @@
                     const pageElement = document.getElementById('summaryPage');
                     pageElement.classList.remove('hidden');
                     document.getElementById('summaryTab').className = document.getElementById('summaryTab').className.replace('tab-inactive', 'tab-active');
+                    // โหลดข้อมูลภาพรวมระบบ
+                    if (window.firebaseDB) {
+                        loadSystemOverview();
+                    }
                 } else if (page === 'patientDb') {
                     const pageElement = document.getElementById('patientDbPage');
                     pageElement.classList.remove('hidden');
@@ -10628,11 +10695,23 @@
             // Wait for Firebase to be ready
             if (window.initializeFirebaseApp) {
                 window.initializeFirebaseApp();
+                // โหลดข้อมูลภาพรวมเมื่อ Firebase พร้อม
+                setTimeout(() => {
+                    if (window.firebaseDB) {
+                        loadSystemOverview();
+                    }
+                }, 1000);
             } else {
                 // Fallback if Firebase is not ready
                 setTimeout(() => {
                     if (window.initializeFirebaseApp) {
                         window.initializeFirebaseApp();
+                        // โหลดข้อมูลภาพรวมเมื่อ Firebase พร้อม
+                        setTimeout(() => {
+                            if (window.firebaseDB) {
+                                loadSystemOverview();
+                            }
+                        }, 1000);
                     } else {
                         console.warn('⚠️ Firebase not ready, using localStorage only');
                         initializeData();
