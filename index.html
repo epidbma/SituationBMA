@@ -928,6 +928,9 @@
 
         // เก็บข้อมูลโรคไว้ใน Cache
         let diseaseCache = {};
+        window.allPatients = []; // เก็บข้อมูลผู้ป่วยทั้งหมด
+        window.currentPatientPage = 1;
+        const itemsPerPage = 50; // แสดง 50 รายการต่อหน้า
 
         async function loadDiseases() {
             try {
@@ -985,30 +988,20 @@
                     console.error('Patient table body not found');
                     return;
                 }
-                tableBody.innerHTML = '';
 
                 if (data) {
                     console.log('Found patient data:', Object.keys(data).length, 'records');
-                    Object.entries(data).forEach(([key, patient]) => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.diseaseCode}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${getDiseaseName(patient.diseaseCode)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.gender}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageYears}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageMonths}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageDays}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.subdistrict}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.district}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.province}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatThaiDate(patient.onsetDate)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.patientCondition}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatThaiDate(patient.deathDate)}</td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
+                    // เก็บข้อมูลทั้งหมดใน allPatients
+                    window.allPatients = Object.entries(data).map(([key, patient]) => ({
+                        ...patient,
+                        id: key
+                    }));
+                    
+                    // แสดงข้อมูลแบบ pagination
+                    displayPaginatedPatients();
                 } else {
                     console.log('No patient data found');
+                    window.allPatients = [];
                     tableBody.innerHTML = `
                         <tr>
                             <td colspan="12" class="px-6 py-4 text-center text-gray-500">
@@ -1016,6 +1009,7 @@
                             </td>
                         </tr>
                     `;
+                    updatePaginationInfo(0, 1, 1);
                 }
             }, (error) => {
                 console.error('Error fetching patient data:', error);
@@ -1030,6 +1024,115 @@
                     `;
                 }
             });
+        }
+
+        function displayPaginatedPatients() {
+            const tableBody = document.getElementById('patientTableBody');
+            if (!tableBody) return;
+
+            const totalRecords = window.allPatients.length;
+            const totalPages = Math.ceil(totalRecords / itemsPerPage);
+            const startIndex = (window.currentPatientPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentPageData = window.allPatients.slice(startIndex, endIndex);
+
+            tableBody.innerHTML = '';
+
+            currentPageData.forEach(patient => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.diseaseCode}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${getDiseaseName(patient.diseaseCode)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.gender}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageYears}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageMonths}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageDays}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.subdistrict}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.district}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.province}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatThaiDate(patient.onsetDate)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.patientCondition}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatThaiDate(patient.deathDate)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // อัพเดท pagination info
+            updatePatientPaginationInfo(totalRecords, window.currentPatientPage, totalPages);
+            updatePatientPaginationControls(totalPages);
+        }
+
+        function updatePatientPaginationInfo(totalRecords, currentPage, totalPages) {
+            let paginationInfo = document.getElementById('patientPaginationInfo');
+            if (!paginationInfo) {
+                // สร้าง pagination info element ถ้ายังไม่มี
+                const tableContainer = document.querySelector('#patientTable').parentElement;
+                const paginationDiv = document.createElement('div');
+                paginationDiv.className = 'flex items-center justify-between px-6 py-3 bg-white border-t border-gray-200';
+                paginationDiv.innerHTML = `
+                    <div>
+                        <p id="patientPaginationInfo" class="text-sm text-gray-700"></p>
+                    </div>
+                    <div id="patientPaginationControls" class="flex-1 flex justify-end">
+                    </div>
+                `;
+                tableContainer.appendChild(paginationDiv);
+                paginationInfo = document.getElementById('patientPaginationInfo');
+            }
+            
+            const startRecord = Math.min((currentPage - 1) * itemsPerPage + 1, totalRecords);
+            const endRecord = Math.min(currentPage * itemsPerPage, totalRecords);
+            paginationInfo.textContent = `แสดง ${startRecord} ถึง ${endRecord} จากทั้งหมด ${totalRecords} รายการ`;
+        }
+
+        function updatePatientPaginationControls(totalPages) {
+            const controls = document.getElementById('patientPaginationControls');
+            if (!controls || totalPages <= 1) {
+                if (controls) controls.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button onclick="goToPatientPage(${window.currentPatientPage - 1})" ${window.currentPatientPage === 1 ? 'disabled' : ''} 
+                            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${window.currentPatientPage === 1 ? 'cursor-not-allowed opacity-50' : ''}">
+                        ก่อนหน้า
+                    </button>
+            `;
+
+            // แสดงหมายเลขหน้า
+            const startPage = Math.max(1, window.currentPatientPage - 2);
+            const endPage = Math.min(totalPages, window.currentPatientPage + 2);
+
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === window.currentPatientPage;
+                html += `
+                    <button onclick="goToPatientPage(${i})" 
+                            class="relative inline-flex items-center px-4 py-2 border text-sm font-medium ${isActive 
+                                ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600' 
+                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            html += `
+                    <button onclick="goToPatientPage(${window.currentPatientPage + 1})" ${window.currentPatientPage === totalPages ? 'disabled' : ''} 
+                            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${window.currentPatientPage === totalPages ? 'cursor-not-allowed opacity-50' : ''}">
+                        ถัดไป
+                    </button>
+                </nav>
+            `;
+
+            controls.innerHTML = html;
+        }
+
+        function goToPatientPage(page) {
+            const totalPages = Math.ceil(window.allPatients.length / itemsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                window.currentPatientPage = page;
+                displayPaginatedPatients();
+            }
         }
 
         // Call displayPatients when the page loads
