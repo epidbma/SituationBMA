@@ -2012,12 +2012,23 @@
                                 },
                                 ticks: {
                                     stepSize: 1,
-                                    callback: function(value) {
-                                        // แสดงเฉพาะเลขจำนวนเต็มที่เป็นเลขกลม ๆ
-                                        if (Number.isInteger(value)) {
-                                            if (value === 0) return '0';
-                                            if (value % 5 === 0 || value <= 10) return value;
-                                            return '';
+                                    maxTicksLimit: false, // ไม่จำกัดจำนวน ticks
+                                    callback: function(value, index, values) {
+                                        // แสดงเฉพาะเลขจำนวนเต็ม
+                                        if (Number.isInteger(value) && value >= 0) {
+                                            // หาค่าสูงสุดในกราฟ
+                                            const maxValue = Math.max(...values.map(v => v.value));
+                                            
+                                            // ถ้าค่าสูงสุดน้อยกว่า 10 ให้แสดงทุกเลข 1-9
+                                            if (maxValue < 10) {
+                                                return value;
+                                            }
+                                            // ถ้าค่าสูงสุด >= 10 ให้แสดงเฉพาะเลขกลม ๆ
+                                            else {
+                                                if (value === 0) return '0';
+                                                if (value % 5 === 0) return value;
+                                                return '';
+                                            }
                                         }
                                         return '';
                                     }
