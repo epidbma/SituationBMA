@@ -1688,33 +1688,48 @@
                 const snapshot = await window.firebaseDB.ref('patients').once('value');
                 const patients = snapshot.val();
                 
-                if (!patients) return;
+                if (!patients) {
+                    // ถ้าไม่มีข้อมูลให้แสดงข้อความ
+                    const select = document.getElementById('diseaseSelect');
+                    select.innerHTML = '<option value="">-- ไม่มีข้อมูลโรค --</option>';
+                    return;
+                }
                 
-                // สร้าง Set เพื่อเก็บโรคที่ไม่ซ้ำ
-                const diseases = new Set();
+                // สร้าง Set เพื่อเก็บโรคที่ไม่ซ้ำ พร้อมนับจำนวนผู้ป่วย
+                const diseaseCount = {};
                 
                 Object.values(patients).forEach(patient => {
-                    if (patient.disease_code) {
-                        diseases.add(patient.disease_code);
+                    if (patient.diseaseCode) {
+                        diseaseCount[patient.diseaseCode] = (diseaseCount[patient.diseaseCode] || 0) + 1;
                     }
                 });
                 
+                // เรียงลำดับตามจำนวนผู้ป่วย (มากไปน้อย) แล้วตามชื่อโรค
+                const sortedDiseases = Object.entries(diseaseCount)
+                    .sort(([a, countA], [b, countB]) => {
+                        if (countB !== countA) return countB - countA; // เรียงตามจำนวนผู้ป่วย
+                        return a.localeCompare(b); // เรียงตามชื่อโรค
+                    });
+                
                 // เติมข้อมูลใน select
                 const select = document.getElementById('diseaseSelect');
-                const sortedDiseases = Array.from(diseases).sort();
                 
                 // ล้างตัวเลือกเก่า (เก็บเฉพาะตัวเลือกแรก)
                 select.innerHTML = '<option value="">-- เลือกโรค --</option>';
                 
-                sortedDiseases.forEach(disease => {
+                sortedDiseases.forEach(([diseaseCode, count]) => {
                     const option = document.createElement('option');
-                    option.value = disease;
-                    option.textContent = disease;
+                    option.value = diseaseCode;
+                    option.textContent = `${diseaseCode} (${count} ราย)`;
                     select.appendChild(option);
                 });
                 
+                console.log(`Loaded ${sortedDiseases.length} diseases from patient database`);
+                
             } catch (error) {
                 console.error('Error loading disease options:', error);
+                const select = document.getElementById('diseaseSelect');
+                select.innerHTML = '<option value="">-- เกิดข้อผิดพลาด --</option>';
             }
         }
 
@@ -1741,7 +1756,7 @@
                 
                 // กรองผู้ป่วยตามโรคที่เลือก
                 const diseasePatients = Object.values(patients).filter(patient => 
-                    patient.disease_code === selectedDisease
+                    patient.diseaseCode === selectedDisease
                 );
                 
                 // นับจำนวนตามเพศ
