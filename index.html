@@ -591,9 +591,8 @@
 
                     <!-- Epidemic Curve -->
                     <div class="glass-card p-6 mb-8">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Epidemic Curve</h3>
-                        <p class="text-sm text-gray-600 mb-6">กราฟแสดงจำนวนผู้ป่วยตามสัปดาห์การระบาด</p>
-                        <div class="relative" style="height: 400px;">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Epidemic Curve - เส้นโค้งการระบาด</h3>
+                        <div class="relative h-96">
                             <canvas id="epidemicCurveChart"></canvas>
                         </div>
                     </div>
@@ -1894,104 +1893,81 @@
                 document.getElementById('maleBar').style.width = `${malePercentage}%`;
                 document.getElementById('femaleBar').style.width = `${femalePercentage}%`;
                 
-                console.log('UI updated successfully');
-                
                 // สร้าง Epidemic Curve
                 await createEpidemicCurve(selectedDisease, allPatients);
+                
+                console.log('UI updated successfully');
                 
             } catch (error) {
                 console.error('Error loading disease details:', error);
             }
         }
 
-        // ฟังก์ชันสำหรับสร้าง Epidemic Curve
+        // สร้าง Epidemic Curve
+        let epidemicChart = null; // เก็บ chart instance
+        
         async function createEpidemicCurve(diseaseCode, allPatients) {
             try {
-                // กรองผู้ป่วยตามโรคที่เลือก
-                const diseasePatients = allPatients.filter(patient => 
-                    patient.diseaseCode && patient.diseaseCode.toString().trim() === diseaseCode.toString().trim()
-                );
-
                 // โหลดข้อมูลสัปดาห์การระบาด
                 const { database, ref, get } = window.firebaseDB;
                 const epidemicWeeksSnapshot = await get(ref(database, 'epidemicWeeks'));
                 const epidemicWeeks = epidemicWeeksSnapshot.val();
-
+                
                 if (!epidemicWeeks || !Array.isArray(epidemicWeeks)) {
-                    console.log('No epidemic weeks data found');
+                    console.error('Epidemic weeks data not found');
                     return;
                 }
-
-                // สร้าง Map สำหรับ epidemic weeks
-                const weekMap = new Map();
+                
+                // กรองผู้ป่วยตามโรคที่เลือก
+                const diseasePatients = allPatients.filter(patient => 
+                    patient.diseaseCode && patient.diseaseCode.toString().trim() === diseaseCode.toString().trim()
+                );
+                
+                console.log('Disease patients for epidemic curve:', diseasePatients.length);
+                
+                // สร้างข้อมูลสำหรับแต่ละสัปดาห์การระบาด
+                const weeklyData = [];
+                const labels = [];
+                
                 epidemicWeeks.forEach(week => {
-                    if (week.week && week.startDate && week.endDate) {
-                        weekMap.set(week.week, {
-                            startDate: new Date(week.startDate),
-                            endDate: new Date(week.endDate),
-                            label: `สัปดาห์ ${week.week}`
-                        });
-                    }
-                });
-
-                // นับจำนวนผู้ป่วยในแต่ละสัปดาห์
-                const weekCounts = new Map();
-                
-                diseasePatients.forEach(patient => {
-                    const onsetDate = patient.onsetDate || patient.illnessDate;
-                    if (!onsetDate) return;
-
-                    // แปลงวันที่เริ่มป่วยเป็น Date object
-                    let patientOnsetDate;
-                    if (typeof onsetDate === 'string') {
-                        // ลองแปลงรูปแบบ dd/mm/yyyy
-                        const parts = onsetDate.split('/');
-                        if (parts.length === 3) {
-                            const day = parseInt(parts[0]);
-                            const month = parseInt(parts[1]) - 1; // JavaScript month เริ่มจาก 0
-                            const year = parseInt(parts[2]);
-                            patientOnsetDate = new Date(year, month, day);
-                        } else {
-                            patientOnsetDate = new Date(onsetDate);
+                    if (!week.startDate || !week.endDate) return;
+                    
+                    const weekStart = new Date(week.startDate);
+                    const weekEnd = new Date(week.endDate);
+                    
+                    // นับผู้ป่วยที่มีวันที่เริ่มป่วยในช่วงสัปดาห์นี้
+                    let weeklyCount = 0;
+                    
+                    diseasePatients.forEach(patient => {
+                        if (patient.onsetDate) {
+                            const onsetDate = parseThaiDate(patient.onsetDate);
+                            if (onsetDate && onsetDate >= weekStart && onsetDate <= weekEnd) {
+                                weeklyCount++;
+                            }
                         }
-                    } else {
-                        patientOnsetDate = new Date(onsetDate);
-                    }
-
-                    if (isNaN(patientOnsetDate.getTime())) return; // วันที่ไม่ถูกต้อง
-
-                    // หาสัปดาห์การระบาดที่วันที่เริ่มป่วยอยู่ในช่วง
-                    for (const [weekNum, weekData] of weekMap) {
-                        if (patientOnsetDate >= weekData.startDate && patientOnsetDate <= weekData.endDate) {
-                            weekCounts.set(weekNum, (weekCounts.get(weekNum) || 0) + 1);
-                            break;
-                        }
-                    }
+                    });
+                    
+                    weeklyData.push(weeklyCount);
+                    labels.push(`สัปดาห์ ${week.week}/${week.year}`);
                 });
-
-                // เรียงลำดับสัปดาห์และสร้างข้อมูลสำหรับกราฟ
-                const sortedWeeks = Array.from(weekMap.keys()).sort((a, b) => a - b);
-                const labels = sortedWeeks.map(week => `สัปดาห์ ${week}`);
-                const data = sortedWeeks.map(week => weekCounts.get(week) || 0);
-
-                console.log('Epidemic curve data:', { labels, data });
-
-                // สร้างกราฟ
-                const ctx = document.getElementById('epidemicCurveChart').getContext('2d');
                 
-                // ลบกราฟเก่า (ถ้ามี)
-                if (window.epidemicChart) {
-                    window.epidemicChart.destroy();
+                console.log('Epidemic curve data:', { labels, data: weeklyData });
+                
+                // ลบ chart เก่าถ้ามี
+                if (epidemicChart) {
+                    epidemicChart.destroy();
                 }
-
-                window.epidemicChart = new Chart(ctx, {
+                
+                // สร้าง chart ใหม่
+                const ctx = document.getElementById('epidemicCurveChart').getContext('2d');
+                epidemicChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labels,
                         datasets: [{
                             label: 'จำนวนผู้ป่วย',
-                            data: data,
-                            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                            data: weeklyData,
+                            backgroundColor: 'rgba(34, 197, 94, 0.6)',
                             borderColor: 'rgba(34, 197, 94, 1)',
                             borderWidth: 1
                         }]
@@ -2004,11 +1980,13 @@
                                 display: true,
                                 text: `Epidemic Curve - ${diseaseCode}`,
                                 font: {
-                                    size: 16
+                                    size: 16,
+                                    weight: 'bold'
                                 }
                             },
                             legend: {
-                                display: false
+                                display: true,
+                                position: 'top'
                             }
                         },
                         scales: {
@@ -2026,15 +2004,31 @@
                                 title: {
                                     display: true,
                                     text: 'สัปดาห์การระบาด'
+                                },
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45
                                 }
                             }
+                        },
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
                         }
                     }
                 });
-
+                
             } catch (error) {
                 console.error('Error creating epidemic curve:', error);
             }
+        }
+
+        // ฟังก์ชันสำหรับแปลงรูปแบบวันที่จาก dd/mm/yyyy เป็น Date object (ใช้ซ้ำ)
+        function parseThaiDate(dateStr) {
+            if (!dateStr) return null;
+            const [day, month, year] = dateStr.split('/').map(num => parseInt(num, 10));
+            if (!day || !month || !year) return null;
+            return new Date(year, month - 1, day);
         }
 
         // คำนวณสัปดาห์ระบาดวิทยาปัจจุบัน
