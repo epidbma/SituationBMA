@@ -1880,33 +1880,46 @@
                     ratio: genderRatio
                 });
                 
-            // รวมรายละเอียดแยกรายโรคไว้ใน 1 บล็อกใหญ่
-            const diseaseSummaryBlock = document.getElementById('diseaseSummaryBlock');
-            if (diseaseSummaryBlock) {
-                diseaseSummaryBlock.innerHTML = `
-                <div class="bg-white rounded-xl shadow-lg p-8 mb-8 border-2 border-green-500 col-span-full md:col-span-2 lg:col-span-2 xl:col-span-2" style="min-width:320px;max-width:600px;margin:auto;">
-                    <div class="flex flex-col items-center justify-center">
-                        <div class="text-2xl font-bold mb-2">สรุปรายละเอียดโรค</div>
-                        <div class="text-4xl font-extrabold text-green-600 mb-2">${totalCount.toLocaleString()} <span class="text-base font-normal text-gray-500">ราย</span></div>
-                        <div class="flex flex-row gap-8 mb-2">
-                            <div class="text-lg font-semibold text-blue-600">ชาย: ${maleCount.toLocaleString()}</div>
-                            <div class="text-lg font-semibold text-pink-600">หญิง: ${femaleCount.toLocaleString()}</div>
+
+            // รวมรายละเอียดทั้งหมดไว้ใน 1 บล็อก
+            const detailBlock = `
+                <div class="bg-white rounded-lg shadow p-6 mb-4">
+                    <div class="flex flex-col md:flex-row md:items-center md:space-x-8">
+                        <div class="mb-2 md:mb-0">
+                            <div class="text-lg font-bold">รวมผู้ป่วย: <span class="text-green-700">${totalCount.toLocaleString()}</span></div>
                         </div>
-                        <div class="mb-2 text-gray-700">อัตราส่วนชาย : หญิง <span class="font-bold">${genderRatio}</span></div>
-                        <div class="w-full max-w-xs mx-auto">
-                            <div class="flex flex-row justify-between text-sm mb-1">
-                                <span class="text-blue-600">ชาย ${malePercentage}%</span>
-                                <span class="text-pink-600">หญิง ${femalePercentage}%</span>
+                        <div class="mb-2 md:mb-0">
+                            <span class="text-blue-700 font-semibold">ชาย:</span> ${maleCount.toLocaleString()} (${malePercentage}%)
+                        </div>
+                        <div class="mb-2 md:mb-0">
+                            <span class="text-pink-700 font-semibold">หญิง:</span> ${femaleCount.toLocaleString()} (${femalePercentage}%)
+                        </div>
+                        <div class="mb-2 md:mb-0">
+                            <span class="font-semibold">เสียชีวิต:</span> ${deathCount.toLocaleString()}
+                        </div>
+                        <div class="mb-2 md:mb-0">
+                            <span class="font-semibold">อัตราส่วนชาย:หญิง</span> ${genderRatio}
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="flex items-center">
+                            <span class="text-blue-700 mr-2">ชาย</span>
+                            <div class="w-full bg-gray-200 rounded h-4 mr-2">
+                                <div id="maleBar" class="bg-blue-400 h-4 rounded-l" style="width: ${malePercentage}%"></div>
                             </div>
-                            <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden flex">
-                                <div class="h-4 bg-blue-400" style="width:${malePercentage}%"></div>
-                                <div class="h-4 bg-pink-400" style="width:${femalePercentage}%"></div>
+                            <span id="malePercentage">${malePercentage}%</span>
+                        </div>
+                        <div class="flex items-center mt-2">
+                            <span class="text-pink-700 mr-2">หญิง</span>
+                            <div class="w-full bg-gray-200 rounded h-4 mr-2">
+                                <div id="femaleBar" class="bg-pink-400 h-4 rounded-l" style="width: ${femalePercentage}%"></div>
                             </div>
+                            <span id="femalePercentage">${femalePercentage}%</span>
                         </div>
                     </div>
                 </div>
-                `;
-            }
+            `;
+            document.getElementById('diseaseDetailsSummaryBlock').innerHTML = detailBlock;
                 
                 // สร้าง Epidemic Curve
                 await createEpidemicCurve(selectedDisease, allPatients);
