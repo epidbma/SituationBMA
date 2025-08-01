@@ -489,6 +489,158 @@
                     </div>
                 </div>
             </div>
+
+            <!-- รายละเอียดแยกรายโรค -->
+            <div class="glass-card p-8 mb-12">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-4">
+                        รายละเอียดแยกรายโรค
+                    </h2>
+                    <p class="text-gray-600 text-lg">ข้อมูลผู้ป่วยแยกตามเพศและสัดส่วนในแต่ละโรค</p>
+                </div>
+
+                <div class="mb-8">
+                    <label for="diseaseSelect" class="block text-sm font-medium text-gray-700 mb-3">เลือกโรคที่ต้องการดูข้อมูล:</label>
+                    <select id="diseaseSelect" onchange="loadDiseaseDetails()" class="w-full max-w-md px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors">
+                        <option value="">-- เลือกโรค --</option>
+                    </select>
+                </div>
+                
+                <div id="diseaseDetailsContainer" class="hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+                        <!-- จำนวนผู้ป่วยรวม -->
+                        <div class="glass-card p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 icon-gradient-blue rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยรวม (ราย)</h3>
+                                    <div id="totalPatients" class="text-2xl font-bold text-gray-900">-</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">ผู้ป่วยทั้งหมดของโรคนี้</div>
+                        </div>
+
+                        <!-- จำนวนผู้ป่วยเพศชาย -->
+                        <div class="glass-card p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 icon-gradient-green rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยเพศชาย (ราย)</h3>
+                                    <div id="malePatients" class="text-2xl font-bold text-blue-600">-</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">ผู้ป่วยเพศชาย</div>
+                        </div>
+
+                        <!-- จำนวนผู้ป่วยเพศหญิง -->
+                        <div class="glass-card p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 icon-gradient-orange rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยเพศหญิง (ราย)</h3>
+                                    <div id="femalePatients" class="text-2xl font-bold text-pink-600">-</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">ผู้ป่วยเพศหญิง</div>
+                        </div>
+
+                        <!-- สัดส่วนชายต่อหญิง -->
+                        <div class="glass-card p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 icon-gradient-purple rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">อัตราส่วนชายต่อหญิง</h3>
+                                    <div id="genderRatio" class="text-2xl font-bold text-purple-600">-</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">อัตราส่วนเพศชาย : เพศหญิง</div>
+                        </div>
+
+                        <!-- จำนวนผู้เสียชีวิต -->
+                        <div class="glass-card p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 icon-gradient-red rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้เสียชีวิต (ราย)</h3>
+                                    <div id="deathPatients" class="text-2xl font-bold text-red-600">-</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">ผู้เสียชีวิตจากโรคนี้</div>
+                        </div>
+                    </div>
+
+                    <!-- กราฟแสดงสัดส่วน -->
+                    <div class="glass-card p-6 mb-8">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">สัดส่วนเพศ</h3>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-1">
+                                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                                    <span>เพศชาย</span>
+                                    <span id="malePercentage">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    <div id="maleBar" class="bg-blue-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                                    <span>เพศหญิง</span>
+                                    <span id="femalePercentage">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    <div id="femaleBar" class="bg-pink-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- อันดับเขตที่พบผู้ป่วยมากที่สุด -->
+                    <div class="glass-card p-6 mb-8">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">อันดับเขตที่พบผู้ป่วยมากที่สุด</h3>
+                        <div id="topDistrictsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Top districts will be populated here -->
+                            <div class="text-center text-gray-500 col-span-full py-8">
+                                <p>ไม่มีข้อมูลเขต</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Epidemic Curve -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Epidemic Curve - เส้นโค้งการระบาด</h3>
+                        <div class="relative h-96">
+                            <canvas id="epidemicCurveChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="noDiseaseSelected" class="text-center text-gray-500 py-12">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
+                    </svg>
+                    <p class="text-lg">กรุณาเลือกโรคที่ต้องการดูข้อมูล</p>
+                </div>
+            </div>
         </div>
 
         <!-- Report Page -->
@@ -1095,7 +1247,7 @@
                 const percentage = ((count / totalPatients) * 100).toFixed(1);
                 
                 return `
-                    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer" onclick="showDiseaseDetailsPopup('${diseaseCode}')">
+                    <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
                         <div class="flex items-center justify-between mb-2">
                             <h4 class="text-sm font-medium text-gray-900 truncate">${diseaseName}</h4>
                             <span class="text-xs text-gray-500">${diseaseCode}</span>
@@ -2001,406 +2153,6 @@
             if (modal) {
                 modal.remove();
             }
-        }
-
-        // ฟังก์ชันแสดง popup รายละเอียดโรค
-        async function showDiseaseDetailsPopup(diseaseCode) {
-            try {
-                // โหลดข้อมูลโรคจากฐานข้อมูล
-                const diseases = await loadFromFirebase('diseases');
-                const selectedDisease = diseases.find(d => d.diseaseCode === diseaseCode);
-                const diseaseName = selectedDisease ? selectedDisease.diseaseName : 'ไม่พบชื่อโรค';
-
-                // สร้าง popup content
-                const popupContent = `
-                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="closeDiseaseDetailsModal()">
-                        <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden" onclick="event.stopPropagation()">
-                            <div class="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6">
-                                <div class="flex justify-between items-center">
-                                    <h2 class="text-xl font-bold">รายละเอียดโรค: ${diseaseName} (${diseaseCode})</h2>
-                                    <button onclick="closeDiseaseDetailsModal()" class="text-white hover:text-gray-200 text-2xl font-bold">&times;</button>
-                                </div>
-                            </div>
-                            <div class="p-6 overflow-y-auto max-h-[80vh]">
-                                <div id="diseasePopupContainer">
-                                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-                                        <!-- จำนวนผู้ป่วยรวม -->
-                                        <div class="glass-card p-6">
-                                            <div class="flex items-center mb-4">
-                                                <div class="w-12 h-12 icon-gradient-blue rounded-xl flex items-center justify-center mr-4">
-                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยรวม (ราย)</h3>
-                                                    <div id="popupTotalPatients" class="text-2xl font-bold text-gray-900">-</div>
-                                                </div>
-                                            </div>
-                                            <div class="text-xs text-gray-500">ผู้ป่วยทั้งหมดของโรคนี้</div>
-                                        </div>
-
-                                        <!-- จำนวนผู้ป่วยเพศชาย -->
-                                        <div class="glass-card p-6">
-                                            <div class="flex items-center mb-4">
-                                                <div class="w-12 h-12 icon-gradient-green rounded-xl flex items-center justify-center mr-4">
-                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยเพศชาย (ราย)</h3>
-                                                    <div id="popupMalePatients" class="text-2xl font-bold text-blue-600">-</div>
-                                                </div>
-                                            </div>
-                                            <div class="text-xs text-gray-500">ผู้ป่วยเพศชาย</div>
-                                        </div>
-
-                                        <!-- จำนวนผู้ป่วยเพศหญิง -->
-                                        <div class="glass-card p-6">
-                                            <div class="flex items-center mb-4">
-                                                <div class="w-12 h-12 icon-gradient-orange rounded-xl flex items-center justify-center mr-4">
-                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยเพศหญิง (ราย)</h3>
-                                                    <div id="popupFemalePatients" class="text-2xl font-bold text-pink-600">-</div>
-                                                </div>
-                                            </div>
-                                            <div class="text-xs text-gray-500">ผู้ป่วยเพศหญิง</div>
-                                        </div>
-
-                                        <!-- สัดส่วนชายต่อหญิง -->
-                                        <div class="glass-card p-6">
-                                            <div class="flex items-center mb-4">
-                                                <div class="w-12 h-12 icon-gradient-purple rounded-xl flex items-center justify-center mr-4">
-                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h4a1 1 0 010 2H6.414l2.293 2.293a1 1 0 01-1.414 1.414L5 6.414V8a1 1 0 01-2 0V4zm9 1a1 1 0 010-2h4a1 1 0 011 1v4a1 1 0 01-2 0V6.414l-2.293 2.293a1 1 0 11-1.414-1.414L13.586 5H12z"/>
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">อัตราส่วนชายต่อหญิง</h3>
-                                                    <div id="popupGenderRatio" class="text-2xl font-bold text-purple-600">-</div>
-                                                </div>
-                                            </div>
-                                            <div class="text-xs text-gray-500">อัตราส่วนเพศชาย : เพศหญิง</div>
-                                        </div>
-
-                                        <!-- จำนวนผู้เสียชีวิต -->
-                                        <div class="glass-card p-6">
-                                            <div class="flex items-center mb-4">
-                                                <div class="w-12 h-12 icon-gradient-red rounded-xl flex items-center justify-center mr-4">
-                                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
-                                                    </svg>
-                                                </div>
-                                                <div>
-                                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้เสียชีวิต (ราย)</h3>
-                                                    <div id="popupDeathPatients" class="text-2xl font-bold text-red-600">-</div>
-                                                </div>
-                                            </div>
-                                            <div class="text-xs text-gray-500">ผู้เสียชีวิตจากโรคนี้</div>
-                                        </div>
-                                    </div>
-
-                                    <!-- กราฟแสดงสัดส่วน -->
-                                    <div class="glass-card p-6 mb-8">
-                                        <h3 class="text-lg font-semibold text-gray-800 mb-4">สัดส่วนเพศ</h3>
-                                        <div class="flex items-center space-x-4">
-                                            <div class="flex-1">
-                                                <div class="flex justify-between text-sm text-gray-600 mb-2">
-                                                    <span>เพศชาย</span>
-                                                    <span id="popupMalePercentage">0%</span>
-                                                </div>
-                                                <div class="w-full bg-gray-200 rounded-full h-3">
-                                                    <div id="popupMaleBar" class="bg-blue-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
-                                                </div>
-                                            </div>
-                                            <div class="flex-1">
-                                                <div class="flex justify-between text-sm text-gray-600 mb-2">
-                                                    <span>เพศหญิง</span>
-                                                    <span id="popupFemalePercentage">0%</span>
-                                                </div>
-                                                <div class="w-full bg-gray-200 rounded-full h-3">
-                                                    <div id="popupFemaleBar" class="bg-pink-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- อันดับเขตที่พบผู้ป่วยมากที่สุด -->
-                                    <div class="glass-card p-6 mb-8">
-                                        <h3 class="text-lg font-semibold text-gray-800 mb-4">อันดับเขตที่พบผู้ป่วยมากที่สุด</h3>
-                                        <div id="popupTopDistrictsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <!-- Top districts will be populated here -->
-                                            <div class="text-center text-gray-500 col-span-full py-8">
-                                                <p>กำลังโหลดข้อมูลเขต...</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Epidemic Curve -->
-                                    <div class="glass-card p-6">
-                                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Epidemic Curve - เส้นโค้งการระบาด</h3>
-                                        <div class="relative h-96">
-                                            <canvas id="popupEpidemicCurveChart"></canvas>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                // แสดง popup
-                const modalContainer = document.createElement('div');
-                modalContainer.id = 'diseaseDetailsModal';
-                modalContainer.innerHTML = popupContent;
-                document.body.appendChild(modalContainer);
-
-                // โหลดข้อมูลรายละเอียดโรค
-                await loadDiseaseDetailsForPopup(diseaseCode);
-
-            } catch (error) {
-                console.error('Error showing disease details popup:', error);
-                alert('เกิดข้อผิดพลาดในการโหลดข้อมูลโรค');
-            }
-        }
-
-        // ฟังก์ชันปิด popup รายละเอียดโรค
-        function closeDiseaseDetailsModal() {
-            const modal = document.getElementById('diseaseDetailsModal');
-            if (modal) {
-                modal.remove();
-            }
-        }
-
-        // ฟังก์ชันโหลดข้อมูลรายละเอียดโรคสำหรับ popup
-        async function loadDiseaseDetailsForPopup(diseaseCode) {
-            const { database, ref, get } = window.firebaseDB;
-            const snapshot = await get(ref(database, 'patients'));
-            const patients = snapshot.val();
-            
-            if (!patients) return;
-
-            const allPatients = Object.values(patients);
-            const selectedDisease = allPatients.filter(patient => 
-                patient.diseaseCode && patient.diseaseCode.toString().trim() === diseaseCode.toString().trim()
-            );
-
-            // คำนวณสถิติ
-            const totalPatients = selectedDisease.length;
-            const malePatients = selectedDisease.filter(p => p.gender === 'ชาย').length;
-            const femalePatients = selectedDisease.filter(p => p.gender === 'หญิง').length;
-            const deathPatients = selectedDisease.filter(p => p.patientCondition === 'เสียชีวิต' || p.deathDate).length;
-
-            // อัปเดต UI
-            document.getElementById('popupTotalPatients').textContent = totalPatients.toLocaleString();
-            document.getElementById('popupMalePatients').textContent = malePatients.toLocaleString();
-            document.getElementById('popupFemalePatients').textContent = femalePatients.toLocaleString();
-            document.getElementById('popupDeathPatients').textContent = deathPatients.toLocaleString();
-
-            // คำนวณสัดส่วนเพศ
-            if (totalPatients > 0) {
-                const malePercentage = ((malePatients / totalPatients) * 100).toFixed(1);
-                const femalePercentage = ((femalePatients / totalPatients) * 100).toFixed(1);
-                
-                document.getElementById('popupMalePercentage').textContent = `${malePercentage}%`;
-                document.getElementById('popupFemalePercentage').textContent = `${femalePercentage}%`;
-                document.getElementById('popupMaleBar').style.width = `${malePercentage}%`;
-                document.getElementById('popupFemaleBar').style.width = `${femalePercentage}%`;
-
-                // อัตราส่วนชายต่อหญิง
-                const ratio = femalePatients > 0 ? (malePatients / femalePatients).toFixed(2) : malePatients;
-                document.getElementById('popupGenderRatio').textContent = `${ratio} : 1`;
-            }
-
-            // โหลดอันดับเขต
-            await createTopDistrictsRankingForPopup(diseaseCode);
-
-            // สร้าง Epidemic Curve
-            await createEpidemicCurveForPopup(selectedDisease);
-        }
-
-        // ฟังก์ชันสร้างอันดับเขตสำหรับ popup
-        async function createTopDistrictsRankingForPopup(diseaseCode) {
-            try {
-                const { database, ref, get } = window.firebaseDB;
-                const [patientsSnapshot, populationSnapshot] = await Promise.all([
-                    get(ref(database, 'patients')),
-                    get(ref(database, 'population'))
-                ]);
-                
-                const patients = patientsSnapshot.val();
-                const populationData = populationSnapshot.val();
-                
-                if (!patients) return;
-
-                const allPatients = Object.values(patients);
-                const filteredPatients = allPatients.filter(patient => 
-                    patient.diseaseCode && patient.diseaseCode.toString().trim() === diseaseCode.toString().trim()
-                );
-
-                const districtCount = {};
-                filteredPatients.forEach(patient => {
-                    const district = patient.district || patient.เขต || 'ไม่ระบุเขต';
-                    if (district && district !== 'ไม่ระบุเขต') {
-                        districtCount[district] = (districtCount[district] || 0) + 1;
-                    }
-                });
-
-                const districtPopulation = {};
-                if (populationData) {
-                    const sortedPopulation = Object.values(populationData).sort((a, b) => (b.year || 2568) - (a.year || 2568));
-                    
-                    sortedPopulation.forEach(pop => {
-                        const district = pop.district || pop.เขต;
-                        if (district && !districtPopulation[district]) {
-                            districtPopulation[district] = parseInt(pop.totalPopulation || (pop.malePopulation || 0) + (pop.femalePopulation || 0) || 0);
-                        }
-                    });
-                }
-
-                const districtRates = Object.entries(districtCount)
-                    .map(([district, count]) => {
-                        const population = districtPopulation[district] || 0;
-                        const rate = population > 0 ? (count / population * 100000) : 0;
-                        return { district, count, population, rate: Math.round(rate * 100) / 100 };
-                    })
-                    .sort((a, b) => b.rate - a.rate)
-                    .slice(0, 3);
-
-                const container = document.getElementById('popupTopDistrictsContainer');
-                
-                if (districtRates.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center text-gray-500 col-span-full py-8">
-                            <p>ไม่มีข้อมูลเขต</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                const rankColors = ['bg-gray-100 border-gray-300', 'bg-gray-100 border-gray-300', 'bg-gray-100 border-gray-300'];
-
-                const districtCards = districtRates.map((data, index) => {
-                    const rankNumber = index + 1;
-                    const populationText = data.population > 0 ? data.population.toLocaleString() : 'ไม่มีข้อมูล';
-                    const rateText = data.rate > 0 ? data.rate.toLocaleString() : '0';
-                    
-                    return `
-                        <div class="border-2 ${rankColors[index]} rounded-lg p-4 text-center">
-                            <div class="text-lg font-bold text-gray-700 mb-2">อันดับที่ ${rankNumber}</div>
-                            <h4 class="font-bold text-gray-800 mb-1 text-lg">เขต${data.district}</h4>
-                            <div class="text-xl font-bold text-red-600 mb-1">${rateText}</div>
-                            <div class="text-sm text-red-500 mb-2">ต่อแสนประชากร</div>
-                            <div class="text-sm text-gray-600">จำนวนผู้ป่วย: ${data.count.toLocaleString()} ราย</div>
-                            <div class="text-xs text-gray-500">ประชากร: ${populationText} คน</div>
-                        </div>
-                    `;
-                }).join('');
-
-                const viewMoreButton = `
-                    <div class="col-span-full mt-4 text-center">
-                        <button onclick="showAllDistrictsRanking('${diseaseCode}')" 
-                                class="bg-green-700 hover:bg-green-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
-                            <svg class="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
-                            </svg>
-                            ดูข้อมูลเขตทั้งหมด
-                        </button>
-                    </div>
-                `;
-
-                container.innerHTML = districtCards + viewMoreButton;
-                
-            } catch (error) {
-                console.error('Error creating top districts ranking for popup:', error);
-            }
-        }
-
-        // ฟังก์ชันสร้าง Epidemic Curve สำหรับ popup
-        async function createEpidemicCurveForPopup(diseasePatients) {
-            const epidemicWeeks = await loadFromFirebase('epidemicWeeks');
-            
-            if (!epidemicWeeks || epidemicWeeks.length === 0) {
-                console.warn('ไม่มีข้อมูลสัปดาห์การระบาด');
-                return;
-            }
-
-            const weekCounts = epidemicWeeks.map(week => {
-                const patientsInWeek = diseasePatients.filter(patient => {
-                    if (!patient.onsetDate) return false;
-                    
-                    const patientDate = parseThaiDate(patient.onsetDate);
-                    if (!patientDate) return false;
-                    
-                    const weekStart = parseThaiDate(week.startDate);
-                    const weekEnd = parseThaiDate(week.endDate);
-                    
-                    if (!weekStart || !weekEnd) return false;
-                    
-                    return patientDate >= weekStart && patientDate <= weekEnd;
-                });
-                
-                return {
-                    week: `สัปดาห์ ${week.weekNumber}/${week.year}`,
-                    count: patientsInWeek.length,
-                    year: week.year,
-                    weekNumber: week.weekNumber
-                };
-            });
-
-            const ctx = document.getElementById('popupEpidemicCurveChart');
-            if (!ctx) return;
-
-            if (window.popupEpidemicChart) {
-                window.popupEpidemicChart.destroy();
-            }
-
-            window.popupEpidemicChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: weekCounts.map(w => w.week),
-                    datasets: [{
-                        label: 'จำนวนผู้ป่วย',
-                        data: weekCounts.map(w => w.count),
-                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
-                        borderColor: 'rgba(34, 197, 94, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Epidemic Curve - เส้นโค้งการระบาด'
-                        },
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'จำนวนผู้ป่วย (ราย)'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'สัปดาห์การระบาด'
-                            }
-                        }
-                    }
-                }
-            });
         }
 
         // สร้าง Epidemic Curve
