@@ -1950,10 +1950,45 @@
                     }
                 });
 
-                // เรียงลำดับและเอา 3 อันดับแรก
+                // เรียงลำดับและจัดกลุ่มตามจำนวนผู้ป่วย
                 const sortedDistricts = Object.entries(districtCount)
-                    .sort(([,a], [,b]) => b - a)
-                    .slice(0, 3);
+                    .sort(([,a], [,b]) => b - a);
+
+                // จัดกลุ่มเขตที่มีจำนวนผู้ป่วยเท่ากัน
+                const rankedDistricts = [];
+                let currentRank = 1;
+                let currentCount = -1;
+                let districtsInCurrentRank = [];
+
+                sortedDistricts.forEach(([district, count], index) => {
+                    if (currentRank > 3) return; // เก็บแค่ 3 อันดับแรก
+
+                    if (count !== currentCount) {
+                        // ถ้าจำนวนผู้ป่วยต่างจากกลุ่มก่อนหน้า ให้เริ่มกลุ่มใหม่
+                        if (districtsInCurrentRank.length > 0) {
+                            rankedDistricts.push({
+                                rank: currentRank,
+                                count: currentCount,
+                                districts: districtsInCurrentRank
+                            });
+                            currentRank++;
+                        }
+                        districtsInCurrentRank = [district];
+                        currentCount = count;
+                    } else {
+                        // ถ้าจำนวนผู้ป่วยเท่ากับกลุ่มปัจจุบัน ให้เพิ่มเข้ากลุ่มเดียวกัน
+                        districtsInCurrentRank.push(district);
+                    }
+                });
+
+                // เพิ่มกลุ่มสุดท้าย
+                if (districtsInCurrentRank.length > 0 && currentRank <= 3) {
+                    rankedDistricts.push({
+                        rank: currentRank,
+                        count: currentCount,
+                        districts: districtsInCurrentRank
+                    });
+                }
 
                 const container = document.getElementById('topDistrictsContainer');
                 
@@ -1969,14 +2004,17 @@
                 const totalPatients = filteredPatients.length;
                 const rankColors = ['bg-yellow-100 border-yellow-300', 'bg-gray-100 border-gray-300', 'bg-orange-100 border-orange-300'];
 
-                const districtCards = sortedDistricts.map(([district, count], index) => {
-                    const percentage = ((count / totalPatients) * 100).toFixed(1);
-                    const rankNumber = index + 1;
+                const districtCards = rankedDistricts.map((rankGroup, index) => {
+                    const percentage = ((rankGroup.count / totalPatients) * 100).toFixed(1);
+                    const districtsHtml = rankGroup.districts
+                        .map(district => `<h4 class="font-semibold text-gray-800">เขต${district}</h4>`)
+                        .join('<div class="my-1 text-gray-400">และ</div>');
+                    
                     return `
                         <div class="border-2 ${rankColors[index]} rounded-lg p-4 text-center">
-                            <div class="text-lg font-bold text-gray-700 mb-2">อันดับที่ ${rankNumber}</div>
-                            <h4 class="font-semibold text-gray-800 mb-1">เขต${district}</h4>
-                            <div class="text-2xl font-bold text-gray-900 mb-1">${count.toLocaleString()} ราย</div>
+                            <div class="text-lg font-bold text-gray-700 mb-2">อันดับที่ ${rankGroup.rank}</div>
+                            <div class="mb-2">${districtsHtml}</div>
+                            <div class="text-2xl font-bold text-gray-900 mb-1">${rankGroup.count.toLocaleString()} ราย</div>
                             <div class="text-sm text-gray-600">${percentage}% ของผู้ป่วยทั้งหมด</div>
                         </div>
                     `;
