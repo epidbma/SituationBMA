@@ -1880,18 +1880,33 @@
                     ratio: genderRatio
                 });
                 
-                // อัปเดตข้อมูลในหน้าจอ
-                document.getElementById('totalPatients').textContent = totalCount.toLocaleString();
-                document.getElementById('malePatients').textContent = maleCount.toLocaleString();
-                document.getElementById('femalePatients').textContent = femaleCount.toLocaleString();
-                document.getElementById('deathPatients').textContent = deathCount.toLocaleString();
-                document.getElementById('genderRatio').textContent = genderRatio;
-                
-                // อัปเดตเปอร์เซ็นต์และแถบกราฟ
-                document.getElementById('malePercentage').textContent = `${malePercentage}%`;
-                document.getElementById('femalePercentage').textContent = `${femalePercentage}%`;
-                document.getElementById('maleBar').style.width = `${malePercentage}%`;
-                document.getElementById('femaleBar').style.width = `${femalePercentage}%`;
+            // รวมรายละเอียดแยกรายโรคไว้ใน 1 บล็อกใหญ่
+            const diseaseSummaryBlock = document.getElementById('diseaseSummaryBlock');
+            if (diseaseSummaryBlock) {
+                diseaseSummaryBlock.innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-8 border-2 border-green-500 col-span-full md:col-span-2 lg:col-span-2 xl:col-span-2" style="min-width:320px;max-width:600px;margin:auto;">
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="text-2xl font-bold mb-2">สรุปรายละเอียดโรค</div>
+                        <div class="text-4xl font-extrabold text-green-600 mb-2">${totalCount.toLocaleString()} <span class="text-base font-normal text-gray-500">ราย</span></div>
+                        <div class="flex flex-row gap-8 mb-2">
+                            <div class="text-lg font-semibold text-blue-600">ชาย: ${maleCount.toLocaleString()}</div>
+                            <div class="text-lg font-semibold text-pink-600">หญิง: ${femaleCount.toLocaleString()}</div>
+                        </div>
+                        <div class="mb-2 text-gray-700">อัตราส่วนชาย : หญิง <span class="font-bold">${genderRatio}</span></div>
+                        <div class="w-full max-w-xs mx-auto">
+                            <div class="flex flex-row justify-between text-sm mb-1">
+                                <span class="text-blue-600">ชาย ${malePercentage}%</span>
+                                <span class="text-pink-600">หญิง ${femalePercentage}%</span>
+                            </div>
+                            <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden flex">
+                                <div class="h-4 bg-blue-400" style="width:${malePercentage}%"></div>
+                                <div class="h-4 bg-pink-400" style="width:${femalePercentage}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
                 
                 // สร้าง Epidemic Curve
                 await createEpidemicCurve(selectedDisease, allPatients);
