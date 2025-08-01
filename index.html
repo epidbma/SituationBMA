@@ -1949,7 +1949,8 @@
                     const weekEnd = new Date(week.endDate);
                     console.log('Parsed weekStart:', weekStart, 'Parsed weekEnd:', weekEnd);
 
-                    // นับผู้ป่วยที่มีวันที่เริ่มป่วยในช่วงสัปดาห์นี้
+                    // เก็บรายชื่อผู้ป่วยที่ถูกนับในสัปดาห์นี้
+                    const countedPatients = [];
                     let weeklyCount = 0;
 
                     diseasePatients.forEach(patient => {
@@ -1957,10 +1958,19 @@
                             const onsetDate = parseThaiDate(patient.onsetDate);
                             if (onsetDate && onsetDate >= weekStart && onsetDate <= weekEnd) {
                                 weeklyCount++;
+                                countedPatients.push({
+                                    id: patient.id || patient.key || '-',
+                                    onsetDate: patient.onsetDate,
+                                    name: patient.name || '-',
+                                    sex: patient.sex || '-',
+                                    age: patient.age || '-',
+                                    ...patient
+                                });
                             }
                         }
                     });
 
+                    console.log(`สัปดาห์ที่ ${week.weekNumber}/${week.year} มีผู้ป่วยที่ถูกนับในกราฟ:`, countedPatients);
                     weeklyData.push(weeklyCount);
                     labels.push(`${week.weekNumber}/${week.year}`);
                 });
