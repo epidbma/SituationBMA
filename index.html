@@ -1945,8 +1945,9 @@
                     if (!week.startDate || !week.endDate) return;
                     // log ตรวจสอบรูปแบบวันที่ของสัปดาห์
                     console.log('EpiWeek:', week.weekNumber, week.year, 'startDate:', week.startDate, 'endDate:', week.endDate);
-                    const weekStart = new Date(week.startDate);
-                    const weekEnd = new Date(week.endDate);
+                    // ใช้ parseThaiDate เพื่อรองรับ dd/mm/yyyy
+                    const weekStart = parseThaiDate(week.startDate);
+                    const weekEnd = parseThaiDate(week.endDate);
                     console.log('Parsed weekStart:', weekStart, 'Parsed weekEnd:', weekEnd);
 
                     // เก็บรายชื่อผู้ป่วยที่ถูกนับในสัปดาห์นี้
