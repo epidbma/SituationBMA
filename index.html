@@ -1920,10 +1920,15 @@
         // ฟังก์ชันสร้างอันดับเขตที่พบผู้ป่วยมากที่สุด
         async function createTopDistrictsRanking(diseaseCode) {
             try {
-                // โหลดข้อมูลผู้ป่วยจากฐานข้อมูล
+                // โหลดข้อมูลผู้ป่วยและประชากรจากฐานข้อมูล
                 const { database, ref, get } = window.firebaseDB;
-                const snapshot = await get(ref(database, 'patients'));
-                const patients = snapshot.val();
+                const [patientsSnapshot, populationSnapshot] = await Promise.all([
+                    get(ref(database, 'patients')),
+                    get(ref(database, 'population'))
+                ]);
+                
+                const patients = patientsSnapshot.val();
+                const populationData = populationSnapshot.val();
                 
                 if (!patients) {
                     const container = document.getElementById('topDistrictsContainer');
@@ -1950,49 +1955,38 @@
                     }
                 });
 
-                // เรียงลำดับและจัดกลุ่มตามจำนวนผู้ป่วย
-                const sortedDistricts = Object.entries(districtCount)
-                    .sort(([,a], [,b]) => b - a);
-
-                // จัดกลุ่มเขตที่มีจำนวนผู้ป่วยเท่ากัน
-                const rankedDistricts = [];
-                let currentRank = 1;
-                let currentCount = -1;
-                let districtsInCurrentRank = [];
-
-                sortedDistricts.forEach(([district, count], index) => {
-                    if (currentRank > 3) return; // เก็บแค่ 3 อันดับแรก
-
-                    if (count !== currentCount) {
-                        // ถ้าจำนวนผู้ป่วยต่างจากกลุ่มก่อนหน้า ให้เริ่มกลุ่มใหม่
-                        if (districtsInCurrentRank.length > 0) {
-                            rankedDistricts.push({
-                                rank: currentRank,
-                                count: currentCount,
-                                districts: districtsInCurrentRank
-                            });
-                            currentRank++;
+                // สร้าง map ของประชากรแต่ละเขต (ใช้ข้อมูลปีล่าสุด)
+                const districtPopulation = {};
+                if (populationData) {
+                    // เรียงตามปีและใช้ข้อมูลปีล่าสุด
+                    const sortedPopulation = Object.values(populationData).sort((a, b) => (b.year || 2568) - (a.year || 2568));
+                    
+                    sortedPopulation.forEach(pop => {
+                        const district = pop.district || pop.เขต;
+                        if (district && !districtPopulation[district]) {
+                            districtPopulation[district] = parseInt(pop.totalPopulation || (pop.malePopulation || 0) + (pop.femalePopulation || 0) || 0);
                         }
-                        districtsInCurrentRank = [district];
-                        currentCount = count;
-                    } else {
-                        // ถ้าจำนวนผู้ป่วยเท่ากับกลุ่มปัจจุบัน ให้เพิ่มเข้ากลุ่มเดียวกัน
-                        districtsInCurrentRank.push(district);
-                    }
-                });
-
-                // เพิ่มกลุ่มสุดท้าย
-                if (districtsInCurrentRank.length > 0 && currentRank <= 3) {
-                    rankedDistricts.push({
-                        rank: currentRank,
-                        count: currentCount,
-                        districts: districtsInCurrentRank
                     });
                 }
 
+                // คำนวณอัตราป่วยต่อแสนประชากร และเรียงลำดับ
+                const districtRates = Object.entries(districtCount)
+                    .map(([district, count]) => {
+                        const population = districtPopulation[district] || 0;
+                        const rate = population > 0 ? (count / population * 100000) : 0;
+                        return {
+                            district,
+                            count,
+                            population,
+                            rate: Math.round(rate * 100) / 100 // ปัดเศษ 2 ตำแหน่ง
+                        };
+                    })
+                    .sort((a, b) => b.rate - a.rate)
+                    .slice(0, 3);
+
                 const container = document.getElementById('topDistrictsContainer');
                 
-                if (sortedDistricts.length === 0) {
+                if (districtRates.length === 0) {
                     container.innerHTML = `
                         <div class="text-center text-gray-500 col-span-full py-8">
                             <p>ไม่มีข้อมูลเขต</p>
@@ -2001,21 +1995,21 @@
                     return;
                 }
 
-                const totalPatients = filteredPatients.length;
                 const rankColors = ['bg-yellow-100 border-yellow-300', 'bg-gray-100 border-gray-300', 'bg-orange-100 border-orange-300'];
 
-                const districtCards = rankedDistricts.map((rankGroup, index) => {
-                    const percentage = ((rankGroup.count / totalPatients) * 100).toFixed(1);
-                    const districtsHtml = rankGroup.districts
-                        .map(district => `<h4 class="font-semibold text-gray-800">เขต${district}</h4>`)
-                        .join('<div class="my-1 text-gray-400">และ</div>');
+                const districtCards = districtRates.map((data, index) => {
+                    const rankNumber = index + 1;
+                    const populationText = data.population > 0 ? data.population.toLocaleString() : 'ไม่มีข้อมูล';
+                    const rateText = data.rate > 0 ? data.rate.toLocaleString() : '0';
                     
                     return `
                         <div class="border-2 ${rankColors[index]} rounded-lg p-4 text-center">
-                            <div class="text-lg font-bold text-gray-700 mb-2">อันดับที่ ${rankGroup.rank}</div>
-                            <div class="mb-2">${districtsHtml}</div>
-                            <div class="text-2xl font-bold text-gray-900 mb-1">${rankGroup.count.toLocaleString()} ราย</div>
-                            <div class="text-sm text-gray-600">${percentage}% ของผู้ป่วยทั้งหมด</div>
+                            <div class="text-lg font-bold text-gray-700 mb-2">อันดับที่ ${rankNumber}</div>
+                            <h4 class="font-semibold text-gray-800 mb-1">เขต${data.district}</h4>
+                            <div class="text-xl font-bold text-red-600 mb-1">${rateText}</div>
+                            <div class="text-sm text-red-500 mb-2">ต่อแสนประชากร</div>
+                            <div class="text-sm text-gray-600">จำนวนผู้ป่วย: ${data.count.toLocaleString()} ราย</div>
+                            <div class="text-xs text-gray-500">ประชากร: ${populationText} คน</div>
                         </div>
                     `;
                 }).join('');
