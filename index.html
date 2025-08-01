@@ -1880,46 +1880,18 @@
                     ratio: genderRatio
                 });
                 
-
-            // รวมรายละเอียดทั้งหมดไว้ใน 1 บล็อก
-            const detailBlock = `
-                <div class="bg-white rounded-lg shadow p-6 mb-4">
-                    <div class="flex flex-col md:flex-row md:items-center md:space-x-8">
-                        <div class="mb-2 md:mb-0">
-                            <div class="text-lg font-bold">รวมผู้ป่วย: <span class="text-green-700">${totalCount.toLocaleString()}</span></div>
-                        </div>
-                        <div class="mb-2 md:mb-0">
-                            <span class="text-blue-700 font-semibold">ชาย:</span> ${maleCount.toLocaleString()} (${malePercentage}%)
-                        </div>
-                        <div class="mb-2 md:mb-0">
-                            <span class="text-pink-700 font-semibold">หญิง:</span> ${femaleCount.toLocaleString()} (${femalePercentage}%)
-                        </div>
-                        <div class="mb-2 md:mb-0">
-                            <span class="font-semibold">เสียชีวิต:</span> ${deathCount.toLocaleString()}
-                        </div>
-                        <div class="mb-2 md:mb-0">
-                            <span class="font-semibold">อัตราส่วนชาย:หญิง</span> ${genderRatio}
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <div class="flex items-center">
-                            <span class="text-blue-700 mr-2">ชาย</span>
-                            <div class="w-full bg-gray-200 rounded h-4 mr-2">
-                                <div id="maleBar" class="bg-blue-400 h-4 rounded-l" style="width: ${malePercentage}%"></div>
-                            </div>
-                            <span id="malePercentage">${malePercentage}%</span>
-                        </div>
-                        <div class="flex items-center mt-2">
-                            <span class="text-pink-700 mr-2">หญิง</span>
-                            <div class="w-full bg-gray-200 rounded h-4 mr-2">
-                                <div id="femaleBar" class="bg-pink-400 h-4 rounded-l" style="width: ${femalePercentage}%"></div>
-                            </div>
-                            <span id="femalePercentage">${femalePercentage}%</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('diseaseDetailsSummaryBlock').innerHTML = detailBlock;
+                // อัปเดตข้อมูลในหน้าจอ
+                document.getElementById('totalPatients').textContent = totalCount.toLocaleString();
+                document.getElementById('malePatients').textContent = maleCount.toLocaleString();
+                document.getElementById('femalePatients').textContent = femaleCount.toLocaleString();
+                document.getElementById('deathPatients').textContent = deathCount.toLocaleString();
+                document.getElementById('genderRatio').textContent = genderRatio;
+                
+                // อัปเดตเปอร์เซ็นต์และแถบกราฟ
+                document.getElementById('malePercentage').textContent = `${malePercentage}%`;
+                document.getElementById('femalePercentage').textContent = `${femalePercentage}%`;
+                document.getElementById('maleBar').style.width = `${malePercentage}%`;
+                document.getElementById('femaleBar').style.width = `${femalePercentage}%`;
                 
                 // สร้าง Epidemic Curve
                 await createEpidemicCurve(selectedDisease, allPatients);
