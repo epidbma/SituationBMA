@@ -476,7 +476,7 @@
             <div class="glass-card p-8 mb-12">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-4">
-                        📊 ภาพรวมฐานข้อมูล
+                        ภาพรวมฐานข้อมูล
                     </h2>
                     <p class="text-gray-600 text-lg">จำนวนผู้ป่วยในแต่ละโรคที่มีข้อมูลในระบบ</p>
                 </div>
@@ -494,7 +494,7 @@
             <div class="glass-card p-8 mb-12">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl font-bold bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent mb-4">
-                        📋 รายละเอียดแยกรายโรค
+                        รายละเอียดแยกรายโรค
                     </h2>
                     <p class="text-gray-600 text-lg">ข้อมูลผู้ป่วยแยกตามเพศและสัดส่วนในแต่ละโรค</p>
                 </div>
@@ -517,7 +517,7 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยรวม</h3>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยรวม (ราย)</h3>
                                     <div id="totalPatients" class="text-2xl font-bold text-gray-900">-</div>
                                 </div>
                             </div>
@@ -533,7 +533,7 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยเพศชาย</h3>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยเพศชาย (ราย)</h3>
                                     <div id="malePatients" class="text-2xl font-bold text-blue-600">-</div>
                                 </div>
                             </div>
@@ -549,27 +549,11 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยเพศหญิง</h3>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้ป่วยเพศหญิง (ราย)</h3>
                                     <div id="femalePatients" class="text-2xl font-bold text-pink-600">-</div>
                                 </div>
                             </div>
                             <div class="text-xs text-gray-500">ผู้ป่วยเพศหญิง</div>
-                        </div>
-
-                        <!-- จำนวนผู้เสียชีวิต -->
-                        <div class="glass-card p-6">
-                            <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 icon-gradient-red rounded-xl flex items-center justify-center mr-4">
-                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้เสียชีวิต</h3>
-                                    <div id="deathPatients" class="text-2xl font-bold text-red-600">-</div>
-                                </div>
-                            </div>
-                            <div class="text-xs text-gray-500">ผู้เสียชีวิตจากโรคนี้</div>
                         </div>
 
                         <!-- สัดส่วนชายต่อหญิง -->
@@ -586,6 +570,22 @@
                                 </div>
                             </div>
                             <div class="text-xs text-gray-500">อัตราส่วนเพศชาย : เพศหญิง</div>
+                        </div>
+
+                        <!-- จำนวนผู้เสียชีวิต -->
+                        <div class="glass-card p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 icon-gradient-red rounded-xl flex items-center justify-center mr-4">
+                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">จำนวนผู้เสียชีวิต (ราย)</h3>
+                                    <div id="deathPatients" class="text-2xl font-bold text-red-600">-</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">ผู้เสียชีวิตจากโรคนี้</div>
                         </div>
                     </div>
 
@@ -2005,7 +2005,7 @@
                     return `
                         <div class="border-2 ${rankColors[index]} rounded-lg p-4 text-center">
                             <div class="text-lg font-bold text-gray-700 mb-2">อันดับที่ ${rankNumber}</div>
-                            <h4 class="font-semibold text-gray-800 mb-1">เขต${data.district}</h4>
+                            <h4 class="font-bold text-gray-800 mb-1 text-lg">เขต${data.district}</h4>
                             <div class="text-xl font-bold text-red-600 mb-1">${rateText}</div>
                             <div class="text-sm text-red-500 mb-2">ต่อแสนประชากร</div>
                             <div class="text-sm text-gray-600">จำนวนผู้ป่วย: ${data.count.toLocaleString()} ราย</div>
@@ -2018,7 +2018,7 @@
                 const viewMoreButton = `
                     <div class="col-span-full mt-4 text-center">
                         <button onclick="showAllDistrictsRanking('${diseaseCode}')" 
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                                class="bg-green-700 hover:bg-green-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
                             <svg class="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
                             </svg>
