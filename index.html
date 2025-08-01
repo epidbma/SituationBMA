@@ -1,3 +1,35 @@
+// สร้างบล็อกแสดงข้อมูล 3 เขตที่พบผู้ป่วยมากที่สุด
+function displayTopDistricts() {
+    if (!window.allPatients || window.allPatients.length === 0) return;
+    // นับจำนวนผู้ป่วยแต่ละเขต
+    const districtCount = {};
+    window.allPatients.forEach(patient => {
+        const district = patient.district || patient.เขต || '-';
+        if (district) {
+            districtCount[district] = (districtCount[district] || 0) + 1;
+        }
+    });
+    // เรียงลำดับตามจำนวนผู้ป่วย (มากไปน้อย)
+    const sortedDistricts = Object.entries(districtCount)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 3);
+    // สร้าง HTML สำหรับแสดงผล
+    let html = '<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">';
+    sortedDistricts.forEach(([district, count], idx) => {
+        html += `<div class="bg-white rounded-lg shadow p-4 flex flex-col items-center">
+            <div class="text-2xl font-bold text-green-600 mb-2">อันดับ ${idx+1}</div>
+            <div class="text-lg font-semibold mb-1">${district}</div>
+            <div class="text-3xl font-bold text-gray-800">${count.toLocaleString()} ราย</div>
+        </div>`;
+    });
+    html += '</div>';
+    // แสดงผลใน element ที่กำหนด (เช่น id="topDistrictsContainer")
+    const container = document.getElementById('topDistrictsContainer');
+    if (container) container.innerHTML = html;
+}
+// เรียกใช้ฟังก์ชันนี้หลังจากโหลดข้อมูลผู้ป่วย
+// เช่น ใน displayPatients หรือหลังอัปเดต window.allPatients
+// displayTopDistricts();
 
 
 <!DOCTYPE html>
@@ -1855,55 +1887,48 @@
                 
                 console.log('Final counts - Total:', totalCount, 'Male:', maleCount, 'Female:', femaleCount, 'Deaths:', deathCount);
                 
-
-                // คำนวณอันดับเขตที่พบผู้ป่วยมากที่สุด 3 อันดับแรก
-                const districtCount = {};
-                allPatients.forEach(patient => {
-                    const district = (patient.district || patient.เขต || '').toString().trim();
-                    if (district) {
-                        districtCount[district] = (districtCount[district] || 0) + 1;
-                    }
-                });
-                const topDistricts = Object.entries(districtCount)
-                    .sort(([, a], [, b]) => b - a)
-                    .slice(0, 3);
-
-                // สร้าง HTML สำหรับบล็อกอันดับเขต
-                let topDistrictsHtml = '<div class="mt-6"><h3 class="text-base font-semibold mb-2">3 เขตที่พบผู้ป่วยมากที่สุด</h3>';
-                if (topDistricts.length === 0) {
-                    topDistrictsHtml += '<div class="text-gray-500">ไม่มีข้อมูล</div>';
+                // คำนวณสัดส่วน
+                const malePercentage = totalCount > 0 ? (maleCount / totalCount * 100).toFixed(1) : 0;
+                const femalePercentage = totalCount > 0 ? (femaleCount / totalCount * 100).toFixed(1) : 0;
+                
+                // คำนวณอัตราส่วนชาย:หญิง
+                let genderRatio = '';
+                if (maleCount > 0 && femaleCount > 0) {
+                    const ratio = femaleCount / maleCount; // เปลี่ยนเป็น หญิง/ชาย
+                    genderRatio = `1 : ${ratio.toFixed(2)}`;
+                } else if (maleCount > 0 && femaleCount === 0) {
+                    genderRatio = 'ชายเท่านั้น';
+                } else if (maleCount === 0 && femaleCount > 0) {
+                    genderRatio = 'หญิงเท่านั้น';
                 } else {
-                    topDistrictsHtml += '<ol class="list-decimal list-inside">';
-                    topDistricts.forEach(([district, count], idx) => {
-                        topDistrictsHtml += `<li><span class="font-medium">${district}</span> <span class="text-gray-500">(${count.toLocaleString()} ราย)</span></li>`;
-                    });
-                    topDistrictsHtml += '</ol>';
+                    genderRatio = 'ไม่มีข้อมูล';
                 }
-                topDistrictsHtml += '</div>';
-
-                // อัปเดตข้อมูลในหน้าจอ (เหมือนเดิม)
+                
+                console.log('About to update UI with:', {
+                    total: totalCount,
+                    male: maleCount,
+                    female: femaleCount,
+                    deaths: deathCount,
+                    ratio: genderRatio
+                });
+                
+                // อัปเดตข้อมูลในหน้าจอ
                 document.getElementById('totalPatients').textContent = totalCount.toLocaleString();
                 document.getElementById('malePatients').textContent = maleCount.toLocaleString();
                 document.getElementById('femalePatients').textContent = femaleCount.toLocaleString();
                 document.getElementById('deathPatients').textContent = deathCount.toLocaleString();
                 document.getElementById('genderRatio').textContent = genderRatio;
-
-                // อัปเดตเปอร์เซ็นต์และแถบกราฟ (เหมือนเดิม)
+                
+                // อัปเดตเปอร์เซ็นต์และแถบกราฟ
                 document.getElementById('malePercentage').textContent = `${malePercentage}%`;
                 document.getElementById('femalePercentage').textContent = `${femalePercentage}%`;
                 document.getElementById('maleBar').style.width = `${malePercentage}%`;
                 document.getElementById('femaleBar').style.width = `${femalePercentage}%`;
-
-                // แทรกบล็อกอันดับเขต (ใต้บล็อกสัดส่วนเพศ)
-                const genderBlock = document.getElementById('genderRatioBlock');
-                if (genderBlock) {
-                    genderBlock.insertAdjacentHTML('afterend', topDistrictsHtml);
-                }
-
+                
                 // สร้าง Epidemic Curve
                 await createEpidemicCurve(selectedDisease, allPatients);
-
-                // console.log('UI updated successfully');
+                
+                console.log('UI updated successfully');
                 
             } catch (error) {
                 console.error('Error loading disease details:', error);
