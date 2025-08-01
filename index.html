@@ -1943,13 +1943,15 @@
                 
                 epidemicWeeks.forEach(week => {
                     if (!week.startDate || !week.endDate) return;
-                    
+                    // log ตรวจสอบรูปแบบวันที่ของสัปดาห์
+                    console.log('EpiWeek:', week.weekNumber, week.year, 'startDate:', week.startDate, 'endDate:', week.endDate);
                     const weekStart = new Date(week.startDate);
                     const weekEnd = new Date(week.endDate);
-                    
+                    console.log('Parsed weekStart:', weekStart, 'Parsed weekEnd:', weekEnd);
+
                     // นับผู้ป่วยที่มีวันที่เริ่มป่วยในช่วงสัปดาห์นี้
                     let weeklyCount = 0;
-                    
+
                     diseasePatients.forEach(patient => {
                         if (patient.onsetDate) {
                             const onsetDate = parseThaiDate(patient.onsetDate);
@@ -1958,7 +1960,7 @@
                             }
                         }
                     });
-                    
+
                     weeklyData.push(weeklyCount);
                     labels.push(`${week.weekNumber}/${week.year}`);
                 });
