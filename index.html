@@ -1893,90 +1893,73 @@
                 document.getElementById('maleBar').style.width = `${malePercentage}%`;
                 document.getElementById('femaleBar').style.width = `${femalePercentage}%`;
                 
-            try {
-                const { database, ref, get } = window.firebaseDB;
-                const snapshot = await get(ref(database, 'patients'));
-                const patients = snapshot.val();
-                if (!patients) { /* ... */ }
-
-                // กรองผู้ป่วยตามรหัสโรคที่เลือก
-                const allPatients = Object.values(patients);
-                let totalCount = 0;
-                let maleCount = 0;
-                let femaleCount = 0;
-                let deathCount = 0;
-
-                // เขต (district) count
-                const districtCount = {};
-
-                allPatients.forEach(patient => {
-                    // นับจำนวนผู้ป่วยตามเขต
-                    if (patient.diseaseCode && patient.diseaseCode.toString().trim() === selectedDisease.toString().trim()) {
-                        totalCount++;
-                        if (patient.sex === 'ชาย') maleCount++;
-                        else if (patient.sex === 'หญิง') femaleCount++;
-                        if (patient.deathDate) deathCount++;
-                        // เขตอาจใช้ patient.district หรือ patient.เขต หรือ patient.districtName
-                        const district = patient.district || patient.เขต || patient.districtName || '-';
-                        if (district) {
-                            districtCount[district] = (districtCount[district] || 0) + 1;
-                        }
-                    }
-                });
-
-                // Top 3 เขตที่พบมากที่สุด
-                const topDistricts = Object.entries(districtCount)
-                    .sort(([, a], [, b]) => b - a)
-                    .slice(0, 3);
-
-                // แสดงผลใน UI (เพิ่มบล็อกอันดับเขต)
-                let districtHtml = '';
-                if (topDistricts.length > 0) {
-                    districtHtml = `<div class="mt-4 p-4 bg-blue-50 rounded-lg">
-                        <div class="font-bold mb-2 text-blue-700">3 อันดับเขตที่พบโรคมากที่สุด</div>
-                        <ol class="list-decimal ml-6">
-                            ${topDistricts.map(([district, count], idx) => `<li><span class="font-semibold">${district}</span> <span class="text-gray-600">(${count} ราย)</span></li>`).join('')}
-                        </ol>
-                    </div>`;
-                }
-                // สมมุติว่ามี div id="topDistrictsBlock" ในหน้ารายละเอียดโรค
-                const topDistrictsBlock = document.getElementById('topDistrictsBlock');
-                if (topDistrictsBlock) {
-                    topDistrictsBlock.innerHTML = districtHtml;
-                }
-
-                // คำนวณสัดส่วน
-                const malePercentage = totalCount > 0 ? (maleCount / totalCount * 100).toFixed(1) : 0;
-                const femalePercentage = totalCount > 0 ? (femaleCount / totalCount * 100).toFixed(1) : 0;
-
-                // คำนวณอัตราส่วนชาย:หญิง
-                let genderRatio = '';
-                if (maleCount > 0 && femaleCount > 0) {
-                    const ratio = femaleCount / maleCount;
-                    genderRatio = `1 : ${ratio.toFixed(2)}`;
-                } else if (maleCount > 0 && femaleCount === 0) {
-                    genderRatio = 'ชายเท่านั้น';
-                } else if (maleCount === 0 && femaleCount > 0) {
-                    genderRatio = 'หญิงเท่านั้น';
-                } else {
-                    genderRatio = 'ไม่มีข้อมูล';
-                }
-
-                document.getElementById('totalPatients').textContent = totalCount.toLocaleString();
-                document.getElementById('malePatients').textContent = maleCount.toLocaleString();
-                document.getElementById('femalePatients').textContent = femaleCount.toLocaleString();
-                document.getElementById('deathPatients').textContent = deathCount.toLocaleString();
-                document.getElementById('genderRatio').textContent = genderRatio;
-
-                document.getElementById('malePercentage').textContent = `${malePercentage}%`;
-                document.getElementById('femalePercentage').textContent = `${femalePercentage}%`;
-                document.getElementById('maleBar').style.width = `${malePercentage}%`;
-                document.getElementById('femaleBar').style.width = `${femalePercentage}%`;
-
+                // สร้าง Epidemic Curve
                 await createEpidemicCurve(selectedDisease, allPatients);
+                
+                console.log('UI updated successfully');
+                
             } catch (error) {
                 console.error('Error loading disease details:', error);
             }
+        }
+
+        // สร้าง Epidemic Curve
+        let epidemicChart = null; // เก็บ chart instance
+        
+        async function createEpidemicCurve(diseaseCode, allPatients) {
+            try {
+                // โหลดข้อมูลสัปดาห์การระบาด
+                const { database, ref, get } = window.firebaseDB;
+                const epidemicWeeksSnapshot = await get(ref(database, 'epidemicWeeks'));
+                const epidemicWeeks = epidemicWeeksSnapshot.val();
+                
+                if (!epidemicWeeks || !Array.isArray(epidemicWeeks)) {
+                    console.error('Epidemic weeks data not found');
+                    return;
+                }
+
+                // โหลดข้อมูลโรคเพื่อหาชื่อโรค
+                const diseasesSnapshot = await get(ref(database, 'diseases'));
+                const diseases = diseasesSnapshot.val();
+                let diseaseName = diseaseCode; // fallback ถ้าหาชื่อโรคไม่เจอ
+                
+                if (diseases && Array.isArray(diseases)) {
+                    const disease = diseases.find(d => d.code === diseaseCode);
+                    if (disease) {
+                        diseaseName = disease.name;
+                    }
+                }
+                
+                // กรองผู้ป่วยตามโรคที่เลือก
+                const diseasePatients = allPatients.filter(patient => 
+                    patient.diseaseCode && patient.diseaseCode.toString().trim() === diseaseCode.toString().trim()
+                );
+                
+                console.log('Disease patients for epidemic curve:', diseasePatients.length);
+                
+                // สร้างข้อมูลสำหรับแต่ละสัปดาห์การระบาด
+                const weeklyData = [];
+                const labels = [];
+                
+                epidemicWeeks.forEach(week => {
+                    if (!week.startDate || !week.endDate) return;
+                    // ใช้ parseThaiDate เพื่อรองรับ dd/mm/yyyy
+                    const weekStart = parseThaiDate(week.startDate);
+                    const weekEnd = parseThaiDate(week.endDate);
+
+                    // เก็บรายชื่อผู้ป่วยที่ถูกนับในสัปดาห์นี้
+                    const countedPatients = [];
+                    let weeklyCount = 0;
+
+                    diseasePatients.forEach(patient => {
+                        if (patient.onsetDate) {
+                            const onsetDate = parseThaiDate(patient.onsetDate);
+                            if (onsetDate && onsetDate >= weekStart && onsetDate <= weekEnd) {
+                                weeklyCount++;
+                                // countedPatients.push({ ... }) // ลบ log debug
+                            }
+                        }
+                    });
 
                     weeklyData.push(weeklyCount);
                     labels.push(`${week.weekNumber}/${week.year}`);
