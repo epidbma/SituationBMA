@@ -1259,13 +1259,6 @@
                         <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
                             <div class="bg-emerald-600 h-2 rounded-full" style="width: ${percentage}%"></div>
                         </div>
-                       <div class="mt-4">
-                           <label for="reportType_${diseaseCode}" class="block text-xs text-gray-700 mb-1">ประเภทรายงาน:</label>
-                           <select id="reportType_${diseaseCode}" class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm" onchange="handleReportTypeChange('${diseaseCode}', this.value)">
-                               <option value="มาก">สถานการณ์โรคมาก</option>
-                               <option value="น้อย">สถานการณ์โรคน้อย</option>
-                           </select>
-                       </div>
                     </div>
                 `;
             }).join('');
@@ -5013,12 +5006,13 @@
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ลำดับ</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">รหัสโรค</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ชื่อโรค</th>
+                                <th class="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">ประเภทรายงาน</th>
                                 <th class="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${diseases.length === 0 ? 
-                                `<tr><td colspan="4" class="px-6 py-20 text-center text-gray-500">
+                                `<tr><td colspan="5" class="px-6 py-20 text-center text-gray-500">
                                     <div class="text-6xl mb-4">📋</div>
                                     <p class="font-semibold text-xl text-gray-700 mb-2">ยังไม่มีข้อมูลโรค</p>
                                     <p class="text-gray-500 mb-4">เริ่มต้นด้วยการเพิ่มข้อมูลรายโรคหรือนำเข้าจากไฟล์ Excel</p>
@@ -5036,6 +5030,12 @@
                                         <td class="px-6 py-4 text-sm text-gray-600">${index + 1}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${disease.code}</td>
                                         <td class="px-6 py-4 font-semibold text-gray-900">${disease.name}</td>
+                                        <td class="px-6 py-4 text-center">
+                                            <select onchange="updateDiseaseReportType(${index}, this.value)" class="px-3 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${(disease.reportType === 'high' || !disease.reportType) ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}">
+                                                <option value="high" ${(disease.reportType === 'high' || !disease.reportType) ? 'selected' : ''}>สถานการณ์โรคมาก</option>
+                                                <option value="low" ${disease.reportType === 'low' ? 'selected' : ''}>สถานการณ์โรคน้อย</option>
+                                            </select>
+                                        </td>
                                         <td class="px-6 py-4 text-center">
                                             <div class="flex justify-center space-x-2">
                                                 <button onclick="editDisease(${index})" class="text-blue-600 hover:text-blue-900 transition-colors p-1 rounded">
@@ -7213,6 +7213,15 @@
                                 <label class="block text-sm font-semibold text-gray-700 mb-3">ชื่อโรค</label>
                                 <input type="text" id="diseaseName" class="w-full input-field" placeholder="เช่น ไข้เลือดออก" required>
                             </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">ประเภทรายงาน</label>
+                                <select id="diseaseReportType" class="w-full input-field" required>
+                                    <option value="high">สถานการณ์โรคมาก</option>
+                                    <option value="low">สถานการณ์โรคน้อย</option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">เลือกประเภทรายงานที่จะใช้สำหรับโรคนี้</p>
+                            </div>
                         </div>
                         
                         <div class="flex space-x-4 mt-8">
@@ -7254,6 +7263,7 @@
             if (disease) {
                 document.getElementById('diseaseCode').value = disease.code;
                 document.getElementById('diseaseName').value = disease.name;
+                document.getElementById('diseaseReportType').value = disease.reportType || 'high';
             }
         }
 
@@ -7271,8 +7281,9 @@
             
             const code = document.getElementById('diseaseCode').value.trim();
             const name = document.getElementById('diseaseName').value.trim();
+            const reportType = document.getElementById('diseaseReportType').value;
             
-            if (!code || !name) {
+            if (!code || !name || !reportType) {
                 showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
                 return;
             }
@@ -7301,7 +7312,7 @@
                     return;
                 }
                 
-                const newDisease = { code, name };
+                const newDisease = { code, name, reportType };
                 
                 if (editIndex !== null) {
                     // Edit existing disease
@@ -7333,6 +7344,65 @@
         // Edit disease function
         function editDisease(index) {
             showDiseaseForm(index);
+        }
+
+        // Update disease report type function
+        async function updateDiseaseReportType(index, reportType) {
+            try {
+                const diseases = await loadFromFirebase('diseases');
+                if (diseases[index]) {
+                    diseases[index].reportType = reportType;
+                    await saveToFirebase('diseases', diseases);
+                    
+                    // Reload the table to reflect changes
+                    await loadDiseasesTable();
+                    
+                    // Show success message
+                    const typeText = reportType === 'high' ? 'สถานการณ์โรคมาก' : 'สถานการณ์โรคน้อย';
+                    showSuccessMessage(`อัปเดตประเภทรายงานเป็น "${typeText}" สำเร็จ`);
+                }
+            } catch (error) {
+                console.error('Error updating disease report type:', error);
+                showErrorMessage('เกิดข้อผิดพลาดในการอัปเดตประเภทรายงาน');
+            }
+        }
+
+        // Show success message function
+        function showSuccessMessage(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 slide-in max-w-sm';
+            successDiv.innerHTML = `
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                    </svg>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
+        }
+
+        // Show error message function
+        function showErrorMessage(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 slide-in max-w-sm';
+            errorDiv.innerHTML = `
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"/>
+                    </svg>
+                    <span>${message}</span>
+                </div>
+            `;
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 3000);
         }
 
         // Delete disease function
@@ -7374,20 +7444,24 @@
                                         <tr>
                                             <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">A</th>
                                             <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">B</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">C</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white">
                                         <tr class="bg-yellow-50">
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">รหัสโรค</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ชื่อโรค</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ประเภทรายงาน</td>
                                         </tr>
                                         <tr>
                                             <td class="px-3 py-2 border border-gray-300 font-mono text-blue-600">A00</td>
                                             <td class="px-3 py-2 border border-gray-300">อหิวาตกโรค</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-red-600">สถานการณ์โรคมาก</td>
                                         </tr>
                                         <tr>
                                             <td class="px-3 py-2 border border-gray-300 font-mono text-blue-600">B01</td>
                                             <td class="px-3 py-2 border border-gray-300">โรคไข้หวัดใหญ่</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-green-600">สถานการณ์โรคน้อย</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -7396,6 +7470,7 @@
                                 <p>• <strong>แถวสีเหลือง:</strong> หัวตาราง (สามารถข้ามได้โดยเลือก "ข้ามแถวแรก")</p>
                                 <p>• <strong>รหัสโรค:</strong> ใช้รหัสมาตรฐาน ICD-10 หรือรหัสที่กำหนดเอง</p>
                                 <p>• <strong>ชื่อโรค:</strong> ชื่อเต็มของโรคภาษาไทย</p>
+                                <p>• <strong>ประเภทรายงาน:</strong> "สถานการณ์โรคมาก" หรือ "สถานการณ์โรคน้อย" (ถ้าไม่ระบุจะใช้ "สถานการณ์โรคมาก")</p>
                             </div>
                         </div>
 
@@ -7490,12 +7565,12 @@
         // Download disease example file
         function downloadDiseaseExampleFile() {
             const data = [
-                ['รหัสโรค', 'ชื่อโรค'],
-                ['A00', 'อหิวาตกโรค'],
-                ['B01', 'โรคไข้หวัดใหญ่'],
-                ['C02', 'โรคติดเชื้อทางเดินหายใจ'],
-                ['D03', 'โรคท้องเสีย'],
-                ['E04', 'โรคเบาหวาน']
+                ['รหัสโรค', 'ชื่อโรค', 'ประเภทรายงาน'],
+                ['A00', 'อหิวาตกโรค', 'สถานการณ์โรคมาก'],
+                ['B01', 'โรคไข้หวัดใหญ่', 'สถานการณ์โรคน้อย'],
+                ['C02', 'โรคติดเชื้อทางเดินหายใจ', 'สถานการณ์โรคมาก'],
+                ['D03', 'โรคท้องเสีย', 'สถานการณ์โรคน้อย'],
+                ['E04', 'โรคเบาหวาน', 'สถานการณ์โรคมาก']
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -7504,7 +7579,7 @@
             
             // Auto-size columns
             const colWidths = data[0].map((col, i) => {
-                return {wch: Math.max(...data.map(row => row[i].length))};
+                return {wch: Math.max(...data.map(row => row[i] ? row[i].length : 0)) + 2};
             });
             ws['!cols'] = colWidths;
             
@@ -7553,6 +7628,17 @@
                             const row = jsonData[i];
                             const code = row[0] ? row[0].toString().trim() : '';
                             const name = row[1] ? row[1].toString().trim() : '';
+                            const reportTypeText = row[2] ? row[2].toString().trim() : '';
+                            
+                            // Convert Thai report type text to code
+                            let reportType = 'high'; // default
+                            if (reportTypeText) {
+                                if (reportTypeText.includes('น้อย') || reportTypeText.toLowerCase().includes('low')) {
+                                    reportType = 'low';
+                                } else if (reportTypeText.includes('มาก') || reportTypeText.toLowerCase().includes('high')) {
+                                    reportType = 'high';
+                                }
+                            }
                             
                             if (!code || !name) {
                                 if (code || name) {
@@ -7567,7 +7653,7 @@
                             }
                             
                             duplicateCodes.add(code);
-                            processedData.push({code, name});
+                            processedData.push({code, name, reportType});
                         }
                         
                         if (processedData.length === 0) {
@@ -7575,6 +7661,12 @@
                         }
                         
                         let existingDiseases = await loadFromFirebase('diseases');
+                        // Ensure existing diseases have reportType field (backward compatibility)
+                        existingDiseases = existingDiseases.map(disease => ({
+                            ...disease,
+                            reportType: disease.reportType || 'high'
+                        }));
+                        
                         if (!replaceExisting) {
                             const existingCodes = new Set(existingDiseases.map(d => d.code));
                             const duplicateExisting = processedData.filter(d => existingCodes.has(d.code));
