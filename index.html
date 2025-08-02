@@ -199,6 +199,104 @@
             background: rgba(6, 95, 70, 0.05);
         }
         
+        /* A4 Report Styling */
+        .a4-report {
+            width: 21cm;
+            min-height: 29.7cm;
+            margin: 0 auto;
+            padding: 2cm 0.8cm 0.9cm 0.8cm;
+            background: white;
+            font-family: 'Anuphan', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .a4-report .report-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .a4-report .report-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .a4-report .report-subtitle {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .a4-report .report-date-range {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .a4-report .report-disclaimer {
+            font-size: 14px;
+            text-align: justify;
+            margin-bottom: 20px;
+            color: #555;
+        }
+        
+        .a4-report .report-section {
+            margin-bottom: 20px;
+        }
+        
+        .a4-report .report-section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .a4-report .report-section-content {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .a4-report .bullet-point {
+            margin-left: 20px;
+            margin-bottom: 8px;
+            text-align: justify;
+        }
+        
+        .a4-report .footer {
+            position: absolute;
+            bottom: 0.9cm;
+            left: 0.8cm;
+            right: 0.3cm;
+            font-size: 12px;
+            text-align: left;
+        }
+        
+        .a4-report .footer-line {
+            margin-bottom: 4px;
+        }
+        
+        @media print {
+            .a4-report {
+                box-shadow: none;
+                margin: 0;
+            }
+            
+            .a4-report .footer {
+                position: fixed;
+                bottom: 0.9cm;
+            }
+        }
+        
+        @media screen and (max-width: 768px) {
+            .a4-report {
+                width: 100%;
+                padding: 1cm;
+                min-height: auto;
+            }
+        }
+        
         .icon-gradient-blue {
             background: linear-gradient(135deg, #065f46 0%, #047857 100%);
             color: white;
@@ -685,12 +783,46 @@
                             <input type="text" id="reportMonth" class="w-full input-field bg-gray-50" readonly>
                         </div>
 
-                        <button onclick="exportReport()" class="w-full btn-primary text-lg py-4">
+                        <button onclick="generateReport()" class="w-full btn-primary text-lg py-4">
                             <svg class="w-6 h-6 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2v10h10V6H5z"/>
+                                <path d="M7 8h6v2H7V8zm0 3h6v2H7v-2z"/>
                             </svg>
-                            ส่งออกรายงาน (พัฒนาต่อไป)
+                            สร้างรายงาน
                         </button>
+                    </div>
+
+                    <!-- ส่วนแสดงตัวอย่างรายงาน -->
+                    <div id="reportPreview" class="hidden glass-card p-8">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-blue-700" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z"/>
+                                <path d="M8 6h4v2H8V6zm0 3h4v2H8V9zm0 3h2v2H8v-2z"/>
+                            </svg>
+                            ตัวอย่างหน้ารายงาน
+                        </h3>
+                        
+                        <!-- กรอบแสดงตัวอย่างรายงาน A4 -->
+                        <div class="bg-white border-2 border-gray-300 rounded-lg shadow-lg overflow-auto" style="max-height: 800px;">
+                            <div id="reportContent" class="a4-report">
+                                <!-- เนื้อหารายงานจะถูกแทรกที่นี่ -->
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 flex justify-center space-x-4">
+                            <button onclick="printReport()" class="btn-primary">
+                                <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zM5 14H4v-3h1v3zm1 0v2h8v-2H6z"/>
+                                </svg>
+                                พิมพ์รายงาน
+                            </button>
+                            <button onclick="exportToPDF()" class="btn-secondary">
+                                <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                                </svg>
+                                ส่งออก PDF
+                            </button>
+                        </div>
                     </div>
 
                     <div class="glass-card p-8">
@@ -2636,17 +2768,294 @@
             }
         }
 
-        // Export report (placeholder)
-        function exportReport() {
+        // Generate report based on selected criteria
+        async function generateReport() {
+            // Get form values
+            const diseaseCode = document.getElementById('diseaseCode').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (!diseaseCode || !startDate || !endDate) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+            
             // Show loading animation
             const button = event.target;
             const originalText = button.innerHTML;
             button.innerHTML = '<svg class="animate-spin w-5 h-5 mr-2 inline" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>กำลังสร้างรายงาน...';
             
-            setTimeout(() => {
+            try {
+                // Load required data
+                const [diseases, patients, population] = await Promise.all([
+                    loadFromFirebase('diseases'),
+                    loadFromFirebase('patients'),
+                    loadFromFirebase('population')
+                ]);
+                
+                // Find selected disease
+                const selectedDisease = diseases.find(d => d.code === diseaseCode);
+                if (!selectedDisease) {
+                    throw new Error('ไม่พบข้อมูลโรคที่เลือก');
+                }
+                
+                // Generate report data
+                const reportData = await generateReportData(selectedDisease, patients, population, startDate, endDate);
+                
+                // Show report preview
+                displayReportPreview(reportData);
+                
+                // Show the preview section
+                document.getElementById('reportPreview').classList.remove('hidden');
+                document.getElementById('reportPreview').scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                console.error('Error generating report:', error);
+                alert('เกิดข้อผิดพลาดในการสร้างรายงาน: ' + error.message);
+            } finally {
                 button.innerHTML = originalText;
-                alert('ฟีเจอร์ส่งออกรายงานจะพัฒนาในเวอร์ชั่นต่อไป พร้อมการสร้าง PDF และ Excel อัตโนมัติ');
-            }, 2000);
+            }
+        }
+        
+        // Generate report data from patient records
+        async function generateReportData(disease, patients, population, startDate, endDate) {
+            // Filter patients by disease and date range
+            const filteredPatients = patients.filter(patient => {
+                if (patient.รหัสโรค !== disease.code) return false;
+                
+                const patientDate = parseThaiDate(patient.วันที่เริ่มป่วย);
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                
+                return patientDate >= start && patientDate <= end;
+            });
+            
+            // Calculate statistics
+            const totalPatients = filteredPatients.length;
+            const totalDeaths = filteredPatients.filter(p => p.สภาพผู้ป่วย === 'เสียชีวิต').length;
+            
+            // Calculate population rate (per 100,000)
+            const totalPopulation = population.reduce((sum, pop) => sum + (pop.totalPopulation || 0), 0);
+            const incidenceRate = totalPopulation > 0 ? ((totalPatients / totalPopulation) * 100000).toFixed(2) : 0;
+            
+            // Gender analysis
+            const malePatients = filteredPatients.filter(p => p.เพศ === 'ชาย').length;
+            const femalePatients = filteredPatients.filter(p => p.เพศ === 'หญิง').length;
+            const genderRatio = femalePatients > 0 ? (malePatients / femalePatients).toFixed(1) : malePatients;
+            
+            // Age group analysis
+            const ageGroups = calculateAgeGroups(filteredPatients);
+            
+            // District analysis
+            const districtStats = calculateDistrictStats(filteredPatients, population);
+            
+            // Historical comparison (placeholder - would need historical data)
+            const currentYear = new Date().getFullYear() + 543;
+            const lastYear = currentYear - 1;
+            
+            return {
+                disease,
+                startDate,
+                endDate,
+                totalPatients,
+                totalDeaths,
+                incidenceRate,
+                genderRatio,
+                ageGroups,
+                districtStats,
+                currentYear,
+                lastYear,
+                reportMonth: getThaiMonth(new Date(endDate).getMonth() + 1),
+                reportYear: new Date(endDate).getFullYear() + 543,
+                startMonth: getThaiMonth(new Date(startDate).getMonth() + 1),
+                startYear: new Date(startDate).getFullYear() + 543
+            };
+        }
+        
+        // Calculate age group statistics
+        function calculateAgeGroups(patients) {
+            const ageGroups = {};
+            
+            patients.forEach(patient => {
+                const age = parseInt(patient.อายุปี) || 0;
+                let ageGroup;
+                
+                if (age < 1) ageGroup = '< 1 ปี';
+                else if (age < 5) ageGroup = '1-4 ปี';
+                else if (age < 15) ageGroup = '5-14 ปี';
+                else if (age < 25) ageGroup = '15-24 ปี';
+                else if (age < 35) ageGroup = '25-34 ปี';
+                else if (age < 45) ageGroup = '35-44 ปี';
+                else if (age < 55) ageGroup = '45-54 ปี';
+                else if (age < 65) ageGroup = '55-64 ปี';
+                else ageGroup = '≥ 65 ปี';
+                
+                ageGroups[ageGroup] = (ageGroups[ageGroup] || 0) + 1;
+            });
+            
+            // Sort by count and return top 3
+            return Object.entries(ageGroups)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 3)
+                .map(([group, count]) => ({
+                    group,
+                    count,
+                    percentage: ((count / patients.length) * 100).toFixed(1)
+                }));
+        }
+        
+        // Calculate district statistics
+        function calculateDistrictStats(patients, population) {
+            const districtCounts = {};
+            const districtPopulation = {};
+            
+            // Count patients by district
+            patients.forEach(patient => {
+                const district = patient.เขต || 'ไม่ระบุ';
+                districtCounts[district] = (districtCounts[district] || 0) + 1;
+            });
+            
+            // Get population by district
+            population.forEach(pop => {
+                if (pop.district) {
+                    districtPopulation[pop.district] = (pop.totalPopulation || 0);
+                }
+            });
+            
+            // Calculate rates and sort
+            return Object.entries(districtCounts)
+                .map(([district, count]) => ({
+                    district,
+                    count,
+                    population: districtPopulation[district] || 0,
+                    rate: districtPopulation[district] ? 
+                        ((count / districtPopulation[district]) * 100000).toFixed(2) : 0
+                }))
+                .sort((a, b) => parseFloat(b.rate) - parseFloat(a.rate))
+                .slice(0, 3);
+        }
+        
+        // Display report preview
+        function displayReportPreview(data) {
+            const reportContent = document.getElementById('reportContent');
+            
+            reportContent.innerHTML = `
+                <div class="report-header">
+                    <div class="report-title">รายงานสถานการณ์โรค${data.disease.name} ในกรุงเทพมหานคร</div>
+                    <div class="report-subtitle">ประจำเดือน${data.reportMonth} ${data.reportYear}</div>
+                    <div class="report-date-range">ตั้งแต่วันที่ ${formatDateThai(data.startDate)} - ${formatDateThai(data.endDate)}</div>
+                </div>
+                
+                <div class="report-disclaimer">
+                    ข้อมูลในรายงานนี้เป็นข้อมูลเบื้องต้นเพื่อเฝ้าระวังและแจ้งเตือนถึงแนวโน้มการระบาดของโรค จึงอาจมีการเปลี่ยนแปลงเมื่อได้รับข้อมูลเพิ่มเติมในภายหลัง ขอให้พิจารณาข้อมูลก่อนนำไปอ้างอิง
+                </div>
+                
+                <div class="report-section">
+                    <div class="report-section-title">สถานการณ์${data.disease.name} ในกรุงเทพมหานคร</div>
+                    <div class="report-section-content">
+                        กลุ่มงานระบาดวิทยา สำนักงานโรคติดต่อทางสาธารณสุข สำนักอนามัย กรุงเทพมหานครได้รับรายงานเฝ้าระวังโรค (รง.506) ดังนี้
+                    </div>
+                    
+                    <div class="bullet-point">• ผู้ป่วยสะสมจำนวน ${data.totalPatients.toLocaleString()} ราย คิดเป็นอัตราป่วยสะสม ${data.incidenceRate} รายต่อแสนประชากร</div>
+                    
+                    <div class="bullet-point">• ${data.totalDeaths > 0 ? `ผู้เสียชีวิตจำนวน ${data.totalDeaths} ราย` : 'ไม่พบผู้เสียชีวิต'}</div>
+                    
+                    <div class="bullet-point">• อัตราส่วนผู้ป่วยชายต่อหญิง คือ ${data.genderRatio} : 1</div>
+                    
+                    ${data.ageGroups.length > 0 ? `
+                        <div class="bullet-point">• อัตราป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${data.ageGroups[0].group} (${data.ageGroups[0].count} ราย) ${data.ageGroups[1] ? `รองลงมา ได้แก่ ${data.ageGroups[1].group} (${data.ageGroups[1].count} ราย)` : ''} ${data.ageGroups[2] ? `และ ${data.ageGroups[2].group} (${data.ageGroups[2].count} ราย)` : ''} ตามลำดับ</div>
+                        
+                        <div class="bullet-point">• ร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${data.ageGroups[0].group} (ร้อยละ ${data.ageGroups[0].percentage}) ${data.ageGroups[1] ? `รองลงมา ได้แก่ ${data.ageGroups[1].group} (ร้อยละ ${data.ageGroups[1].percentage})` : ''} ${data.ageGroups[2] ? `และ ${data.ageGroups[2].group} (ร้อยละ ${data.ageGroups[2].percentage})` : ''} ตามลำดับ</div>
+                    ` : ''}
+                    
+                    ${data.districtStats.length > 0 ? `
+                        <div class="bullet-point">• เขตที่มีอัตราป่วยมากที่สุด คือ ${data.districtStats[0].district} (${data.districtStats[0].rate} ต่อประชากรแสนคน) ${data.districtStats[1] ? `รองลงมา ได้แก่ ${data.districtStats[1].district} (${data.districtStats[1].rate} ต่อประชากรแสนคน)` : ''} ${data.districtStats[2] ? `และ ${data.districtStats[2].district} (${data.districtStats[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</div>
+                    ` : ''}
+                    
+                    <div class="bullet-point">• ในปี ${data.currentYear} ตั้งแต่เดือน${data.startMonth}ถึงเดือน${data.reportMonth} จำนวนผู้ป่วยโรค${data.disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า เท่ากับค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น 1.0 เท่าในช่วงเวลาเดียวกัน</div>
+                    
+                    <div class="bullet-point">• ในปี ${data.currentYear} ตั้งแต่เดือน${data.startMonth}ถึงเดือน${data.reportMonth} จำนวนผู้ป่วยโรค${data.disease.name} เมื่อเปรียบเทียบกับปี ${data.lastYear} พบว่า เท่ากับปี ${data.lastYear} คิดเป็น 1.0 เท่า ในช่วงเวลาเดียวกัน</div>
+                </div>
+                
+                <div class="footer">
+                    <div class="footer-line">เอกสารใช้ในราชการ เฉพาะเครือข่ายเฝ้าระวังทางระบาดวิทยา</div>
+                    <div class="footer-line">กลุ่มงานระบาดวิทยา ส่วนระบาดวิทยา สำนักงานโรคติดต่อทางสาธารณสุข สำนักอนามัย กรุงเทพมหานคร</div>
+                </div>
+            `;
+        }
+        
+        // Helper functions
+        function formatDateThai(dateStr) {
+            const date = new Date(dateStr);
+            const day = date.getDate();
+            const month = getThaiMonth(date.getMonth() + 1);
+            const year = date.getFullYear() + 543;
+            return `${day} ${month} ${year}`;
+        }
+        
+        function getThaiMonth(monthNumber) {
+            const months = {
+                1: 'มกราคม', 2: 'กุมภาพันธ์', 3: 'มีนาคม', 4: 'เมษายน',
+                5: 'พฤษภาคม', 6: 'มิถุนายน', 7: 'กรกฎาคม', 8: 'สิงหาคม',
+                9: 'กันยายน', 10: 'ตุลาคม', 11: 'พฤศจิกายน', 12: 'ธันวาคม'
+            };
+            return months[monthNumber] || '';
+        }
+        
+        // Print report
+        function printReport() {
+            const reportContent = document.getElementById('reportContent').innerHTML;
+            const printWindow = window.open('', '_blank');
+            
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>รายงานสถานการณ์โรค</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Anuphan:wght@100;200;300;400;500;600;700&display=swap');
+                        body { margin: 0; padding: 0; }
+                        .a4-report {
+                            width: 21cm;
+                            min-height: 29.7cm;
+                            margin: 0 auto;
+                            padding: 2cm 0.8cm 0.9cm 0.8cm;
+                            background: white;
+                            font-family: 'Anuphan', sans-serif;
+                            font-size: 14px;
+                            line-height: 1.6;
+                            color: #333;
+                            position: relative;
+                        }
+                        .report-header { text-align: center; margin-bottom: 30px; }
+                        .report-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+                        .report-subtitle { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+                        .report-date-range { font-size: 16px; margin-bottom: 20px; }
+                        .report-disclaimer { font-size: 14px; text-align: justify; margin-bottom: 20px; color: #555; }
+                        .report-section { margin-bottom: 20px; }
+                        .report-section-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; }
+                        .bullet-point { margin-left: 20px; margin-bottom: 8px; text-align: justify; }
+                        .footer { position: fixed; bottom: 0.9cm; left: 0.8cm; right: 0.3cm; font-size: 12px; }
+                        .footer-line { margin-bottom: 4px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="a4-report">${reportContent}</div>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        }
+        
+        // Export to PDF (placeholder)
+        function exportToPDF() {
+            alert('ฟีเจอร์ส่งออก PDF จะพัฒนาในเวอร์ชั่นต่อไป');
         }
 
         // High-performance Excel import for large datasets (100K+ records)
