@@ -2851,7 +2851,7 @@
                     
                     <div style="margin: 1.5rem 0;"></div>
                     
-                    <p style="font-size: 14px; line-height: 1.5; text-align: justify; font-family: 'Anuphan', sans-serif; text-indent: 2cm;">
+                    <p style="font-size: 14px; line-height: 1.5; text-align: justify; font-family: 'Anuphan', sans-serif; text-indent: 1cm;">
                         ข้อมูลในรายงานนี้เป็นข้อมูลเบื้องต้นเพื่อเฝ้าระวังและแจ้งเตือนถึงแนวโน้มการระบาดของโรค 
                         จึงอาจมีการเปลี่ยนแปลงเมื่อได้รับข้อมูลเพิ่มเติมในภายหลัง ขอให้พิจารณาข้อมูลก่อนนำไปอ้างอิง
                     </p>
@@ -2860,25 +2860,25 @@
                     
                     <!-- Situation Overview -->
                     <h3 style="text-align: left; font-weight: bold; font-family: 'Anuphan', sans-serif;">สถานการณ์${disease.name} ในกรุงเทพมหานคร</h3>
-                    <p style="font-size: 14px; margin: 0.5rem 0; font-family: 'Anuphan', sans-serif; text-indent: 2cm;">
+                    <p style="font-size: 14px; margin: 0.5rem 0; font-family: 'Anuphan', sans-serif; text-indent: 1cm;">
                         กลุ่มงานระบาดวิทยา สำนักงานโรคติดต่อทางสาธารณสุข สำนักอนามัย กรุงเทพมหานครได้รับรายงานเฝ้าระวังโรค (รง.506) ดังนี้
                     </p>
                     
-                    <ul style="font-size: 14px; line-height: 1.8; list-style: none; padding-left: 2cm; font-family: 'Anuphan', sans-serif;">
-                        <li style="margin: 0.4rem 0;">- ผู้ป่วยสะสมจำนวน ${totalPatients.toLocaleString()} ราย คิดเป็นอัตราป่วยสะสม ${incidenceRate} รายต่อแสนประชากร</li>
-                        <li style="margin: 0.4rem 0;">- ${deaths > 0 ? `ผู้เสียชีวิต ${deaths} ราย` : 'ไม่พบผู้เสียชีวิต'}</li>
-                        <li style="margin: 0.4rem 0;">- อัตราส่วนผู้ป่วยชายต่อหญิง คือ ${genderRatio !== 'ไม่สามารถคำนวณได้' ? `1 ต่อ ${genderRatio}` : genderRatio}</li>
+                    <ul style="font-size: 14px; line-height: 1.8; list-style: none; padding-left: 1cm; font-family: 'Anuphan', sans-serif;">
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ผู้ป่วยสะสมจำนวน ${totalPatients.toLocaleString()} ราย คิดเป็นอัตราป่วยสะสม ${incidenceRate} รายต่อแสนประชากร</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ${deaths > 0 ? `ผู้เสียชีวิต ${deaths} ราย` : 'ไม่พบผู้เสียชีวิต'}</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- อัตราส่วนผู้ป่วยชายต่อหญิง คือ ${genderRatio !== 'ไม่สามารถคำนวณได้' ? `1 ต่อ ${genderRatio}` : genderRatio}</li>
                         ${ageGroupStats.topThree.length > 0 ? `
-                        <li style="margin: 0.4rem 0;">- อัตราป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${ageGroupStats.topThree[0].ageGroup} (${ageGroupStats.topThree[0].rate} ต่อประชากรแสนคน) ${ageGroupStats.topThree.length > 1 ? `รองลงมา ได้แก่ ${ageGroupStats.topThree[1].ageGroup} (${ageGroupStats.topThree[1].rate} ต่อประชากรแสนคน)` : ''} ${ageGroupStats.topThree.length > 2 ? `และ ${ageGroupStats.topThree[2].ageGroup} (${ageGroupStats.topThree[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- อัตราป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${ageGroupStats.topThree[0].ageGroup} (${ageGroupStats.topThree[0].rate} ต่อประชากรแสนคน) ${ageGroupStats.topThree.length > 1 ? `รองลงมา ได้แก่ ${ageGroupStats.topThree[1].ageGroup} (${ageGroupStats.topThree[1].rate} ต่อประชากรแสนคน)` : ''} ${ageGroupStats.topThree.length > 2 ? `และ ${ageGroupStats.topThree[2].ageGroup} (${ageGroupStats.topThree[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
                         ` : ''}
                         ${ageGroupStats.percentageTop.length > 0 ? `
-                        <li style="margin: 0.4rem 0;">- ร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${ageGroupStats.percentageTop[0].ageGroup} (ร้อยละ ${ageGroupStats.percentageTop[0].percentage}) ${ageGroupStats.percentageTop.length > 1 ? `รองลงมา ได้แก่ ${ageGroupStats.percentageTop[1].ageGroup} (ร้อยละ ${ageGroupStats.percentageTop[1].percentage})` : ''} ${ageGroupStats.percentageTop.length > 2 ? `และ ${ageGroupStats.percentageTop[2].ageGroup} (ร้อยละ ${ageGroupStats.percentageTop[2].percentage})` : ''} ตามลำดับ</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${ageGroupStats.percentageTop[0].ageGroup} (ร้อยละ ${ageGroupStats.percentageTop[0].percentage}) ${ageGroupStats.percentageTop.length > 1 ? `รองลงมา ได้แก่ ${ageGroupStats.percentageTop[1].ageGroup} (ร้อยละ ${ageGroupStats.percentageTop[1].percentage})` : ''} ${ageGroupStats.percentageTop.length > 2 ? `และ ${ageGroupStats.percentageTop[2].ageGroup} (ร้อยละ ${ageGroupStats.percentageTop[2].percentage})` : ''} ตามลำดับ</li>
                         ` : ''}
                         ${districtStats.length > 0 ? `
-                        <li style="margin: 0.4rem 0;">- เขตที่มีอัตราป่วยมากที่สุด คือ ${districtStats[0].district} (${districtStats[0].rate} ต่อประชากรแสนคน) ${districtStats.length > 1 ? `รองลงมา ได้แก่ ${districtStats[1].district} (${districtStats[1].rate} ต่อประชากรแสนคน)` : ''} ${districtStats.length > 2 ? `และ ${districtStats[2].district} (${districtStats[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- เขตที่มีอัตราป่วยมากที่สุด คือ ${districtStats[0].district} (${districtStats[0].rate} ต่อประชากรแสนคน) ${districtStats.length > 1 ? `รองลงมา ได้แก่ ${districtStats[1].district} (${districtStats[1].rate} ต่อประชากรแสนคน)` : ''} ${districtStats.length > 2 ? `และ ${districtStats[2].district} (${districtStats[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
                         ` : ''}
-                        <li style="margin: 0.4rem 0;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า มากกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น 1.2 เท่าในช่วงเวลาเดียวกัน</li>
-                        <li style="margin: 0.4rem 0;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับปี ${new Date().getFullYear() + 542} พบว่า สูงกว่าปี ${new Date().getFullYear() + 542} คิดเป็น 1.1 เท่า ในช่วงเวลาเดียวกัน</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า มากกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น 1.2 เท่าในช่วงเวลาเดียวกัน</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับปี ${new Date().getFullYear() + 542} พบว่า สูงกว่าปี ${new Date().getFullYear() + 542} คิดเป็น 1.1 เท่า ในช่วงเวลาเดียวกัน</li>
                     </ul>
                 </div>
             `;
