@@ -333,6 +333,11 @@
             background: white;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             margin: 0 auto;
+            font-family: 'Anuphan', sans-serif;
+        }
+        
+        .report-content {
+            font-family: 'Anuphan', sans-serif;
         }
         
         .report-content h1 {
@@ -340,6 +345,7 @@
             font-weight: bold;
             text-align: center;
             margin: 0.5rem 0;
+            font-family: 'Anuphan', sans-serif;
         }
         
         .report-content h2 {
@@ -347,6 +353,7 @@
             font-weight: normal;
             text-align: center;
             margin: 0.3rem 0;
+            font-family: 'Anuphan', sans-serif;
         }
         
         .report-content h3 {
@@ -354,16 +361,23 @@
             font-weight: normal;
             text-align: center;
             margin: 0.3rem 0;
+            font-family: 'Anuphan', sans-serif;
         }
         
         .report-content ul {
             padding-left: 1rem;
             margin: 0.5rem 0;
+            font-family: 'Anuphan', sans-serif;
         }
         
         .report-content li {
             margin: 0.3rem 0;
             line-height: 1.5;
+            font-family: 'Anuphan', sans-serif;
+        }
+        
+        .report-content p {
+            font-family: 'Anuphan', sans-serif;
         }
         
         @media print {
@@ -780,7 +794,7 @@
                 </div>
                 
                 <!-- A4 Paper Preview -->
-                <div class="bg-white shadow-2xl mx-auto border border-gray-300" style="width: 210mm; min-height: 297mm; padding: 20mm 8mm 9mm 3mm; font-family: 'Sarabun', sans-serif; position: relative; font-size: 16px; line-height: 1.6;">
+                <div class="bg-white shadow-2xl mx-auto border border-gray-300" style="width: 210mm; min-height: 297mm; padding: 20mm 3mm 9mm 8mm; font-family: 'Anuphan', sans-serif; position: relative; font-size: 16px; line-height: 1.6;">
                     <!-- Report Content -->
                     <div id="reportContent" style="min-height: calc(297mm - 29mm); padding-bottom: 40px;">
                         <!-- Content will be generated here -->
@@ -2666,16 +2680,55 @@
 
         // Load disease options for report
         async function loadDiseaseOptions() {
-            const diseases = await loadFromFirebase('diseases');
-            const select = document.getElementById('diseaseCode');
-            select.innerHTML = '<option value="">เลือกรหัสโรค</option>';
-            
-            diseases.forEach(disease => {
-                const option = document.createElement('option');
-                option.value = disease.code;
-                option.textContent = `${disease.code} - ${disease.name}`;
-                select.appendChild(option);
-            });
+            try {
+                // Load both diseases and patients data
+                const [diseases, patients] = await Promise.all([
+                    loadFromFirebase('diseases'),
+                    loadFromFirebase('patients')
+                ]);
+                
+                const select = document.getElementById('diseaseCode');
+                select.innerHTML = '<option value="">เลือกรหัสโรค</option>';
+                
+                // Get unique disease codes from patients database
+                const diseasesWithPatients = new Set();
+                if (patients && patients.length > 0) {
+                    patients.forEach(patient => {
+                        if (patient.diseaseCode) {
+                            diseasesWithPatients.add(patient.diseaseCode);
+                        }
+                    });
+                }
+                
+                // Filter diseases to show only those with patients
+                const availableDiseases = diseases.filter(disease => 
+                    diseasesWithPatients.has(disease.code)
+                );
+                
+                // Sort diseases by code
+                availableDiseases.sort((a, b) => a.code.localeCompare(b.code));
+                
+                availableDiseases.forEach(disease => {
+                    const option = document.createElement('option');
+                    option.value = disease.code;
+                    option.textContent = `${disease.code} - ${disease.name}`;
+                    select.appendChild(option);
+                });
+                
+                // Show message if no diseases have patients
+                if (availableDiseases.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'ไม่พบโรคที่มีผู้ป่วยในระบบ';
+                    option.disabled = true;
+                    select.appendChild(option);
+                }
+                
+            } catch (error) {
+                console.error('Error loading disease options:', error);
+                const select = document.getElementById('diseaseCode');
+                select.innerHTML = '<option value="">เกิดข้อผิดพลาดในการโหลดข้อมูล</option>';
+            }
         }
 
         // Load disease info when code is selected
@@ -2777,6 +2830,11 @@
                     return onsetDate >= start && onsetDate <= end;
                 });
                 
+                // Check if there are any patients for this disease in the date range
+                if (filteredPatients.length === 0) {
+                    throw new Error(`ไม่พบผู้ป่วยโรค${selectedDisease.name} ในช่วงวันที่ที่เลือก`);
+                }
+                
                 // Generate report HTML
                 const reportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts);
                 
@@ -2826,15 +2884,15 @@
             const districtStats = calculateDistrictStats(patients, bangkokDistricts);
             
             return `
-                <div class="report-content">
+                <div class="report-content" style="font-family: 'Anuphan', sans-serif;">
                     <!-- Header -->
-                    <h1>รายงานสถานการณ์โรค${disease.name} ในกรุงเทพมหานคร</h1>
-                    <h2>ประจำเดือน${reportMonth}</h2>
-                    <h3>ตั้งแต่วันที่ ${startDateFormatted} - ${endDateFormatted}</h3>
+                    <h1 style="font-family: 'Anuphan', sans-serif;">รายงานสถานการณ์โรค${disease.name} ในกรุงเทพมหานคร</h1>
+                    <h2 style="font-family: 'Anuphan', sans-serif;">ประจำเดือน${reportMonth}</h2>
+                    <h3 style="font-family: 'Anuphan', sans-serif;">ตั้งแต่วันที่ ${startDateFormatted} - ${endDateFormatted}</h3>
                     
                     <div style="margin: 1.5rem 0;"></div>
                     
-                    <p style="font-size: 14px; line-height: 1.5; text-align: justify;">
+                    <p style="font-size: 14px; line-height: 1.5; text-align: justify; font-family: 'Anuphan', sans-serif;">
                         ข้อมูลในรายงานนี้เป็นข้อมูลเบื้องต้นเพื่อเฝ้าระวังและแจ้งเตือนถึงแนวโน้มการระบาดของโรค 
                         จึงอาจมีการเปลี่ยนแปลงเมื่อได้รับข้อมูลเพิ่มเติมในภายหลัง ขอให้พิจารณาข้อมูลก่อนนำไปอ้างอิง
                     </p>
@@ -2842,12 +2900,12 @@
                     <div style="margin: 1.5rem 0;"></div>
                     
                     <!-- Situation Overview -->
-                    <h3 style="text-align: left; font-weight: bold;">สถานการณ์${disease.name} ในกรุงเทพมหานคร</h3>
-                    <p style="font-size: 14px; margin: 0.5rem 0;">
+                    <h3 style="text-align: left; font-weight: bold; font-family: 'Anuphan', sans-serif;">สถานการณ์${disease.name} ในกรุงเทพมหานคร</h3>
+                    <p style="font-size: 14px; margin: 0.5rem 0; font-family: 'Anuphan', sans-serif;">
                         กลุ่มงานระบาดวิทยา สำนักงานโรคติดต่อทางสาธารณสุข สำนักอนามัย กรุงเทพมหานครได้รับรายงานเฝ้าระวังโรค (รง.506) ดังนี้
                     </p>
                     
-                    <ul style="font-size: 14px; line-height: 1.8; list-style: none; padding-left: 0;">
+                    <ul style="font-size: 14px; line-height: 1.8; list-style: none; padding-left: 0; font-family: 'Anuphan', sans-serif;">
                         <li style="margin: 0.4rem 0;">- ผู้ป่วยสะสมจำนวน ${totalPatients.toLocaleString()} ราย คิดเป็นอัตราป่วยสะสม ${incidenceRate} รายต่อแสนประชากร</li>
                         <li style="margin: 0.4rem 0;">- ${deaths > 0 ? `ผู้เสียชีวิต ${deaths} ราย` : 'ไม่พบผู้เสียชีวิต'}</li>
                         <li style="margin: 0.4rem 0;">- อัตราส่วนผู้ป่วยชายต่อหญิง คือ ${genderRatio !== 'ไม่สามารถคำนวณได้' ? `1 ต่อ ${genderRatio}` : genderRatio}</li>
@@ -2955,7 +3013,14 @@
             const startDate = new Date(currentYear, 0, 1);
             
             // End date: Last day of previous month
-            const endDate = new Date(currentYear, currentMonth, 0);
+            let endDate;
+            if (currentMonth === 0) {
+                // If current month is January, get December of previous year
+                endDate = new Date(currentYear - 1, 11, 31);
+            } else {
+                // Otherwise, get last day of previous month
+                endDate = new Date(currentYear, currentMonth, 0);
+            }
             
             // Format dates for input fields (YYYY-MM-DD)
             const formatForInput = (date) => {
