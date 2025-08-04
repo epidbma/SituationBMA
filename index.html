@@ -689,6 +689,28 @@
                         </div>
                     </div>
 
+                    <!-- อัตราป่วยจำแนกตามกลุ่มอายุ -->
+                    <div class="glass-card p-6 mb-8">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">อัตราป่วยจำแนกตามกลุ่มอายุ (ต่อแสนประชากร)</h3>
+                        <div id="topAgeGroupsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Top age groups will be populated here -->
+                            <div class="text-center text-gray-500 col-span-full py-8">
+                                <p>ไม่มีข้อมูลกลุ่มอายุ</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุ -->
+                    <div class="glass-card p-6 mb-8">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">ร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุสูงสุด</h3>
+                        <div id="topAgePercentageContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Top age percentages will be populated here -->
+                            <div class="text-center text-gray-500 col-span-full py-8">
+                                <p>ไม่มีข้อมูลกลุ่มอายุ</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Epidemic Curve -->
                     <div class="glass-card p-6">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Epidemic Curve - เส้นโค้งการระบาด</h3>
@@ -2002,6 +2024,12 @@
                 // สร้างข้อมูลอันดับเขต
                 await createTopDistrictsRanking(selectedDisease);
                 
+                // สร้างข้อมูลอันดับกลุ่มอายุ (อัตราป่วย)
+                await createTopAgeGroupsRanking(selectedDisease);
+                
+                // สร้างข้อมูลร้อยละกลุ่มอายุ
+                await createTopAgePercentageRanking(selectedDisease);
+                
                 console.log('UI updated successfully');
                 
             } catch (error) {
@@ -2132,6 +2160,199 @@
             }
         }
 
+        // ฟังก์ชันสร้างอันดับกลุ่มอายุที่มีอัตราป่วยสูงสุด
+        async function createTopAgeGroupsRanking(diseaseCode) {
+            try {
+                // โหลดข้อมูลผู้ป่วยและประชากรจากฐานข้อมูล
+                const { database, ref, get } = window.firebaseDB;
+                const [patientsSnapshot, agePopulationSnapshot] = await Promise.all([
+                    get(ref(database, 'patients')),
+                    get(ref(database, 'agePopulation'))
+                ]);
+                
+                const patients = patientsSnapshot.val();
+                const agePopulation = agePopulationSnapshot.val();
+                
+                if (!patients || !agePopulation) {
+                    throw new Error('ไม่พบข้อมูลผู้ป่วยหรือประชากร');
+                }
+
+                // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
+                const allPatients = Object.values(patients);
+                const filteredPatients = allPatients.filter(patient => 
+                    patient.diseaseCode === diseaseCode || patient.รหัสโรค === diseaseCode
+                );
+
+                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ
+                const ageGroupCount = {};
+                filteredPatients.forEach(patient => {
+                    const ageGroup = patient.ageGroup || patient.กลุ่มอายุ;
+                    if (ageGroup) {
+                        ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
+                    }
+                });
+
+                // สร้าง map ของประชากรแต่ละกลุ่มอายุ
+                const ageGroupPopulation = {};
+                if (Array.isArray(agePopulation)) {
+                    agePopulation.forEach(group => {
+                        if (group.ageGroup && group.population) {
+                            ageGroupPopulation[group.ageGroup] = group.population;
+                        }
+                    });
+                }
+
+                // คำนวณอัตราป่วยและเรียงลำดับ
+                const ageGroupRates = Object.entries(ageGroupCount)
+                    .map(([ageGroup, count]) => {
+                        const population = ageGroupPopulation[ageGroup] || 0;
+                        const rate = population > 0 ? ((count / population) * 100000).toFixed(2) : '0.00';
+                        return {
+                            ageGroup,
+                            count,
+                            population,
+                            rate: parseFloat(rate),
+                            rateText: rate
+                        };
+                    })
+                    .sort((a, b) => b.rate - a.rate)
+                    .slice(0, 3);
+
+                // สร้าง HTML cards
+                const ageGroupCards = ageGroupRates.map((data, index) => {
+                    const rank = index + 1;
+                    const populationText = data.population > 0 ? data.population.toLocaleString() : 'ไม่มีข้อมูล';
+                    
+                    return `
+                        <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-medium text-purple-600">อันดับ ${rank}</span>
+                                <span class="text-lg font-bold text-purple-800">${data.rateText}</span>
+                            </div>
+                            <div class="text-sm font-semibold text-gray-800 mb-1">${data.ageGroup}</div>
+                            <div class="text-sm text-gray-600">จำนวนผู้ป่วย: ${data.count.toLocaleString()} ราย</div>
+                            <div class="text-xs text-gray-500">ประชากร: ${populationText} คน</div>
+                        </div>
+                    `;
+                }).join('');
+
+                // สร้างปุ่มดูข้อมูลเพิ่มเติม
+                const viewMoreButton = `
+                    <div class="col-span-full mt-4 text-center">
+                        <button onclick="showAllAgeGroupsRanking('${diseaseCode}')" 
+                                class="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                            <svg class="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
+                            </svg>
+                            ดูข้อมูลกลุ่มอายุทั้งหมด
+                        </button>
+                    </div>
+                `;
+
+                const container = document.getElementById('topAgeGroupsContainer');
+                container.innerHTML = ageGroupCards + viewMoreButton;
+                
+            } catch (error) {
+                console.error('Error creating top age groups ranking:', error);
+                const container = document.getElementById('topAgeGroupsContainer');
+                container.innerHTML = `
+                    <div class="text-center text-red-500 col-span-full py-8">
+                        <p>เกิดข้อผิดพลาดในการโหลดข้อมูลกลุ่มอายุ</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ฟังก์ชันสร้างร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุ
+        async function createTopAgePercentageRanking(diseaseCode) {
+            try {
+                // โหลดข้อมูลผู้ป่วยจากฐานข้อมูล
+                const { database, ref, get } = window.firebaseDB;
+                const patientsSnapshot = await get(ref(database, 'patients'));
+                const patients = patientsSnapshot.val();
+                
+                if (!patients) {
+                    throw new Error('ไม่พบข้อมูลผู้ป่วย');
+                }
+
+                // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
+                const allPatients = Object.values(patients);
+                const filteredPatients = allPatients.filter(patient => 
+                    patient.diseaseCode === diseaseCode || patient.รหัสโรค === diseaseCode
+                );
+
+                const totalPatients = filteredPatients.length;
+                if (totalPatients === 0) {
+                    throw new Error('ไม่พบผู้ป่วยสำหรับโรคนี้');
+                }
+
+                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ
+                const ageGroupCount = {};
+                filteredPatients.forEach(patient => {
+                    const ageGroup = patient.ageGroup || patient.กลุ่มอายุ;
+                    if (ageGroup) {
+                        ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
+                    }
+                });
+
+                // คำนวณร้อยละและเรียงลำดับ
+                const ageGroupPercentages = Object.entries(ageGroupCount)
+                    .map(([ageGroup, count]) => {
+                        const percentage = ((count / totalPatients) * 100).toFixed(1);
+                        return {
+                            ageGroup,
+                            count,
+                            percentage: parseFloat(percentage),
+                            percentageText: percentage
+                        };
+                    })
+                    .sort((a, b) => b.percentage - a.percentage)
+                    .slice(0, 3);
+
+                // สร้าง HTML cards
+                const agePercentageCards = ageGroupPercentages.map((data, index) => {
+                    const rank = index + 1;
+                    
+                    return `
+                        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-medium text-blue-600">อันดับ ${rank}</span>
+                                <span class="text-lg font-bold text-blue-800">${data.percentageText}%</span>
+                            </div>
+                            <div class="text-sm font-semibold text-gray-800 mb-1">${data.ageGroup}</div>
+                            <div class="text-sm text-gray-600">จำนวนผู้ป่วย: ${data.count.toLocaleString()} ราย</div>
+                            <div class="text-xs text-gray-500">จากทั้งหมด: ${totalPatients.toLocaleString()} ราย</div>
+                        </div>
+                    `;
+                }).join('');
+
+                // สร้างปุ่มดูข้อมูลเพิ่มเติม
+                const viewMoreButton = `
+                    <div class="col-span-full mt-4 text-center">
+                        <button onclick="showAllAgePercentageRanking('${diseaseCode}')" 
+                                class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                            <svg class="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
+                            </svg>
+                            ดูข้อมูลกลุ่มอายุทั้งหมด
+                        </button>
+                    </div>
+                `;
+
+                const container = document.getElementById('topAgePercentageContainer');
+                container.innerHTML = agePercentageCards + viewMoreButton;
+                
+            } catch (error) {
+                console.error('Error creating top age percentage ranking:', error);
+                const container = document.getElementById('topAgePercentageContainer');
+                container.innerHTML = `
+                    <div class="text-center text-red-500 col-span-full py-8">
+                        <p>เกิดข้อผิดพลาดในการโหลดข้อมูลกลุ่มอายุ</p>
+                    </div>
+                `;
+            }
+        }
+
         // ฟังก์ชันแสดง popup อันดับเขตทั้งหมด
         async function showAllDistrictsRanking(diseaseCode) {
             try {
@@ -2242,6 +2463,209 @@
         // ฟังก์ชันปิด popup
         function closeAllDistrictsModal() {
             const modal = document.getElementById('allDistrictsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // ฟังก์ชันแสดง popup อันดับกลุ่มอายุทั้งหมด (อัตราป่วย)
+        async function showAllAgeGroupsRanking(diseaseCode) {
+            try {
+                // โหลดข้อมูลผู้ป่วยและประชากรจากฐานข้อมูล
+                const { database, ref, get } = window.firebaseDB;
+                const [patientsSnapshot, agePopulationSnapshot] = await Promise.all([
+                    get(ref(database, 'patients')),
+                    get(ref(database, 'agePopulation'))
+                ]);
+                
+                const patients = patientsSnapshot.val();
+                const agePopulation = agePopulationSnapshot.val();
+                
+                if (!patients || !agePopulation) {
+                    alert('ไม่พบข้อมูลผู้ป่วยหรือประชากร');
+                    return;
+                }
+
+                // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
+                const allPatients = Object.values(patients);
+                const filteredPatients = allPatients.filter(patient => 
+                    patient.diseaseCode === diseaseCode || patient.รหัสโรค === diseaseCode
+                );
+
+                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ
+                const ageGroupCount = {};
+                filteredPatients.forEach(patient => {
+                    const ageGroup = patient.ageGroup || patient.กลุ่มอายุ;
+                    if (ageGroup) {
+                        ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
+                    }
+                });
+
+                // สร้าง map ของประชากรแต่ละกลุ่มอายุ
+                const ageGroupPopulation = {};
+                if (Array.isArray(agePopulation)) {
+                    agePopulation.forEach(group => {
+                        if (group.ageGroup && group.population) {
+                            ageGroupPopulation[group.ageGroup] = group.population;
+                        }
+                    });
+                }
+
+                // คำนวณอัตราป่วยทุกกลุ่มอายุและเรียงลำดับ
+                const allAgeGroupRates = Object.entries(ageGroupCount)
+                    .map(([ageGroup, count]) => {
+                        const population = ageGroupPopulation[ageGroup] || 0;
+                        const rate = population > 0 ? ((count / population) * 100000).toFixed(2) : '0.00';
+                        return {
+                            ageGroup,
+                            count,
+                            population,
+                            rate: parseFloat(rate),
+                            rateText: rate
+                        };
+                    })
+                    .sort((a, b) => b.rate - a.rate);
+
+                // สร้าง popup content
+                const popupContent = `
+                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="closeAllAgeGroupsModal()">
+                        <div class="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-bold text-gray-800">อัตราป่วยจำแนกตามกลุ่มอายุทั้งหมด</h3>
+                                <button onclick="closeAllAgeGroupsModal()" class="text-gray-500 hover:text-gray-700">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                ${allAgeGroupRates.map((data, index) => `
+                                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-xs font-medium text-purple-600">อันดับ ${index + 1}</span>
+                                            <span class="text-lg font-bold text-purple-800">${data.rateText}</span>
+                                        </div>
+                                        <div class="text-sm font-semibold text-gray-800 mb-1">${data.ageGroup}</div>
+                                        <div class="text-sm text-gray-600">จำนวนผู้ป่วย: ${data.count.toLocaleString()} ราย</div>
+                                        <div class="text-xs text-gray-500">ประชากร: ${data.population > 0 ? data.population.toLocaleString() : 'ไม่มีข้อมูล'} คน</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // แสดง popup
+                const modalContainer = document.createElement('div');
+                modalContainer.id = 'allAgeGroupsModal';
+                modalContainer.innerHTML = popupContent;
+                document.body.appendChild(modalContainer);
+
+            } catch (error) {
+                console.error('Error showing all age groups ranking:', error);
+                alert('เกิดข้อผิดพลาดในการโหลดข้อมูลกลุ่มอายุ');
+            }
+        }
+
+        // ฟังก์ชันแสดง popup ร้อยละกลุ่มอายุทั้งหมด
+        async function showAllAgePercentageRanking(diseaseCode) {
+            try {
+                // โหลดข้อมูลผู้ป่วยจากฐานข้อมูล
+                const { database, ref, get } = window.firebaseDB;
+                const patientsSnapshot = await get(ref(database, 'patients'));
+                const patients = patientsSnapshot.val();
+                
+                if (!patients) {
+                    alert('ไม่พบข้อมูลผู้ป่วย');
+                    return;
+                }
+
+                // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
+                const allPatients = Object.values(patients);
+                const filteredPatients = allPatients.filter(patient => 
+                    patient.diseaseCode === diseaseCode || patient.รหัสโรค === diseaseCode
+                );
+
+                const totalPatients = filteredPatients.length;
+                if (totalPatients === 0) {
+                    alert('ไม่พบผู้ป่วยสำหรับโรคนี้');
+                    return;
+                }
+
+                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ
+                const ageGroupCount = {};
+                filteredPatients.forEach(patient => {
+                    const ageGroup = patient.ageGroup || patient.กลุ่มอายุ;
+                    if (ageGroup) {
+                        ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
+                    }
+                });
+
+                // คำนวณร้อยละทุกกลุ่มอายุและเรียงลำดับ
+                const allAgeGroupPercentages = Object.entries(ageGroupCount)
+                    .map(([ageGroup, count]) => {
+                        const percentage = ((count / totalPatients) * 100).toFixed(1);
+                        return {
+                            ageGroup,
+                            count,
+                            percentage: parseFloat(percentage),
+                            percentageText: percentage
+                        };
+                    })
+                    .sort((a, b) => b.percentage - a.percentage);
+
+                // สร้าง popup content
+                const popupContent = `
+                    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="closeAllAgePercentageModal()">
+                        <div class="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-bold text-gray-800">ร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุทั้งหมด</h3>
+                                <button onclick="closeAllAgePercentageModal()" class="text-gray-500 hover:text-gray-700">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                ${allAgeGroupPercentages.map((data, index) => `
+                                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-xs font-medium text-blue-600">อันดับ ${index + 1}</span>
+                                            <span class="text-lg font-bold text-blue-800">${data.percentageText}%</span>
+                                        </div>
+                                        <div class="text-sm font-semibold text-gray-800 mb-1">${data.ageGroup}</div>
+                                        <div class="text-sm text-gray-600">จำนวนผู้ป่วย: ${data.count.toLocaleString()} ราย</div>
+                                        <div class="text-xs text-gray-500">จากทั้งหมด: ${totalPatients.toLocaleString()} ราย</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // แสดง popup
+                const modalContainer = document.createElement('div');
+                modalContainer.id = 'allAgePercentageModal';
+                modalContainer.innerHTML = popupContent;
+                document.body.appendChild(modalContainer);
+
+            } catch (error) {
+                console.error('Error showing all age percentage ranking:', error);
+                alert('เกิดข้อผิดพลาดในการโหลดข้อมูลกลุ่มอายุ');
+            }
+        }
+
+        // ฟังก์ชันปิด popup กลุ่มอายุ (อัตราป่วย)
+        function closeAllAgeGroupsModal() {
+            const modal = document.getElementById('allAgeGroupsModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // ฟังก์ชันปิด popup กลุ่มอายุ (ร้อยละ)
+        function closeAllAgePercentageModal() {
+            const modal = document.getElementById('allAgePercentageModal');
             if (modal) {
                 modal.remove();
             }
@@ -2818,7 +3242,7 @@
                 const year = date.getFullYear() + 543;
                 const monthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
                                    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-                return `${day}/${String(month + 1).padStart(2, '0')}/${year}`;
+                return `${day} ${monthNames[month]} ${year}`;
             };
             
             const reportMonth = startDateObj.toLocaleString('th-TH', { month: 'long' });
@@ -2866,7 +3290,7 @@
                     <ul style="font-size: 14px; line-height: 1.8; list-style: none; padding-left: 1cm; font-family: 'Anuphan', sans-serif;">
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ผู้ป่วยสะสมจำนวน ${totalPatients.toLocaleString()} ราย คิดเป็นอัตราป่วยสะสม ${incidenceRate} รายต่อแสนประชากร</li>
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ${deaths > 0 ? `ผู้เสียชีวิต ${deaths} ราย` : 'ไม่พบผู้เสียชีวิต'}</li>
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- อัตราส่วนผู้ป่วยชายต่อหญิง คือ ${genderRatio !== 'ไม่สามารถคำนวณได้' ? `1 ต่อ ${genderRatio}` : genderRatio}</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- อัตราส่วนผู้ป่วยชายต่อหญิง คือ ${genderRatio !== 'ไม่สามารถคำนวณได้' ? `1 : ${genderRatio}` : genderRatio}</li>
                         ${ageGroupStats.topThree.length > 0 ? `
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- อัตราป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${ageGroupStats.topThree[0].ageGroup} (${ageGroupStats.topThree[0].rate} ต่อประชากรแสนคน) ${ageGroupStats.topThree.length > 1 ? `รองลงมา ได้แก่ ${ageGroupStats.topThree[1].ageGroup} (${ageGroupStats.topThree[1].rate} ต่อประชากรแสนคน)` : ''} ${ageGroupStats.topThree.length > 2 ? `และ ${ageGroupStats.topThree[2].ageGroup} (${ageGroupStats.topThree[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
                         ` : ''}
