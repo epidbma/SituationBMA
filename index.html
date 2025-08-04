@@ -6,6 +6,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบสรุปสถานการณ์โรค - กลุ่มงานระบาดวิทยา</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -801,7 +804,7 @@
                     </div>
                     
                     <!-- Footer -->
-                    <div class="absolute bottom-0 left-0 right-0 text-center text-sm text-gray-600" style="padding: 5mm; font-size: 12px;">
+                    <div class="absolute bottom-0 left-0 right-0 text-center text-sm text-gray-600" style="padding: 5mm; font-size: 12px; font-family: 'Anuphan', sans-serif;">
                         <div class="mb-1">เอกสารใช้ในราชการ เฉพาะเครือข่ายเฝ้าระวังทางระบาดวิทยา</div>
                         <div>กลุ่มงานระบาดวิทยา ส่วนระบาดวิทยา สำนักงานโรคติดต่อทางสาธารณสุข สำนักอนามัย กรุงเทพมหานคร</div>
                     </div>
@@ -2680,55 +2683,16 @@
 
         // Load disease options for report
         async function loadDiseaseOptions() {
-            try {
-                // Load both diseases and patients data
-                const [diseases, patients] = await Promise.all([
-                    loadFromFirebase('diseases'),
-                    loadFromFirebase('patients')
-                ]);
-                
-                const select = document.getElementById('diseaseCode');
-                select.innerHTML = '<option value="">เลือกรหัสโรค</option>';
-                
-                // Get unique disease codes from patients database
-                const diseasesWithPatients = new Set();
-                if (patients && patients.length > 0) {
-                    patients.forEach(patient => {
-                        if (patient.diseaseCode) {
-                            diseasesWithPatients.add(patient.diseaseCode);
-                        }
-                    });
-                }
-                
-                // Filter diseases to show only those with patients
-                const availableDiseases = diseases.filter(disease => 
-                    diseasesWithPatients.has(disease.code)
-                );
-                
-                // Sort diseases by code
-                availableDiseases.sort((a, b) => a.code.localeCompare(b.code));
-                
-                availableDiseases.forEach(disease => {
-                    const option = document.createElement('option');
-                    option.value = disease.code;
-                    option.textContent = `${disease.code} - ${disease.name}`;
-                    select.appendChild(option);
-                });
-                
-                // Show message if no diseases have patients
-                if (availableDiseases.length === 0) {
-                    const option = document.createElement('option');
-                    option.value = '';
-                    option.textContent = 'ไม่พบโรคที่มีผู้ป่วยในระบบ';
-                    option.disabled = true;
-                    select.appendChild(option);
-                }
-                
-            } catch (error) {
-                console.error('Error loading disease options:', error);
-                const select = document.getElementById('diseaseCode');
-                select.innerHTML = '<option value="">เกิดข้อผิดพลาดในการโหลดข้อมูล</option>';
-            }
+            const diseases = await loadFromFirebase('diseases');
+            const select = document.getElementById('diseaseCode');
+            select.innerHTML = '<option value="">เลือกรหัสโรค</option>';
+            
+            diseases.forEach(disease => {
+                const option = document.createElement('option');
+                option.value = disease.code;
+                option.textContent = `${disease.code} - ${disease.name}`;
+                select.appendChild(option);
+            });
         }
 
         // Load disease info when code is selected
@@ -2829,11 +2793,6 @@
                     
                     return onsetDate >= start && onsetDate <= end;
                 });
-                
-                // Check if there are any patients for this disease in the date range
-                if (filteredPatients.length === 0) {
-                    throw new Error(`ไม่พบผู้ป่วยโรค${selectedDisease.name} ในช่วงวันที่ที่เลือก`);
-                }
                 
                 // Generate report HTML
                 const reportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts);
@@ -3009,18 +2968,11 @@
             const currentYear = now.getFullYear();
             const currentMonth = now.getMonth();
             
-            // Start date: January 1st of current year
-            const startDate = new Date(currentYear, 0, 1);
+            // Start date: January 1st of current year (1 มกราคม)
+            const startDate = new Date(currentYear, 0, 1); // 0 = January, 1 = first day
             
             // End date: Last day of previous month
-            let endDate;
-            if (currentMonth === 0) {
-                // If current month is January, get December of previous year
-                endDate = new Date(currentYear - 1, 11, 31);
-            } else {
-                // Otherwise, get last day of previous month
-                endDate = new Date(currentYear, currentMonth, 0);
-            }
+            const endDate = new Date(currentYear, currentMonth, 0);
             
             // Format dates for input fields (YYYY-MM-DD)
             const formatForInput = (date) => {
