@@ -2180,6 +2180,15 @@
                     agePopulationCount: agePopulation ? agePopulation.length : 0,
                     agePopulationSample: agePopulation ? agePopulation.slice(0, 2) : null
                 });
+
+                // แสดงกลุ่มอายุทั้งหมดที่มีในฐานข้อมูล
+                if (agePopulation && Array.isArray(agePopulation)) {
+                    console.log('🎯 Available age groups in database:');
+                    agePopulation.forEach((group, index) => {
+                        console.log(`   ${index + 1}. กลุ่มอายุ: "${group.ageGroup}" | ประชากร: ${group.population}`);
+                    });
+                    console.log('📝 Total age groups available:', agePopulation.length);
+                }
                 
                 if (!patients || !agePopulation) {
                     throw new Error('ไม่พบข้อมูลผู้ป่วยหรือประชากร');
@@ -2202,27 +2211,76 @@
 
                 // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ
                 const ageGroupCount = {};
-                filteredPatients.forEach(patient => {
+                const patientAgeGroupDetails = []; // เก็บรายละเอียดการจัดกลุ่ม
+                
+                console.log('🔄 Processing patients for age group classification:');
+                
+                filteredPatients.forEach((patient, index) => {
                     // เช็คหลายฟิลด์ที่อาจจะเป็นกลุ่มอายุ
                     const ageGroup = patient.ageGroup || patient.กลุ่มอายุ || patient['กลุ่มอายุ'];
+                    
+                    // เก็บรายละเอียดการจัดกลุ่ม
+                    patientAgeGroupDetails.push({
+                        patientIndex: index + 1,
+                        ageGroup: ageGroup || 'ไม่ระบุ',
+                        patientData: {
+                            ageGroup: patient.ageGroup,
+                            กลุ่มอายุ: patient.กลุ่มอายุ,
+                            'กลุ่มอายุ': patient['กลุ่มอายุ']
+                        }
+                    });
+                    
                     if (ageGroup) {
                         ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
                     }
                 });
 
+                // แสดงรายละเอียดการจัดกลุ่มอายุ
+                console.log('👥 Patient age group classification details:');
+                patientAgeGroupDetails.slice(0, 10).forEach(detail => {
+                    console.log(`   ผู้ป่วยคนที่ ${detail.patientIndex}: กลุ่มอายุ = "${detail.ageGroup}"`);
+                    if (detail.ageGroup === 'ไม่ระบุ') {
+                        console.log(`      ข้อมูลในฐานข้อมูล:`, detail.patientData);
+                    }
+                });
+                
+                if (patientAgeGroupDetails.length > 10) {
+                    console.log(`   ... และอีก ${patientAgeGroupDetails.length - 10} คน`);
+                }
+
                 console.log('📈 Age group counts:', ageGroupCount);
 
                 // สร้าง map ของประชากรแต่ละกลุ่มอายุ
                 const ageGroupPopulation = {};
+                const availableAgeGroups = [];
+                
                 if (Array.isArray(agePopulation)) {
                     agePopulation.forEach(group => {
                         if (group.ageGroup && group.population) {
                             ageGroupPopulation[group.ageGroup] = group.population;
+                            availableAgeGroups.push(group.ageGroup);
                         }
                     });
                 }
 
                 console.log('👥 Age group population:', ageGroupPopulation);
+
+                // เปรียบเทียบกลุ่มอายุของผู้ป่วยกับที่มีในฐานข้อมูลประชากร
+                console.log('🔍 Age group matching analysis:');
+                console.log('   กลุ่มอายุในฐานข้อมูลประชากร:', availableAgeGroups);
+                console.log('   กลุ่มอายุที่พบในผู้ป่วย:', Object.keys(ageGroupCount));
+                
+                // หากลุ่มอายุที่ไม่ตรงกัน
+                const patientAgeGroups = Object.keys(ageGroupCount);
+                const unmatchedPatientGroups = patientAgeGroups.filter(group => !availableAgeGroups.includes(group));
+                const unmatchedPopulationGroups = availableAgeGroups.filter(group => !patientAgeGroups.includes(group));
+                
+                if (unmatchedPatientGroups.length > 0) {
+                    console.log('⚠️  กลุ่มอายุในผู้ป่วยที่ไม่พบในฐานข้อมูลประชากร:', unmatchedPatientGroups);
+                }
+                if (unmatchedPopulationGroups.length > 0) {
+                    console.log('📋 กลุ่มอายุในฐานข้อมูลประชากรที่ไม่มีผู้ป่วย:', unmatchedPopulationGroups);
+                }
 
                 // คำนวณอัตราป่วยและเรียงลำดับ
                 const ageGroupRates = Object.entries(ageGroupCount)
@@ -2343,13 +2401,37 @@
 
                 // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ
                 const ageGroupCount = {};
-                filteredPatients.forEach(patient => {
+                const patientAgeGroupDetails = []; // เก็บรายละเอียดการจัดกลุ่ม
+                
+                console.log('🔄 Percentage - Processing patients for age group classification:');
+                
+                filteredPatients.forEach((patient, index) => {
                     // เช็คหลายฟิลด์ที่อาจจะเป็นกลุ่มอายุ
                     const ageGroup = patient.ageGroup || patient.กลุ่มอายุ || patient['กลุ่มอายุ'];
+                    
+                    // เก็บรายละเอียดการจัดกลุ่ม
+                    patientAgeGroupDetails.push({
+                        patientIndex: index + 1,
+                        ageGroup: ageGroup || 'ไม่ระบุ',
+                        patientData: {
+                            ageGroup: patient.ageGroup,
+                            กลุ่มอายุ: patient.กลุ่มอายุ,
+                            'กลุ่มอายุ': patient['กลุ่มอายุ']
+                        }
+                    });
+                    
                     if (ageGroup) {
                         ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
                     }
                 });
+
+                // แสดงสถิติการจัดกลุ่มอายุ
+                const patientsWithAgeGroup = patientAgeGroupDetails.filter(p => p.ageGroup !== 'ไม่ระบุ').length;
+                const patientsWithoutAgeGroup = patientAgeGroupDetails.filter(p => p.ageGroup === 'ไม่ระบุ').length;
+                
+                console.log('📊 Percentage - Age group classification summary:');
+                console.log(`   ผู้ป่วยที่มีกลุ่มอายุ: ${patientsWithAgeGroup} คน (${((patientsWithAgeGroup/totalPatients)*100).toFixed(1)}%)`);
+                console.log(`   ผู้ป่วยที่ไม่มีกลุ่มอายุ: ${patientsWithoutAgeGroup} คน (${((patientsWithoutAgeGroup/totalPatients)*100).toFixed(1)}%)`);
 
                 console.log('📈 Percentage - Age group counts:', ageGroupCount);
 
