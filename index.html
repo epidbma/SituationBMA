@@ -2160,6 +2160,60 @@
             }
         }
 
+        // ฟังก์ชันแปลงอายุเป็นกลุ่มอายุ
+        function getAgeGroupFromAge(age) {
+            if (age < 0) return null;
+            if (age <= 4) return '0-4 ปี';
+            if (age <= 9) return '5-9 ปี';
+            if (age <= 14) return '10-14 ปี';
+            if (age <= 19) return '15-19 ปี';
+            if (age <= 24) return '20-24 ปี';
+            if (age <= 29) return '25-29 ปี';
+            if (age <= 34) return '30-34 ปี';
+            if (age <= 39) return '35-39 ปี';
+            if (age <= 44) return '40-44 ปี';
+            if (age <= 49) return '45-49 ปี';
+            if (age <= 54) return '50-54 ปี';
+            if (age <= 59) return '55-59 ปี';
+            if (age <= 64) return '60-64 ปี';
+            if (age <= 69) return '65-69 ปี';
+            if (age <= 74) return '70-74 ปี';
+            if (age <= 79) return '75-79 ปี';
+            return '80+ ปี';
+        }
+
+        // ฟังก์ชันคำนวณประชากรแต่ละกลุ่มอายุจากข้อมูล ageYear
+        function calculateAgeGroupPopulation(populationData) {
+            const ageGroupPop = {};
+            const ageGroups = [
+                '0-4 ปี', '5-9 ปี', '10-14 ปี', '15-19 ปี', '20-24 ปี',
+                '25-29 ปี', '30-34 ปี', '35-39 ปี', '40-44 ปี', '45-49 ปี',
+                '50-54 ปี', '55-59 ปี', '60-64 ปี', '65-69 ปี', '70-74 ปี',
+                '75-79 ปี', '80+ ปี'
+            ];
+
+            // Initialize all age groups with 0
+            ageGroups.forEach(group => {
+                ageGroupPop[group] = 0;
+            });
+
+            if (Array.isArray(populationData)) {
+                populationData.forEach(record => {
+                    const ageYear = record.ageYear || record.อายุปี || record['อายุปี'];
+                    const population = record.population || record.ประชากร || record['ประชากร'] || 0;
+                    
+                    if (ageYear !== undefined && ageYear !== null && population > 0) {
+                        const ageGroup = getAgeGroupFromAge(parseInt(ageYear));
+                        if (ageGroup && ageGroupPop.hasOwnProperty(ageGroup)) {
+                            ageGroupPop[ageGroup] += parseInt(population);
+                        }
+                    }
+                });
+            }
+
+            return ageGroupPop;
+        }
+
         // ฟังก์ชันสร้างอันดับกลุ่มอายุที่มีอัตราป่วยสูงสุด
         async function createTopAgeGroupsRanking(diseaseCode) {
             try {
@@ -2167,22 +2221,22 @@
                 
                 // โหลดข้อมูลผู้ป่วยและประชากรจากฐานข้อมูล
                 const { database, ref, get } = window.firebaseDB;
-                const [patientsSnapshot, agePopulationSnapshot] = await Promise.all([
+                const [patientsSnapshot, populationSnapshot] = await Promise.all([
                     get(ref(database, 'patients')),
-                    get(ref(database, 'agePopulation'))
+                    get(ref(database, 'population'))
                 ]);
                 
                 const patients = patientsSnapshot.val();
-                const agePopulation = agePopulationSnapshot.val();
+                const populationData = populationSnapshot.val();
                 
                 console.log('📊 Raw data loaded:', {
                     patientsCount: patients ? Object.keys(patients).length : 0,
-                    agePopulationCount: agePopulation ? agePopulation.length : 0,
-                    agePopulationSample: agePopulation ? agePopulation.slice(0, 2) : null
+                    populationDataCount: populationData ? Object.keys(populationData).length : 0,
+                    populationSample: populationData ? Object.values(populationData).slice(0, 2) : null
                 });
                 
-                if (!patients || !agePopulation) {
-                    throw new Error('ไม่พบข้อมูลผู้ป่วยหรือประชากร');
+                if (!patients) {
+                    throw new Error('ไม่พบข้อมูลผู้ป่วย');
                 }
 
                 // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
@@ -2200,134 +2254,30 @@
                     diseaseCode: diseaseCode
                 });
 
-                // สร้างกลุ่มอายุจาก ageYear สำหรับผู้ป่วยที่ไม่มี ageGroup
-                const createAgeGroupFromAgeYear = (ageYear) => {
-                    if (ageYear === null || ageYear === undefined || isNaN(ageYear)) return null;
-                    
-                    const age = parseInt(ageYear);
-                    if (age < 0) return null;
-                    
-                    if (age <= 4) return '0-4 ปี';
-                    if (age <= 9) return '5-9 ปี';
-                    if (age <= 14) return '10-14 ปี';
-                    if (age <= 19) return '15-19 ปี';
-                    if (age <= 24) return '20-24 ปี';
-                    if (age <= 29) return '25-29 ปี';
-                    if (age <= 34) return '30-34 ปี';
-                    if (age <= 39) return '35-39 ปี';
-                    if (age <= 44) return '40-44 ปี';
-                    if (age <= 49) return '45-49 ปี';
-                    if (age <= 54) return '50-54 ปี';
-                    if (age <= 59) return '55-59 ปี';
-                    if (age <= 64) return '60-64 ปี';
-                    if (age <= 69) return '65-69 ปี';
-                    if (age <= 74) return '70-74 ปี';
-                    if (age <= 79) return '75-79 ปี';
-                    return '80+ ปี';
-                };
-
-                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ พร้อมแสดง Console Log
+                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ (ใช้ ageYear แล้วแปลงเป็นกลุ่มอายุ)
                 const ageGroupCount = {};
-                const ageGroupDetails = {};
-                
-                console.log('🔍 === การวิเคราะห์กลุ่มอายุ ===');
-                console.log('รหัสโรค:', diseaseCode);
-                console.log('จำนวนผู้ป่วยที่กรองแล้ว:', filteredPatients.length);
-                console.log('');
-                
-                filteredPatients.forEach((patient, index) => {
-                    // เช็คหลายฟิลด์ที่อาจจะเป็นกลุ่มอายุ
+                filteredPatients.forEach(patient => {
+                    // ลองหากลุ่มอายุที่มีอยู่แล้วก่อน
                     let ageGroup = patient.ageGroup || patient.กลุ่มอายุ || patient['กลุ่มอายุ'];
                     
-                    // ถ้าไม่มี ageGroup ให้สร้างจาก ageYears
+                    // ถ้าไม่มีกลุ่มอายุ ให้คำนวณจาก ageYear
                     if (!ageGroup) {
                         const ageYear = patient.ageYears || patient.อายุปี || patient['อายุปี'];
-                        ageGroup = createAgeGroupFromAgeYear(ageYear);
+                        if (ageYear !== undefined && ageYear !== null) {
+                            ageGroup = getAgeGroupFromAge(parseInt(ageYear));
+                        }
                     }
                     
                     if (ageGroup) {
-                        // นับจำนวน
                         ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
-                        
-                        // เก็บรายละเอียดผู้ป่วยในแต่ละกลุ่ม
-                        if (!ageGroupDetails[ageGroup]) {
-                            ageGroupDetails[ageGroup] = [];
-                        }
-                        
-                        const ageYear = patient.ageYears || patient.อายุปี || patient['อายุปี'] || 'ไม่ระบุ';
-                        const gender = patient.gender || patient.เพศ || patient['เพศ'] || 'ไม่ระบุ';
-                        const onsetDate = patient.onsetDate || patient.วันที่เริ่มป่วย || patient['วันที่เริ่มป่วย'] || 'ไม่ระบุ';
-                        
-                        ageGroupDetails[ageGroup].push({
-                            ลำดับ: index + 1,
-                            อายุปี: ageYear,
-                            เพศ: gender,
-                            วันที่เริ่มป่วย: onsetDate,
-                            ข้อมูลดิบ: patient
-                        });
-                    } else {
-                        console.log(`⚠️ ผู้ป่วยลำดับที่ ${index + 1} ไม่สามารถจัดกลุ่มอายุได้:`, {
-                            ageGroup: patient.ageGroup,
-                            กลุ่มอายุ: patient.กลุ่มอายุ,
-                            ageYears: patient.ageYears,
-                            อายุปี: patient.อายุปี,
-                            ข้อมูลดิบ: patient
-                        });
                     }
                 });
 
-                console.log('📈 สรุปจำนวนผู้ป่วยแต่ละกลุ่มอายุ:', ageGroupCount);
-                console.log('');
-                
-                // แสดงรายละเอียดผู้ป่วยในแต่ละกลุ่มอายุ
-                Object.entries(ageGroupDetails).forEach(([ageGroup, patients]) => {
-                    console.log(`👥 กลุ่มอายุ "${ageGroup}" (${patients.length} ราย):`);
-                    console.table(patients);
-                    console.log('');
-                });
+                console.log('📈 Age group counts:', ageGroupCount);
 
-                // แสดงสถิติสรุป
-                const totalGrouped = Object.values(ageGroupCount).reduce((sum, count) => sum + count, 0);
-                const ungroupedCount = filteredPatients.length - totalGrouped;
-                
-                console.log('📊 สถิติสรุป:');
-                console.log(`- ผู้ป่วยทั้งหมด: ${filteredPatients.length} ราย`);
-                console.log(`- จัดกลุ่มอายุได้: ${totalGrouped} ราย`);
-                console.log(`- จัดกลุ่มอายุไม่ได้: ${ungroupedCount} ราย`);
-                console.log('');
-                
-                // แสดงผู้ป่วยที่ไม่สามารถจัดกลุ่มได้
-                if (ungroupedCount > 0) {
-                    const ungroupedPatients = filteredPatients.filter(patient => {
-                        let ageGroup = patient.ageGroup || patient.กลุ่มอายุ || patient['กลุ่มอายุ'];
-                        if (!ageGroup) {
-                            const ageYear = patient.ageYears || patient.อายุปี || patient['อายุปี'];
-                            ageGroup = createAgeGroupFromAgeYear(ageYear);
-                        }
-                        return !ageGroup;
-                    });
-                    
-                    console.log('⚠️ ผู้ป่วยที่ไม่สามารถจัดกลุ่มอายุได้:');
-                    console.table(ungroupedPatients.map((patient, index) => ({
-                        ลำดับ: index + 1,
-                        ageGroup: patient.ageGroup,
-                        กลุ่มอายุ: patient.กลุ่มอายุ,
-                        ageYears: patient.ageYears,
-                        อายุปี: patient.อายุปี,
-                        เพศ: patient.gender || patient.เพศ
-                    })));
-                    console.log('');
-                }
-
-                // สร้าง map ของประชากรแต่ละกลุ่มอายุ
-                const ageGroupPopulation = {};
-                if (Array.isArray(agePopulation)) {
-                    agePopulation.forEach(group => {
-                        if (group.ageGroup && group.population) {
-                            ageGroupPopulation[group.ageGroup] = group.population;
-                        }
-                    });
-                }
+                // คำนวณประชากรแต่ละกลุ่มอายุจากข้อมูล population
+                const ageGroupPopulation = populationData ? 
+                    calculateAgeGroupPopulation(Object.values(populationData)) : {};
 
                 console.log('👥 Age group population:', ageGroupPopulation);
 
@@ -2408,139 +2358,6 @@
             }
         }
 
-        // ฟังก์ชันแยกต่างหากสำหรับแสดง Console Log ข้อมูลกลุ่มอายุ
-        async function logAgeGroupAnalysis(diseaseCode) {
-            try {
-                console.log('🔍 === เริ่มการวิเคราะห์กลุ่มอายุแบบเฉพาะ ===');
-                
-                // โหลดข้อมูลผู้ป่วยจากฐานข้อมูล
-                const { database, ref, get } = window.firebaseDB;
-                const patientsSnapshot = await get(ref(database, 'patients'));
-                const patients = patientsSnapshot.val();
-                
-                if (!patients) {
-                    console.log('❌ ไม่พบข้อมูลผู้ป่วยในฐานข้อมูล');
-                    return;
-                }
-
-                // สร้างกลุ่มอายุจาก ageYear
-                const createAgeGroupFromAgeYear = (ageYear) => {
-                    if (ageYear === null || ageYear === undefined || isNaN(ageYear)) return null;
-                    
-                    const age = parseInt(ageYear);
-                    if (age < 0) return null;
-                    
-                    if (age <= 4) return '0-4 ปี';
-                    if (age <= 9) return '5-9 ปี';
-                    if (age <= 14) return '10-14 ปี';
-                    if (age <= 19) return '15-19 ปี';
-                    if (age <= 24) return '20-24 ปี';
-                    if (age <= 29) return '25-29 ปี';
-                    if (age <= 34) return '30-34 ปี';
-                    if (age <= 39) return '35-39 ปี';
-                    if (age <= 44) return '40-44 ปี';
-                    if (age <= 49) return '45-49 ปี';
-                    if (age <= 54) return '50-54 ปี';
-                    if (age <= 59) return '55-59 ปี';
-                    if (age <= 64) return '60-64 ปี';
-                    if (age <= 69) return '65-69 ปี';
-                    if (age <= 74) return '70-74 ปี';
-                    if (age <= 79) return '75-79 ปี';
-                    return '80+ ปี';
-                };
-
-                // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
-                const allPatients = Object.values(patients);
-                const filteredPatients = diseaseCode ? 
-                    allPatients.filter(patient => {
-                        const diseaseCodeField = patient.diseaseCode || patient.รหัสโรค || patient['รหัสโรค'] || patient.โรค;
-                        return diseaseCodeField === diseaseCode;
-                    }) : allPatients;
-
-                console.log('📊 ข้อมูลพื้นฐาน:');
-                console.log(`- รหัสโรค: ${diseaseCode || 'ทั้งหมด'}`);
-                console.log(`- ผู้ป่วยทั้งหมด: ${allPatients.length} ราย`);
-                console.log(`- ผู้ป่วยที่เลือก: ${filteredPatients.length} ราย`);
-                console.log('');
-
-                // วิเคราะห์กลุ่มอายุ
-                const ageGroupCount = {};
-                const ageGroupDetails = {};
-                const ageYearGroups = {}; // จัดกลุ่มตาม ageYear ดิบ
-                
-                filteredPatients.forEach((patient, index) => {
-                    // ดึง ageYear ดิบ
-                    const ageYear = patient.ageYears || patient.อายุปี || patient['อายุปี'];
-                    
-                    // สร้าง ageGroup หรือใช้ที่มีอยู่แล้ว
-                    let ageGroup = patient.ageGroup || patient.กลุ่มอายุ || patient['กลุ่มอายุ'];
-                    if (!ageGroup && ageYear !== null && ageYear !== undefined) {
-                        ageGroup = createAgeGroupFromAgeYear(ageYear);
-                    }
-                    
-                    // จัดกลุ่มตาม ageYear ดิบ
-                    if (ageYear !== null && ageYear !== undefined && !isNaN(ageYear)) {
-                        const ageKey = `${ageYear} ปี`;
-                        if (!ageYearGroups[ageKey]) {
-                            ageYearGroups[ageKey] = [];
-                        }
-                        ageYearGroups[ageKey].push({
-                            ลำดับ: index + 1,
-                            อายุปี: ageYear,
-                            กลุ่มอายุที่สร้าง: ageGroup,
-                            กลุ่มอายุเดิม: patient.ageGroup || patient.กลุ่มอายุ,
-                            เพศ: patient.gender || patient.เพศ || 'ไม่ระบุ',
-                            วันที่เริ่มป่วย: patient.onsetDate || patient.วันที่เริ่มป่วย || 'ไม่ระบุ'
-                        });
-                    }
-                    
-                    // นับตาม ageGroup
-                    if (ageGroup) {
-                        ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
-                        
-                        if (!ageGroupDetails[ageGroup]) {
-                            ageGroupDetails[ageGroup] = [];
-                        }
-                        ageGroupDetails[ageGroup].push({
-                            ลำดับ: index + 1,
-                            อายุปี: ageYear || 'ไม่ระบุ',
-                            เพศ: patient.gender || patient.เพศ || 'ไม่ระบุ',
-                            วันที่เริ่มป่วย: patient.onsetDate || patient.วันที่เริ่มป่วย || 'ไม่ระบุ'
-                        });
-                    }
-                });
-
-                // แสดงผลการจัดกลุ่มตาม ageYear
-                console.log('🎯 === การจัดกลุ่มตามอายุปี (ageYear) ===');
-                const sortedAgeYears = Object.keys(ageYearGroups).sort((a, b) => {
-                    const ageA = parseInt(a.replace(' ปี', ''));
-                    const ageB = parseInt(b.replace(' ปี', ''));
-                    return ageA - ageB;
-                });
-                
-                sortedAgeYears.forEach(ageKey => {
-                    const patients = ageYearGroups[ageKey];
-                    console.log(`👤 อายุ ${ageKey} (${patients.length} ราย):`);
-                    console.table(patients);
-                });
-
-                // แสดงผลการจัดกลุ่มตาม ageGroup
-                console.log('👥 === การจัดกลุ่มตามช่วงอายุ (ageGroup) ===');
-                console.log('สรุปจำนวน:', ageGroupCount);
-                console.log('');
-                
-                Object.entries(ageGroupDetails).forEach(([ageGroup, patients]) => {
-                    console.log(`📊 กลุ่มอายุ "${ageGroup}" (${patients.length} ราย):`);
-                    console.table(patients);
-                });
-
-                console.log('✅ การวิเคราะห์กลุ่มอายุเสร็จสิ้น');
-                
-            } catch (error) {
-                console.error('❌ Error in logAgeGroupAnalysis:', error);
-            }
-        }
-
         // ฟังก์ชันสร้างร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุ
         async function createTopAgePercentageRanking(diseaseCode) {
             try {
@@ -2581,11 +2398,20 @@
                     return;
                 }
 
-                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ
+                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ (ใช้ ageYear แล้วแปลงเป็นกลุ่มอายุ)
                 const ageGroupCount = {};
                 filteredPatients.forEach(patient => {
-                    // เช็คหลายฟิลด์ที่อาจจะเป็นกลุ่มอายุ
-                    const ageGroup = patient.ageGroup || patient.กลุ่มอายุ || patient['กลุ่มอายุ'];
+                    // ลองหากลุ่มอายุที่มีอยู่แล้วก่อน
+                    let ageGroup = patient.ageGroup || patient.กลุ่มอายุ || patient['กลุ่มอายุ'];
+                    
+                    // ถ้าไม่มีกลุ่มอายุ ให้คำนวณจาก ageYear
+                    if (!ageGroup) {
+                        const ageYear = patient.ageYears || patient.อายุปี || patient['อายุปี'];
+                        if (ageYear !== undefined && ageYear !== null) {
+                            ageGroup = getAgeGroupFromAge(parseInt(ageYear));
+                        }
+                    }
+                    
                     if (ageGroup) {
                         ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
                     }
@@ -3508,10 +3334,10 @@
         async function generateReportContent(diseaseCode, startDate, endDate) {
             try {
                 // Load necessary data
-                const [diseases, patients, agePopulation, bangkokDistricts] = await Promise.all([
+                const [diseases, patients, populationData, bangkokDistricts] = await Promise.all([
                     loadFromFirebase('diseases'),
                     loadFromFirebase('patients'),
-                    loadFromFirebase('agePopulation'),
+                    loadFromFirebase('population'),
                     loadFromFirebase('bangkokDistricts')
                 ]);
                 
@@ -3533,7 +3359,7 @@
                 });
                 
                 // Generate report HTML
-                const reportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts);
+                const reportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, populationData, bangkokDistricts);
                 
                 // Display in preview
                 document.getElementById('reportContent').innerHTML = reportHTML;
@@ -3545,7 +3371,7 @@
         }
 
         // Generate the actual report HTML content
-        function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts) {
+        function generateReportHTML(disease, patients, startDate, endDate, populationData, bangkokDistricts) {
             const startDateObj = new Date(startDate);
             const endDateObj = new Date(endDate);
             
@@ -3572,12 +3398,16 @@
             // Calculate gender ratio
             const genderRatio = femalePatients > 0 ? (malePatients / femalePatients).toFixed(1) : 'ไม่สามารถคำนวณได้';
             
-            // Calculate total population for Bangkok
-            const totalPopulation = agePopulation.reduce((sum, group) => sum + (group.population || 0), 0);
+            // Calculate total population for Bangkok from populationData
+            const allPopulationData = populationData ? Object.values(populationData) : [];
+            const totalPopulation = allPopulationData.reduce((sum, record) => {
+                const population = record.population || record.ประชากร || record['ประชากร'] || 0;
+                return sum + parseInt(population);
+            }, 0);
             const incidenceRate = totalPopulation > 0 ? ((totalPatients / totalPopulation) * 100000).toFixed(2) : '0.00';
             
             // Generate age group statistics
-            const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
+            const ageGroupStats = calculateAgeGroupStats(patients, allPopulationData);
             const districtStats = calculateDistrictStats(patients, bangkokDistricts);
             
             return `
@@ -3622,21 +3452,36 @@
         }
 
         // Calculate age group statistics
-        function calculateAgeGroupStats(patients, agePopulation) {
+        function calculateAgeGroupStats(patients, populationData) {
+            // คำนวณประชากรแต่ละกลุ่มอายุจากข้อมูล population
+            const ageGroupPopulation = populationData ? 
+                calculateAgeGroupPopulation(populationData) : {};
+            
             const ageGroups = {};
             
-            // Initialize age groups
-            agePopulation.forEach(group => {
-                ageGroups[group.ageGroup] = {
+            // Initialize age groups from calculated population
+            Object.entries(ageGroupPopulation).forEach(([ageGroup, population]) => {
+                ageGroups[ageGroup] = {
                     patients: 0,
-                    population: group.population || 0
+                    population: population || 0
                 };
             });
             
-            // Count patients by age group
+            // Count patients by age group (use ageYear to determine age group)
             patients.forEach(patient => {
-                if (patient.ageGroup && ageGroups[patient.ageGroup]) {
-                    ageGroups[patient.ageGroup].patients++;
+                // ลองหากลุ่มอายุที่มีอยู่แล้วก่อน
+                let ageGroup = patient.ageGroup || patient.กลุ่มอายุ || patient['กลุ่มอายุ'];
+                
+                // ถ้าไม่มีกลุ่มอายุ ให้คำนวณจาก ageYear
+                if (!ageGroup) {
+                    const ageYear = patient.ageYears || patient.อายุปี || patient['อายุปี'];
+                    if (ageYear !== undefined && ageYear !== null) {
+                        ageGroup = getAgeGroupFromAge(parseInt(ageYear));
+                    }
+                }
+                
+                if (ageGroup && ageGroups[ageGroup]) {
+                    ageGroups[ageGroup].patients++;
                 }
             });
             
@@ -12989,38 +12834,6 @@
                 }, 1000);
             }
         });
-
-        // ฟังก์ชันเพื่อทดสอบการวิเคราะห์กลุ่มอายุจาก Console
-        window.testAgeGroupAnalysis = async function(diseaseCode = null) {
-            console.log('🧪 === ทดสอบการวิเคราะห์กลุ่มอายุ ===');
-            await logAgeGroupAnalysis(diseaseCode);
-        };
-
-        // ฟังก์ชันเพื่อทดสอบกับโรคเฉพาะ
-        window.testAgeGroupForDisease = async function(diseaseCode) {
-            if (!diseaseCode) {
-                console.log('❌ กรุณาระบุรหัสโรค เช่น testAgeGroupForDisease("A00")');
-                return;
-            }
-            console.log(`🧪 === ทดสอบการวิเคราะห์กลุ่มอายุสำหรับโรค ${diseaseCode} ===`);
-            await logAgeGroupAnalysis(diseaseCode);
-        };
-
-        // ฟังก์ชันสำหรับแสดงข้อมูลตัวอย่างการใช้งาน
-        window.showAgeGroupCommands = function() {
-            console.log('📚 === คำสั่งสำหรับทดสอบการวิเคราะห์กลุ่มอายุ ===');
-            console.log('');
-            console.log('1. ทดสอบข้อมูลทั้งหมด:');
-            console.log('   testAgeGroupAnalysis()');
-            console.log('');
-            console.log('2. ทดสอบข้อมูลโรคเฉพาะ:');
-            console.log('   testAgeGroupForDisease("A00")  // เปลี่ยน A00 เป็นรหัสโรคที่ต้องการ');
-            console.log('');
-            console.log('3. ดูคำสั่งนี้อีกครั้ง:');
-            console.log('   showAgeGroupCommands()');
-            console.log('');
-            console.log('💡 Tips: ตรวจสอบ Console เพื่อดูผลลัพธ์การวิเคราะห์');
-        };
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9649c11c7372731d',t:'MTc1MzQyNjU1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
