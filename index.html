@@ -2883,22 +2883,53 @@
             `;
         }
 
+        // Helper function to determine age group from patient's age
+        function getAgeGroupFromAge(ageYears, agePopulation) {
+            if (!ageYears && ageYears !== 0) return null;
+            if (!agePopulation || !Array.isArray(agePopulation)) return null;
+            
+            const age = parseInt(ageYears);
+            if (isNaN(age) || age < 0) return null;
+            
+            // Find the age group that contains this age
+            for (const group of agePopulation) {
+                const startAge = parseInt(group.startAge || 0);
+                const endAge = parseInt(group.endAge || 999);
+                
+                if (age >= startAge && age <= endAge) {
+                    return group.ageGroup || `${startAge}-${endAge >= 999 ? '999+' : endAge} ปี`;
+                }
+            }
+            
+            return null;
+        }
+
         // Calculate age group statistics
         function calculateAgeGroupStats(patients, agePopulation) {
             const ageGroups = {};
             
-            // Initialize age groups
+            // Initialize age groups using new structure
             agePopulation.forEach(group => {
-                ageGroups[group.ageGroup] = {
+                const key = group.ageGroup || `${group.startAge || 0}-${group.endAge >= 999 ? '999+' : group.endAge || 0} ปี`;
+                ageGroups[key] = {
                     patients: 0,
-                    population: group.population || 0
+                    population: group.total || group.population || 0,
+                    startAge: parseInt(group.startAge || 0),
+                    endAge: parseInt(group.endAge || 999)
                 };
             });
             
             // Count patients by age group
             patients.forEach(patient => {
+                // If patient already has ageGroup assigned, use it
                 if (patient.ageGroup && ageGroups[patient.ageGroup]) {
                     ageGroups[patient.ageGroup].patients++;
+                } else if (patient.ageYears || patient.ageYears === 0) {
+                    // Calculate age group from patient's age
+                    const ageGroup = getAgeGroupFromAge(patient.ageYears, agePopulation);
+                    if (ageGroup && ageGroups[ageGroup]) {
+                        ageGroups[ageGroup].patients++;
+                    }
                 }
             });
             
@@ -5679,7 +5710,8 @@
                         <thead class="table-header">
                             <tr>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ปี (ค.ศ.)</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">กลุ่มอายุ</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุเริ่มต้น</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุสิ้นสุด</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">จำนวนประชากร</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">ชาย</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">หญิง</th>
@@ -5688,11 +5720,12 @@
                         </thead>
                         <tbody>
                             ${agePopulation.length === 0 ? 
-                                '<tr><td colspan="6" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">👥</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลประชากรตามอายุ</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลประชากรแต่ละกลุ่มอายุ</p></td></tr>' :
+                                '<tr><td colspan="7" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">👥</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลประชากรตามอายุ</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลประชากรแต่ละกลุ่มอายุ</p></td></tr>' :
                                 agePopulation.map((age, index) => `
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
                                         <td class="px-6 py-4 font-semibold text-gray-900">${age.year}</td>
-                                        <td class="px-6 py-4 font-bold text-blue-600">${age.ageGroup}</td>
+                                        <td class="px-6 py-4 font-bold text-blue-600">${age.startAge || age.startAge === 0 ? age.startAge : '-'}</td>
+                                        <td class="px-6 py-4 font-bold text-blue-600">${age.endAge || age.endAge === 0 ? age.endAge : '-'}</td>
                                         <td class="px-6 py-4 text-right font-semibold text-gray-900">${age.total ? parseInt(age.total).toLocaleString() : ''}</td>
                                         <td class="px-6 py-4 text-right text-blue-600">${age.male ? parseInt(age.male).toLocaleString() : ''}</td>
                                         <td class="px-6 py-4 text-right text-pink-600">${age.female ? parseInt(age.female).toLocaleString() : ''}</td>
@@ -9358,19 +9391,32 @@
                                     class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                     placeholder="ปี ค.ศ." value="2025" required>
                             </div>
-                            <!-- Age Group -->
-                            <div class="md:col-span-2">
+                            <!-- Age Range -->
+                            <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-3">
                                     <svg class="w-4 h-4 inline mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
                                     </svg>
-                                    กลุ่มอายุ
+                                    อายุเริ่มต้น
                                 </label>
-                                <input type="text" id="agePopulationGroup" name="ageGroup"
+                                <input type="number" id="agePopulationStartAge" name="startAge" min="0" max="999" step="1"
                                     class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                                    placeholder="เช่น 0-4 ปี, 5-9 ปี" required>
+                                    placeholder="เช่น 0, 5, 10" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">
+                                    <svg class="w-4 h-4 inline mr-2 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                                    </svg>
+                                    อายุสิ้นสุด
+                                </label>
+                                <input type="number" id="agePopulationEndAge" name="endAge" min="0" max="999" step="1"
+                                    class="form-input block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    placeholder="เช่น 4, 9, 14 (ใช้ 999 สำหรับ 80+)" required>
+                                <p class="text-xs text-gray-500 mt-1">หมายเหตุ: ใช้ 999 สำหรับกลุ่มอายุ 80+ หรือกลุ่มสุดท้าย</p>
                             </div>
                             
+                            <!-- Age Group Display (Auto-generated) -->
                             <!-- Male Population -->
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-3">
@@ -9455,7 +9501,7 @@
             
             // Focus on first input
             setTimeout(() => {
-                document.getElementById('agePopulationGroup').focus();
+                document.getElementById('agePopulationStartAge').focus();
             }, 100);
         }
 
@@ -9485,10 +9531,12 @@
             const age = agePopulation[index];
             
             if (age) {
-                document.getElementById('agePopulationGroup').value = age.ageGroup;
+                document.getElementById('agePopulationYear').value = age.year || new Date().getFullYear();
+                document.getElementById('agePopulationStartAge').value = age.startAge || age.startAge === 0 ? age.startAge : '';
+                document.getElementById('agePopulationEndAge').value = age.endAge || age.endAge === 0 ? age.endAge : '';
                 document.getElementById('agePopulationMale').value = age.male;
                 document.getElementById('agePopulationFemale').value = age.female;
-                document.getElementById('agePopulationPercentage').value = age.percentage;
+                
                 calculateAgeTotal();
             }
         }
@@ -9541,30 +9589,43 @@
                                             <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">B</th>
                                             <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">C</th>
                                             <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">D</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">E</th>
+                                            <th class="px-3 py-2 border border-gray-300 text-left font-bold text-gray-700">F</th>
                                         </tr>
                                     </thead>
                                     <tbody class="bg-white">
                                         <tr class="bg-yellow-50">
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ปี (ค.ศ.)</td>
-                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">กลุ่มอายุ</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">อายุเริ่มต้น</td>
+                                            <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">อายุสิ้นสุด</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">จำนวนประชากร</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">ชาย</td>
                                             <td class="px-3 py-2 border border-gray-300 text-gray-600 italic">หญิง</td>
                                         </tr>
                                         <tr>
                                             <td class="px-3 py-2 border border-gray-300">2025</td>
-                                            <td class="px-3 py-2 border border-gray-300">0-4 ปี</td>
+                                            <td class="px-3 py-2 border border-gray-300">0</td>
+                                            <td class="px-3 py-2 border border-gray-300">4</td>
                                             <td class="px-3 py-2 border border-gray-300">25000</td>
                                             <td class="px-3 py-2 border border-gray-300">12800</td>
                                             <td class="px-3 py-2 border border-gray-300">12200</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2 border border-gray-300">2025</td>
+                                            <td class="px-3 py-2 border border-gray-300">5</td>
+                                            <td class="px-3 py-2 border border-gray-300">9</td>
+                                            <td class="px-3 py-2 border border-gray-300">28000</td>
+                                            <td class="px-3 py-2 border border-gray-300">14300</td>
+                                            <td class="px-3 py-2 border border-gray-300">13700</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
                             <div class="mt-3 text-xs text-purple-700 space-y-1">
                                 <p>• <strong>แถวสีเหลือง:</strong> หัวตาราง (สามารถข้ามได้โดยเลือก "ข้ามแถวแรก")</p>
+                                <p>• <strong>อายุเริ่มต้น/สิ้นสุด:</strong> ต้องเป็นตัวเลขเท่านั้น (เช่น 0, 5, 10)</p>
                                 <p>• <strong>จำนวนประชากร:</strong> ต้องเป็นตัวเลขเท่านั้น</p>
-                                <p>• <strong>กลุ่มอายุ:</strong> ต้องระบุช่วงอายุตามรูปแบบ เช่น "0-4 ปี", "5-9 ปี"</p>
+                                <p>• <strong>ตัวอย่าง:</strong> อายุ 0-4 ปี ให้ใส่ อายุเริ่มต้น=0, อายุสิ้นสุด=4</p>
                             </div>
                         </div>
 
@@ -9663,12 +9724,24 @@
         function downloadAgePopulationExampleFile() {
             const currentYear = new Date().getFullYear();
             const data = [
-                ['ปี (ค.ศ.)', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
-                [currentYear, '0-4 ปี', 25000, 12800, 12200],
-                [currentYear, '5-9 ปี', 28000, 14300, 13700],
-                [currentYear, '10-14 ปี', 30000, 15400, 14600],
-                [currentYear, '15-19 ปี', 32000, 16100, 15900],
-                [currentYear, '20-24 ปี', 35000, 17200, 17800]
+                ['ปี (ค.ศ.)', 'อายุเริ่มต้น', 'อายุสิ้นสุด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                [currentYear, 0, 4, 25000, 12800, 12200],
+                [currentYear, 5, 9, 28000, 14300, 13700],
+                [currentYear, 10, 14, 30000, 15400, 14600],
+                [currentYear, 15, 19, 32000, 16100, 15900],
+                [currentYear, 20, 24, 35000, 17200, 17800],
+                [currentYear, 25, 29, 38000, 18800, 19200],
+                [currentYear, 30, 34, 40000, 19500, 20500],
+                [currentYear, 35, 39, 42000, 20800, 21200],
+                [currentYear, 40, 44, 45000, 22000, 23000],
+                [currentYear, 45, 49, 47000, 23200, 23800],
+                [currentYear, 50, 54, 44000, 21800, 22200],
+                [currentYear, 55, 59, 41000, 20300, 20700],
+                [currentYear, 60, 64, 38000, 18500, 19500],
+                [currentYear, 65, 69, 35000, 16800, 18200],
+                [currentYear, 70, 74, 28000, 13200, 14800],
+                [currentYear, 75, 79, 22000, 10000, 12000],
+                [currentYear, 80, 999, 18000, 7500, 10500]
             ];
             
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -9730,15 +9803,16 @@
                     
                     for (let i = startRow; i < jsonData.length; i++) {
                         const row = jsonData[i];
-                        if (row.length < 5) continue; // Skip incomplete rows - now checking for 5 columns
+                        if (row.length < 6) continue; // Skip incomplete rows - now checking for 6 columns
                         
                         const year = parseInt(row[0]);
-                        const ageGroup = row[1]?.toString().trim();
-                        const total = parseInt(row[2]);
-                        const male = parseInt(row[3]);
-                        const female = parseInt(row[4]);
+                        const startAge = parseInt(row[1]);
+                        const endAge = parseInt(row[2]);
+                        const total = parseInt(row[3]);
+                        const male = parseInt(row[4]);
+                        const female = parseInt(row[5]);
                         
-                        if (!year || !ageGroup || isNaN(total) || isNaN(male) || isNaN(female)) {
+                        if (!year || isNaN(startAge) || isNaN(endAge) || isNaN(total) || isNaN(male) || isNaN(female)) {
                             errors.push(`แถวที่ ${i + 1}: ข้อมูลไม่ครบถ้วนหรือไม่ถูกต้อง`);
                             continue;
                         }
@@ -9748,9 +9822,19 @@
                             continue;
                         }
                         
+                        if (startAge < 0 || endAge < 0 || startAge > endAge) {
+                            errors.push(`แถวที่ ${i + 1}: อายุเริ่มต้นต้องน้อยกว่าหรือเท่ากับอายุสิ้นสุด และต้องไม่เป็นลบ`);
+                            continue;
+                        }
+                        
+                        // Generate age group display name
+                        const ageGroup = endAge >= 999 ? `${startAge}+ ปี` : `${startAge}-${endAge} ปี`;
+                        
                         newData.push({
                             year: year.toString(),
-                            ageGroup,
+                            startAge,
+                            endAge,
+                            ageGroup, // Keep for backward compatibility
                             total,
                             male,
                             female
@@ -9771,7 +9855,8 @@
                         for (const newItem of newData) {
                             const existingIndex = existingData.findIndex(item => 
                                 item.year === newItem.year && 
-                                item.ageGroup.toLowerCase() === newItem.ageGroup.toLowerCase()
+                                parseInt(item.startAge || 0) === newItem.startAge && 
+                                parseInt(item.endAge || 0) === newItem.endAge
                             );
                             
                             if (existingIndex !== -1) {
@@ -9809,13 +9894,19 @@
             event.preventDefault();
             
             const year = parseInt(document.getElementById('agePopulationYear').value);
-            const ageGroup = document.getElementById('agePopulationGroup').value.trim();
+            const startAge = parseInt(document.getElementById('agePopulationStartAge').value);
+            const endAge = parseInt(document.getElementById('agePopulationEndAge').value);
             const male = parseInt(document.getElementById('agePopulationMale').value) || 0;
             const female = parseInt(document.getElementById('agePopulationFemale').value) || 0;
             const total = male + female;
             
-            if (!year || !ageGroup || total <= 0) {
+            if (!year || isNaN(startAge) || isNaN(endAge) || total <= 0) {
                 showNotification('กรุณากรอกข้อมูลให้ครบถ้วนและถูกต้อง', 'error');
+                return;
+            }
+            
+            if (startAge < 0 || endAge < 0 || startAge > endAge) {
+                showNotification('อายุเริ่มต้นต้องน้อยกว่าหรือเท่ากับอายุสิ้นสุด และต้องไม่เป็นลบ', 'error');
                 return;
             }
             
@@ -9851,7 +9942,8 @@
                 
                 const newAgePopulation = {
                     year: year.toString(),
-                    ageGroup,
+                    startAge: parseInt(startAge),
+                    endAge: parseInt(endAge),
                     male: male.toString(),
                     female: female.toString(),
                     total: total.toString()
@@ -12038,13 +12130,24 @@
         // Download example Excel file for age population
         function downloadAgePopulationExampleFile() {
             const data = [
-                ['ปี', 'กลุ่มอายุ', 'จำนวนประชากร', 'ชาย', 'หญิง'],
-                [2025, '0-4 ปี', 25000, 12800, 12200],
-                [2025, '5-9 ปี', 28000, 14300, 13700],
-                [2025, '10-14 ปี', 30000, 15400, 14600],
-                [2025, '15-19 ปี', 32000, 16100, 15900],
-                [2025, '20-24 ปี', 35000, 17200, 17800],
-                [2568, '25-29 ปี', 38000, 18500, 19500],
+                ['ปี', 'อายุเริ่มต้น', 'อายุสิ้นสุด', 'จำนวนประชากร', 'ชาย', 'หญิง'],
+                [2025, 0, 4, 25000, 12800, 12200],
+                [2025, 5, 9, 28000, 14300, 13700],
+                [2025, 10, 14, 30000, 15400, 14600],
+                [2025, 15, 19, 32000, 16100, 15900],
+                [2025, 20, 24, 35000, 17200, 17800],
+                [2025, 25, 29, 38000, 18500, 19500],
+                [2025, 30, 34, 40000, 19500, 20500],
+                [2025, 35, 39, 42000, 20800, 21200],
+                [2025, 40, 44, 45000, 22000, 23000],
+                [2025, 45, 49, 47000, 23200, 23800],
+                [2025, 50, 54, 44000, 21800, 22200],
+                [2025, 55, 59, 41000, 20300, 20700],
+                [2025, 60, 64, 38000, 18500, 19500],
+                [2025, 65, 69, 35000, 16800, 18200],
+                [2025, 70, 74, 28000, 13200, 14800],
+                [2025, 75, 79, 22000, 10000, 12000],
+                [2025, 80, 999, 18000, 7500, 10500]
             ];
             
             // Create workbook and worksheet
@@ -12054,7 +12157,8 @@
             // Set column widths
             ws['!cols'] = [
                 { wch: 8 },   // ปี
-                { wch: 15 },  // กลุ่มอายุ
+                { wch: 12 },  // อายุเริ่มต้น
+                { wch: 12 },  // อายุสิ้นสุด
                 { wch: 15 },  // จำนวนประชากร
                 { wch: 12 },  // ชาย
                 { wch: 12 }   // หญิง
