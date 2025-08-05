@@ -2194,33 +2194,21 @@
                 
                 console.log('🔢 Filtered patients:', filteredPatients.length, 'for disease:', diseaseCode);
 
-                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ
-                const ageGroupCount = {};
-                filteredPatients.forEach(patient => {
-                    const ageGroup = patient.ageGroup || patient.กลุ่มอายุ;
-                    if (ageGroup) {
-                        ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
-                    }
-                });
-                
-                console.log('🔢 Age group count:', ageGroupCount);
-
                 // สร้าง map ของประชากรแต่ละกลุ่มอายุ
                 const ageGroupPopulation = {};
+                let ageGroups = [];
+                
                 if (Array.isArray(agePopulation)) {
-                    agePopulation.forEach(group => {
-                        if (group.ageGroup && group.population) {
-                            ageGroupPopulation[group.ageGroup] = group.population;
-                        }
-                    });
+                    ageGroups = agePopulation;
                 } else if (typeof agePopulation === 'object') {
-                    // หากข้อมูลเป็น object ให้แปลงเป็น array
-                    Object.values(agePopulation).forEach(group => {
-                        if (group.ageGroup && group.population) {
-                            ageGroupPopulation[group.ageGroup] = group.population;
-                        }
-                    });
+                    ageGroups = Object.values(agePopulation);
                 }
+                
+                ageGroups.forEach(group => {
+                    if (group.ageGroup && group.population) {
+                        ageGroupPopulation[group.ageGroup] = group.population;
+                    }
+                });
                 
                 console.log('👥 Age group population mapping:', ageGroupPopulation);
                 
@@ -2241,6 +2229,64 @@
                     `;
                     return;
                 }
+
+                // ฟังก์ชันจัดกลุ่มอายุตามอายุปีของผู้ป่วย
+                function getAgeGroupFromAge(age) {
+                    if (!age && age !== 0) return null;
+                    
+                    const numAge = parseInt(age);
+                    if (isNaN(numAge)) return null;
+                    
+                    // จัดกลุ่มตามข้อมูลประชากรที่มีอยู่
+                    const ageGroupKeys = Object.keys(ageGroupPopulation);
+                    
+                    for (const ageGroup of ageGroupKeys) {
+                        // ตรวจสอบรูปแบบกลุ่มอายุ เช่น "0-4", "5-9", "10-14", "65+"
+                        if (ageGroup.includes('-')) {
+                            const [min, max] = ageGroup.split('-').map(num => parseInt(num.trim()));
+                            if (!isNaN(min) && !isNaN(max) && numAge >= min && numAge <= max) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('+')) {
+                            const min = parseInt(ageGroup.replace('+', '').trim());
+                            if (!isNaN(min) && numAge >= min) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('ปีขึ้นไป')) {
+                            const min = parseInt(ageGroup.replace('ปีขึ้นไป', '').trim());
+                            if (!isNaN(min) && numAge >= min) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('ปี')) {
+                            // รูปแบบ "0-4 ปี", "5-9 ปี"
+                            const cleanGroup = ageGroup.replace('ปี', '').trim();
+                            if (cleanGroup.includes('-')) {
+                                const [min, max] = cleanGroup.split('-').map(num => parseInt(num.trim()));
+                                if (!isNaN(min) && !isNaN(max) && numAge >= min && numAge <= max) {
+                                    return ageGroup;
+                                }
+                            }
+                        }
+                    }
+                    
+                    return null;
+                }
+
+                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ โดยคำนวณจากอายุของผู้ป่วย
+                const ageGroupCount = {};
+                filteredPatients.forEach(patient => {
+                    // ลองหาอายุจากฟิลด์ที่เป็นไปได้
+                    const age = patient.age || patient.อายุ || patient.ageInYears || patient.อายุปี;
+                    const ageGroup = getAgeGroupFromAge(age);
+                    
+                    if (ageGroup && ageGroupPopulation[ageGroup]) {
+                        ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
+                    } else if (age) {
+                        console.warn(`⚠️ Cannot classify age ${age} into any age group`);
+                    }
+                });
+                
+                console.log('🔢 Age group count:', ageGroupCount);
 
                 // คำนวณอัตราป่วยและเรียงลำดับ
                 const ageGroupRates = Object.entries(ageGroupCount)
@@ -2306,10 +2352,17 @@
         // ฟังก์ชันสร้างร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุ
         async function createTopAgePercentageRanking(diseaseCode) {
             try {
-                // โหลดข้อมูลผู้ป่วยจากฐานข้อมูล
+                console.log('🔄 Creating age percentage ranking for disease:', diseaseCode);
+                
+                // โหลดข้อมูลผู้ป่วยและประชากรจากฐานข้อมูล
                 const { database, ref, get } = window.firebaseDB;
-                const patientsSnapshot = await get(ref(database, 'patients'));
+                const [patientsSnapshot, agePopulationSnapshot] = await Promise.all([
+                    get(ref(database, 'patients')),
+                    get(ref(database, 'agePopulation'))
+                ]);
+                
                 const patients = patientsSnapshot.val();
+                const agePopulation = agePopulationSnapshot.val();
                 
                 if (!patients) {
                     throw new Error('ไม่พบข้อมูลผู้ป่วย');
@@ -2326,10 +2379,71 @@
                     throw new Error('ไม่พบผู้ป่วยสำหรับโรคนี้');
                 }
 
-                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ
+                // สร้าง map ของประชากรแต่ละกลุ่มอายุ
+                const ageGroupPopulation = {};
+                let ageGroups = [];
+                
+                if (Array.isArray(agePopulation)) {
+                    ageGroups = agePopulation;
+                } else if (typeof agePopulation === 'object') {
+                    ageGroups = Object.values(agePopulation);
+                }
+                
+                ageGroups.forEach(group => {
+                    if (group.ageGroup && group.population) {
+                        ageGroupPopulation[group.ageGroup] = group.population;
+                    }
+                });
+
+                // ฟังก์ชันจัดกลุ่มอายุตามอายุปีของผู้ป่วย
+                function getAgeGroupFromAge(age) {
+                    if (!age && age !== 0) return null;
+                    
+                    const numAge = parseInt(age);
+                    if (isNaN(numAge)) return null;
+                    
+                    // จัดกลุ่มตามข้อมูลประชากรที่มีอยู่
+                    const ageGroupKeys = Object.keys(ageGroupPopulation);
+                    
+                    for (const ageGroup of ageGroupKeys) {
+                        // ตรวจสอบรูปแบบกลุ่มอายุ เช่น "0-4", "5-9", "10-14", "65+"
+                        if (ageGroup.includes('-')) {
+                            const [min, max] = ageGroup.split('-').map(num => parseInt(num.trim()));
+                            if (!isNaN(min) && !isNaN(max) && numAge >= min && numAge <= max) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('+')) {
+                            const min = parseInt(ageGroup.replace('+', '').trim());
+                            if (!isNaN(min) && numAge >= min) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('ปีขึ้นไป')) {
+                            const min = parseInt(ageGroup.replace('ปีขึ้นไป', '').trim());
+                            if (!isNaN(min) && numAge >= min) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('ปี')) {
+                            // รูปแบบ "0-4 ปี", "5-9 ปี"
+                            const cleanGroup = ageGroup.replace('ปี', '').trim();
+                            if (cleanGroup.includes('-')) {
+                                const [min, max] = cleanGroup.split('-').map(num => parseInt(num.trim()));
+                                if (!isNaN(min) && !isNaN(max) && numAge >= min && numAge <= max) {
+                                    return ageGroup;
+                                }
+                            }
+                        }
+                    }
+                    
+                    return null;
+                }
+
+                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ โดยคำนวณจากอายุของผู้ป่วย
                 const ageGroupCount = {};
                 filteredPatients.forEach(patient => {
-                    const ageGroup = patient.ageGroup || patient.กลุ่มอายุ;
+                    // ลองหาอายุจากฟิลด์ที่เป็นไปได้
+                    const age = patient.age || patient.อายุ || patient.ageInYears || patient.อายุปี;
+                    const ageGroup = getAgeGroupFromAge(age);
+                    
                     if (ageGroup) {
                         ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
                     }
@@ -2532,24 +2646,75 @@
                     patient.diseaseCode === diseaseCode || patient.รหัสโรค === diseaseCode
                 );
 
-                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ
-                const ageGroupCount = {};
-                filteredPatients.forEach(patient => {
-                    const ageGroup = patient.ageGroup || patient.กลุ่มอายุ;
-                    if (ageGroup) {
-                        ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
+                // สร้าง map ของประชากรแต่ละกลุ่มอายุ
+                const ageGroupPopulation = {};
+                let ageGroups = [];
+                
+                if (Array.isArray(agePopulation)) {
+                    ageGroups = agePopulation;
+                } else if (typeof agePopulation === 'object') {
+                    ageGroups = Object.values(agePopulation);
+                }
+                
+                ageGroups.forEach(group => {
+                    if (group.ageGroup && group.population) {
+                        ageGroupPopulation[group.ageGroup] = group.population;
                     }
                 });
 
-                // สร้าง map ของประชากรแต่ละกลุ่มอายุ
-                const ageGroupPopulation = {};
-                if (Array.isArray(agePopulation)) {
-                    agePopulation.forEach(group => {
-                        if (group.ageGroup && group.population) {
-                            ageGroupPopulation[group.ageGroup] = group.population;
+                // ฟังก์ชันจัดกลุ่มอายุตามอายุปีของผู้ป่วย
+                function getAgeGroupFromAge(age) {
+                    if (!age && age !== 0) return null;
+                    
+                    const numAge = parseInt(age);
+                    if (isNaN(numAge)) return null;
+                    
+                    // จัดกลุ่มตามข้อมูลประชากรที่มีอยู่
+                    const ageGroupKeys = Object.keys(ageGroupPopulation);
+                    
+                    for (const ageGroup of ageGroupKeys) {
+                        // ตรวจสอบรูปแบบกลุ่มอายุ เช่น "0-4", "5-9", "10-14", "65+"
+                        if (ageGroup.includes('-')) {
+                            const [min, max] = ageGroup.split('-').map(num => parseInt(num.trim()));
+                            if (!isNaN(min) && !isNaN(max) && numAge >= min && numAge <= max) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('+')) {
+                            const min = parseInt(ageGroup.replace('+', '').trim());
+                            if (!isNaN(min) && numAge >= min) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('ปีขึ้นไป')) {
+                            const min = parseInt(ageGroup.replace('ปีขึ้นไป', '').trim());
+                            if (!isNaN(min) && numAge >= min) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('ปี')) {
+                            // รูปแบบ "0-4 ปี", "5-9 ปี"
+                            const cleanGroup = ageGroup.replace('ปี', '').trim();
+                            if (cleanGroup.includes('-')) {
+                                const [min, max] = cleanGroup.split('-').map(num => parseInt(num.trim()));
+                                if (!isNaN(min) && !isNaN(max) && numAge >= min && numAge <= max) {
+                                    return ageGroup;
+                                }
+                            }
                         }
-                    });
+                    }
+                    
+                    return null;
                 }
+
+                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ โดยคำนวณจากอายุของผู้ป่วย
+                const ageGroupCount = {};
+                filteredPatients.forEach(patient => {
+                    // ลองหาอายุจากฟิลด์ที่เป็นไปได้
+                    const age = patient.age || patient.อายุ || patient.ageInYears || patient.อายุปี;
+                    const ageGroup = getAgeGroupFromAge(age);
+                    
+                    if (ageGroup && ageGroupPopulation[ageGroup]) {
+                        ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
+                    }
+                });
 
                 // คำนวณอัตราป่วยทุกกลุ่มอายุและเรียงลำดับ
                 const allAgeGroupRates = Object.entries(ageGroupCount)
@@ -2610,10 +2775,15 @@
         // ฟังก์ชันแสดง popup ร้อยละกลุ่มอายุทั้งหมด
         async function showAllAgePercentageRanking(diseaseCode) {
             try {
-                // โหลดข้อมูลผู้ป่วยจากฐานข้อมูล
+                // โหลดข้อมูลผู้ป่วยและประชากรจากฐานข้อมูล
                 const { database, ref, get } = window.firebaseDB;
-                const patientsSnapshot = await get(ref(database, 'patients'));
+                const [patientsSnapshot, agePopulationSnapshot] = await Promise.all([
+                    get(ref(database, 'patients')),
+                    get(ref(database, 'agePopulation'))
+                ]);
+                
                 const patients = patientsSnapshot.val();
+                const agePopulation = agePopulationSnapshot.val();
                 
                 if (!patients) {
                     alert('ไม่พบข้อมูลผู้ป่วย');
@@ -2632,10 +2802,71 @@
                     return;
                 }
 
-                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ
+                // สร้าง map ของประชากรแต่ละกลุ่มอายุ
+                const ageGroupPopulation = {};
+                let ageGroups = [];
+                
+                if (Array.isArray(agePopulation)) {
+                    ageGroups = agePopulation;
+                } else if (typeof agePopulation === 'object') {
+                    ageGroups = Object.values(agePopulation);
+                }
+                
+                ageGroups.forEach(group => {
+                    if (group.ageGroup && group.population) {
+                        ageGroupPopulation[group.ageGroup] = group.population;
+                    }
+                });
+
+                // ฟังก์ชันจัดกลุ่มอายุตามอายุปีของผู้ป่วย
+                function getAgeGroupFromAge(age) {
+                    if (!age && age !== 0) return null;
+                    
+                    const numAge = parseInt(age);
+                    if (isNaN(numAge)) return null;
+                    
+                    // จัดกลุ่มตามข้อมูลประชากรที่มีอยู่
+                    const ageGroupKeys = Object.keys(ageGroupPopulation);
+                    
+                    for (const ageGroup of ageGroupKeys) {
+                        // ตรวจสอบรูปแบบกลุ่มอายุ เช่น "0-4", "5-9", "10-14", "65+"
+                        if (ageGroup.includes('-')) {
+                            const [min, max] = ageGroup.split('-').map(num => parseInt(num.trim()));
+                            if (!isNaN(min) && !isNaN(max) && numAge >= min && numAge <= max) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('+')) {
+                            const min = parseInt(ageGroup.replace('+', '').trim());
+                            if (!isNaN(min) && numAge >= min) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('ปีขึ้นไป')) {
+                            const min = parseInt(ageGroup.replace('ปีขึ้นไป', '').trim());
+                            if (!isNaN(min) && numAge >= min) {
+                                return ageGroup;
+                            }
+                        } else if (ageGroup.includes('ปี')) {
+                            // รูปแบบ "0-4 ปี", "5-9 ปี"
+                            const cleanGroup = ageGroup.replace('ปี', '').trim();
+                            if (cleanGroup.includes('-')) {
+                                const [min, max] = cleanGroup.split('-').map(num => parseInt(num.trim()));
+                                if (!isNaN(min) && !isNaN(max) && numAge >= min && numAge <= max) {
+                                    return ageGroup;
+                                }
+                            }
+                        }
+                    }
+                    
+                    return null;
+                }
+
+                // นับจำนวนผู้ป่วยแต่ละกลุ่มอายุ โดยคำนวณจากอายุของผู้ป่วย
                 const ageGroupCount = {};
                 filteredPatients.forEach(patient => {
-                    const ageGroup = patient.ageGroup || patient.กลุ่มอายุ;
+                    // ลองหาอายุจากฟิลด์ที่เป็นไปได้
+                    const age = patient.age || patient.อายุ || patient.ageInYears || patient.อายุปี;
+                    const ageGroup = getAgeGroupFromAge(age);
+                    
                     if (ageGroup) {
                         ageGroupCount[ageGroup] = (ageGroupCount[ageGroup] || 0) + 1;
                     }
@@ -3359,10 +3590,56 @@
                 };
             });
             
-            // Count patients by age group
+            // ฟังก์ชันจัดกลุ่มอายุตามอายุปีของผู้ป่วย
+            function getAgeGroupFromAge(age) {
+                if (!age && age !== 0) return null;
+                
+                const numAge = parseInt(age);
+                if (isNaN(numAge)) return null;
+                
+                // จัดกลุ่มตามข้อมูลประชากรที่มีอยู่
+                const ageGroupKeys = Object.keys(ageGroups);
+                
+                for (const ageGroup of ageGroupKeys) {
+                    // ตรวจสอบรูปแบบกลุ่มอายุ เช่น "0-4", "5-9", "10-14", "65+"
+                    if (ageGroup.includes('-')) {
+                        const [min, max] = ageGroup.split('-').map(num => parseInt(num.trim()));
+                        if (!isNaN(min) && !isNaN(max) && numAge >= min && numAge <= max) {
+                            return ageGroup;
+                        }
+                    } else if (ageGroup.includes('+')) {
+                        const min = parseInt(ageGroup.replace('+', '').trim());
+                        if (!isNaN(min) && numAge >= min) {
+                            return ageGroup;
+                        }
+                    } else if (ageGroup.includes('ปีขึ้นไป')) {
+                        const min = parseInt(ageGroup.replace('ปีขึ้นไป', '').trim());
+                        if (!isNaN(min) && numAge >= min) {
+                            return ageGroup;
+                        }
+                    } else if (ageGroup.includes('ปี')) {
+                        // รูปแบบ "0-4 ปี", "5-9 ปี"
+                        const cleanGroup = ageGroup.replace('ปี', '').trim();
+                        if (cleanGroup.includes('-')) {
+                            const [min, max] = cleanGroup.split('-').map(num => parseInt(num.trim()));
+                            if (!isNaN(min) && !isNaN(max) && numAge >= min && numAge <= max) {
+                                return ageGroup;
+                            }
+                        }
+                    }
+                }
+                
+                return null;
+            }
+            
+            // Count patients by age group โดยคำนวณจากอายุของผู้ป่วย
             patients.forEach(patient => {
-                if (patient.ageGroup && ageGroups[patient.ageGroup]) {
-                    ageGroups[patient.ageGroup].patients++;
+                // ลองหาอายุจากฟิลด์ที่เป็นไปได้
+                const age = patient.age || patient.อายุ || patient.ageInYears || patient.อายุปี;
+                const ageGroup = getAgeGroupFromAge(age);
+                
+                if (ageGroup && ageGroups[ageGroup]) {
+                    ageGroups[ageGroup].patients++;
                 }
             });
             
