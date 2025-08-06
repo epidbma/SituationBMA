@@ -983,6 +983,7 @@
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อโรค</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เพศ</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อายุปี</th>
+                                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">กลุ่มอายุ</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อายุเดือน</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อายุวัน</th>
                                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">แขวง</th>
@@ -1162,25 +1163,39 @@
                     return '';
                 }
 
-                const patients = jsonData.map(row => ({
-                    diseaseCode: row['รหัสโรค'] || '',
-                    gender: row['เพศ'] || '',
-                    ageYears: parseInt(row['อายุปี']) || 0,
-                    ageMonths: parseInt(row['อายุเดือน']) || 0,
-                    ageDays: parseInt(row['อายุวัน']) || 0,
-                    subdistrict: row['แขวง'] || '',
-                    district: row['เขต'] || '',
-                    province: row['จังหวัด'] || '',
-                    onsetDate: validateAndFormatDate(row['วันที่เริ่มป่วย']),
-                    patientCondition: row['สภาพผู้ป่วย'] || '',
-                    deathDate: validateAndFormatDate(row['วันที่เสียชีวิต'])
+                // คำนวณกลุ่มอายุสำหรับแต่ละผู้ป่วย
+                const patientsWithAgeGroup = await Promise.all(jsonData.map(async row => {
+                    const patientData = {
+                        diseaseCode: row['รหัสโรค'] || '',
+                        gender: row['เพศ'] || '',
+                        ageYears: parseInt(row['อายุปี']) || 0,
+                        ageMonths: parseInt(row['อายุเดือน']) || 0,
+                        ageDays: parseInt(row['อายุวัน']) || 0,
+                        subdistrict: row['แขวง'] || '',
+                        district: row['เขต'] || '',
+                        province: row['จังหวัด'] || '',
+                        onsetDate: validateAndFormatDate(row['วันที่เริ่มป่วย']),
+                        patientCondition: row['สภาพผู้ป่วย'] || '',
+                        deathDate: validateAndFormatDate(row['วันที่เสียชีวิต'])
+                    };
+
+                    // เพิ่มกลุ่มอายุ
+                    try {
+                        const ageGroup = await getPatientAgeGroup(patientData);
+                        patientData.ageGroup = ageGroup;
+                    } catch (error) {
+                        console.warn('Could not determine age group for patient:', error);
+                        patientData.ageGroup = '-';
+                    }
+
+                    return patientData;
                 }));
 
                 // Save to Firebase
                 const { database, ref, push } = window.firebaseDB;
                 const patientRef = ref(database, 'patients');
 
-                const total = patients.length;
+                const total = patientsWithAgeGroup.length;
                 for (let i = 0; i < total; i++) {
                     if (window.importCancelled) {
                         hideImportModal();
@@ -1188,7 +1203,7 @@
                         return;
                     }
 
-                    await push(patientRef, patients[i]);
+                    await push(patientRef, patientsWithAgeGroup[i]);
                     showImportProgress(i + 1, total);
                 }
 
@@ -1263,7 +1278,7 @@
             return diseaseCache[diseaseCode] || diseaseCode || '-';
         }
 
-        function displayPatients() {
+        async function displayPatients() {
             console.log('Starting to display patients...');
             if (!window.firebaseDB) {
                 console.error('Firebase not initialized');
@@ -1282,7 +1297,7 @@
             const patientRef = ref(database, 'patients');
             console.log('Patient reference created');
             
-            onValue(patientRef, (snapshot) => {
+            onValue(patientRef, async (snapshot) => {
                 console.log('Received Firebase snapshot');
                 const data = snapshot.val();
                 const tableBody = document.getElementById('patientTableBody');
@@ -1300,7 +1315,7 @@
                     }));
                     
                     // แสดงข้อมูลแบบ pagination
-                    displayPaginatedPatients();
+                    await displayPaginatedPatients();
                     
                     // สร้างสรุปข้อมูลโรค
                     createDiseaseSummary();
@@ -1381,7 +1396,7 @@
             document.getElementById('totalPatientCount').textContent = `รวมผู้ป่วยทั้งหมด: ${totalPatients} ราย`;
         }
 
-        function displayPaginatedPatients() {
+        async function displayPaginatedPatients() {
             const tableBody = document.getElementById('patientTableBody');
             if (!tableBody) return;
 
@@ -1393,15 +1408,25 @@
 
             tableBody.innerHTML = '';
 
-            currentPageData.forEach(patient => {
+            // แสดง loading state
+            tableBody.innerHTML = '<tr><td colspan="13" class="px-6 py-4 text-center text-gray-500">กำลังโหลดข้อมูลกลุ่มอายุ...</td></tr>';
+
+            // สร้างแถวข้อมูลแบบ async เพื่อรอการโหลดกลุ่มอายุ
+            const rows = [];
+            for (const patient of currentPageData) {
                 const row = document.createElement('tr');
+                
+                // คำนวณกลุ่มอายุสำหรับผู้ป่วยรายนี้
+                const ageGroup = await getPatientAgeGroup(patient);
+                
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.diseaseCode}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${getDiseaseName(patient.diseaseCode)}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.gender}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageYears || patient.ageYear || '-'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageMonths}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageDays}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">${ageGroup}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageMonths || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageDays || '-'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.subdistrict}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.district}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.province}</td>
@@ -1409,8 +1434,12 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.patientCondition}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatThaiDate(patient.deathDate)}</td>
                 `;
-                tableBody.appendChild(row);
-            });
+                rows.push(row);
+            }
+            
+            // ล้าง loading และแสดงข้อมูลจริง
+            tableBody.innerHTML = '';
+            rows.forEach(row => tableBody.appendChild(row));
 
             // อัพเดท pagination info
             updatePatientPaginationInfo(totalRecords, window.currentPatientPage, totalPages);
@@ -1482,11 +1511,11 @@
             controls.innerHTML = html;
         }
 
-        function goToPatientPage(page) {
+        async function goToPatientPage(page) {
             const totalPages = Math.ceil(window.allPatients.length / itemsPerPage);
             if (page >= 1 && page <= totalPages) {
                 window.currentPatientPage = page;
-                displayPaginatedPatients();
+                await displayPaginatedPatients();
             }
         }
 
@@ -3303,6 +3332,48 @@
                     </ul>
                 </div>
             `;
+        }
+
+        // Helper function to get age group for a patient in the table
+        async function getPatientAgeGroup(patient) {
+            try {
+                // ถ้าผู้ป่วยมี ageGroup อยู่แล้ว ให้ใช้เลย
+                if (patient.ageGroup && patient.ageGroup !== '-') {
+                    return patient.ageGroup;
+                }
+
+                // ใช้ข้อมูลกลุ่มอายุจาก window object หากมี หรือโหลดจาก Firebase
+                let agePopulationArray = window.agePopulationData;
+                
+                if (!agePopulationArray) {
+                    const { database, ref, get } = window.firebaseDB;
+                    const agePopulationSnapshot = await get(ref(database, 'agePopulation'));
+                    const agePopulationData = agePopulationSnapshot.val();
+                    
+                    if (!agePopulationData) {
+                        return '-';
+                    }
+                    
+                    agePopulationArray = Array.isArray(agePopulationData) 
+                        ? agePopulationData 
+                        : Object.values(agePopulationData);
+                    
+                    // แปลงข้อมูลเก่าให้เป็นโครงสร้างใหม่
+                    agePopulationArray = convertLegacyAgePopulationData(agePopulationArray);
+                    
+                    // เก็บไว้ใน window object เพื่อใช้ครั้งต่อไป
+                    window.agePopulationData = agePopulationArray;
+                }
+                
+                // ใช้ฟังก์ชันที่มีอยู่แล้วเพื่อหากลุ่มอายุ
+                const patientAge = patient.ageYears || patient.ageYear || patient['อายุปี'] || patient.age;
+                const ageGroup = getAgeGroupFromAge(patientAge, agePopulationArray);
+                
+                return ageGroup || '-';
+            } catch (error) {
+                console.error('Error getting age group for patient:', error);
+                return '-';
+            }
         }
 
         // Helper function to determine age group from patient's age
