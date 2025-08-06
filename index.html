@@ -2283,7 +2283,7 @@
                     })));
                 }
 
-                // คำนวณสถิติกลุ่มอายุ
+                // คำนวณสถิติกลุ่มอายุ - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
                 const ageGroupStats = calculateAgeGroupStats(filteredPatients, agePopulationArray);
                 
                 console.log('🎯 Age Group Stats Result:', {
@@ -2543,7 +2543,7 @@
                     patient.diseaseCode === diseaseCode || patient.โรค === diseaseCode
                 );
 
-                // คำนวณสถิติกลุ่มอายุทั้งหมด
+                // คำนวณสถิติกลุ่มอายุทั้งหมด - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
                 const ageGroupStats = calculateAgeGroupStats(filteredPatients, agePopulationData);
                 
                 // เรียงลำดับตามประเภทที่เลือก
@@ -3289,7 +3289,7 @@
             // Calculate cumulative incidence rate
             const incidenceRate = totalPopulation > 0 ? ((totalPatients / totalPopulation) * 100000).toFixed(2) : '0.00';
             
-            // Generate age group statistics
+            // Generate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
             const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
             const districtStats = calculateDistrictStats(patients, bangkokDistricts);
             
@@ -3390,53 +3390,41 @@
             }
         }
 
-        // Helper function to determine age group from patient's age
+        // Helper function to determine age group from patient's age (backup function)
         function getAgeGroupFromAge(ageValue, agePopulation) {
             if (!ageValue && ageValue !== 0) {
-                console.log(`🚫 getAgeGroupFromAge: Invalid age value:`, ageValue);
                 return null;
             }
             if (!agePopulation || !Array.isArray(agePopulation)) {
-                console.log(`🚫 getAgeGroupFromAge: Invalid agePopulation:`, agePopulation);
                 return null;
             }
             
             const age = parseInt(ageValue);
             if (isNaN(age) || age < 0) {
-                console.log(`🚫 getAgeGroupFromAge: Invalid age after parsing:`, age, 'from', ageValue);
                 return null;
             }
-            
-            console.log(`🔍 getAgeGroupFromAge: Looking for age group for age ${age} (type: ${typeof age})`);
-            console.log(`   Available groups:`, agePopulation.map(g => `${g.startAge}-${g.endAge} (${g.ageGroup || 'auto-generated'})`));
             
             // Find the age group that contains this age
             for (const group of agePopulation) {
                 const startAge = parseInt(group.startAge || 0);
                 const endAge = parseInt(group.endAge || 999);
                 
-                console.log(`   Checking group ${startAge}-${endAge}: ${age} >= ${startAge} && ${age} <= ${endAge} = ${age >= startAge && age <= endAge}`);
-                console.log(`     Data types: age(${typeof age}), startAge(${typeof startAge}), endAge(${typeof endAge})`);
-                console.log(`     Raw values: startAge(${group.startAge}), endAge(${group.endAge})`);
-                
                 // Check if patient's age falls within this age group range
                 if (age >= startAge && age <= endAge) {
                     // Return the age group label (either predefined or auto-generated)
                     const ageGroupLabel = group.ageGroup || `${startAge}-${endAge >= 999 ? '999+' : endAge} ปี`;
-                    console.log(`✅ getAgeGroupFromAge: Found match! Age ${age} → group "${ageGroupLabel}"`);
                     return ageGroupLabel;
                 }
             }
             
-            console.log(`❌ getAgeGroupFromAge: No group found for age ${age}`);
             return null;
         }
 
-        // Calculate age group statistics
+        // Calculate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
         function calculateAgeGroupStats(patients, agePopulation) {
             const ageGroups = {};
             
-            // Initialize age groups using new structure
+            // Initialize age groups using population data
             agePopulation.forEach(group => {
                 const key = group.ageGroup || `${group.startAge || 0}-${group.endAge >= 999 ? '999+' : group.endAge || 0} ปี`;
                 ageGroups[key] = {
@@ -3447,91 +3435,68 @@
                 };
             });
             
-            // Count patients by age group
-            console.log(`📊 Starting age group classification for ${patients.length} patients`);
-            console.log(`📊 Available age groups:`, agePopulation.map(g => `${g.startAge}-${g.endAge}`));
+            // Count patients by age group using existing ageGroup field from database
+            console.log(`📊 Starting age group counting from database for ${patients.length} patients`);
+            console.log(`📊 Available age groups:`, Object.keys(ageGroups));
             
-            // Debug: ตรวจสอบข้อมูลผู้ป่วยตัวอย่าง
-            if (patients.length > 0) {
-                const samplePatient = patients[0];
-                console.log(`📊 Sample patient fields:`, Object.keys(samplePatient));
-                console.log(`📊 Sample patient age data:`, {
-                    ageYear: samplePatient.ageYear,
-                    ageYears: samplePatient.ageYears,
-                    'อายุปี': samplePatient['อายุปี'],
-                    age: samplePatient.age
-                });
-            }
-            
-            let patientsWithAge = 0;
+            let patientsWithAgeGroup = 0;
             let patientsClassified = 0;
             let debugCount = 0;
             
             patients.forEach((patient, index) => {
-                // ตรวจสอบฟิลด์อายุจากหลายแหล่ง - เปลี่ยนลำดับให้ ageYears มาก่อน และรวมอายุ 0 ปี
-                let patientAge = patient.ageYears !== undefined ? patient.ageYears 
-                    : patient.ageYear !== undefined ? patient.ageYear 
-                    : patient['อายุปี'] !== undefined ? patient['อายุปี'] 
-                    : patient.age;
-                
-                // แปลงเป็นตัวเลข และยอมรับค่า 0
-                if (patientAge !== undefined && patientAge !== null && patientAge !== '') {
-                    patientAge = parseInt(patientAge);
-                    if (isNaN(patientAge)) {
-                        patientAge = undefined;
-                    }
-                }
+                // ใช้ฟิลด์ ageGroup ที่มีอยู่แล้วในฐานข้อมูลผู้ป่วย
+                let patientAgeGroup = patient.ageGroup;
                 
                 // Debug บางรายการแรก
                 if (debugCount < 5) {
                     console.log(`📊 Patient ${index + 1}:`, {
-                        ageYear: patient.ageYear,
+                        ageGroup: patient.ageGroup,
                         ageYears: patient.ageYears,
+                        ageYear: patient.ageYear,
                         'อายุปี': patient['อายุปี'],
-                        age: patient.age,
-                        finalAge: patientAge
+                        age: patient.age
                     });
                     debugCount++;
                 }
                 
-                // ตรวจสอบว่ามีข้อมูลอายุที่ถูกต้องหรือไม่ (รวมอายุ 0 ปี)
-                if (patientAge !== undefined && patientAge !== null && patientAge >= 0) {
-                    patientsWithAge++;
-                    // Calculate age group from patient's age using startAge/endAge ranges
-                    const ageGroup = getAgeGroupFromAge(patientAge, agePopulation);
+                // ตรวจสอบว่ามีข้อมูลกลุ่มอายุหรือไม่
+                if (patientAgeGroup && patientAgeGroup !== '-' && patientAgeGroup !== '') {
+                    patientsWithAgeGroup++;
                     
                     // Debug: แสดงรายละเอียดการจำแนกกลุ่มอายุ
-                    console.log(`🔍 Processing patient ${index + 1}: age ${patientAge} → group "${ageGroup}"`);
+                    console.log(`🔍 Processing patient ${index + 1}: ageGroup "${patientAgeGroup}"`);
                     console.log(`   Available age groups:`, Object.keys(ageGroups));
                     
-                    if (ageGroup && ageGroups[ageGroup]) {
-                        ageGroups[ageGroup].patients++;
+                    if (ageGroups[patientAgeGroup]) {
+                        ageGroups[patientAgeGroup].patients++;
                         patientsClassified++;
                         
-                        console.log(`✅ Patient classified successfully: age ${patientAge} → group "${ageGroup}" (total in group: ${ageGroups[ageGroup].patients})`);
-                    } else if (ageGroup) {
-                        console.log(`⚠️ Age group "${ageGroup}" returned but not found in ageGroups:`, Object.keys(ageGroups));
+                        console.log(`✅ Patient classified successfully: ageGroup "${patientAgeGroup}" (total in group: ${ageGroups[patientAgeGroup].patients})`);
                     } else {
-                        console.log(`❌ No age group found for age ${patientAge}`);
-                        console.log(`   Age population structure:`, agePopulation.map(g => ({
-                            startAge: g.startAge,
-                            endAge: g.endAge,
-                            ageGroup: g.ageGroup
-                        })));
+                        console.log(`⚠️ Age group "${patientAgeGroup}" not found in population data:`, Object.keys(ageGroups));
+                        
+                        // สร้างกลุ่มอายุใหม่ถ้าไม่มีในข้อมูลประชากร
+                        ageGroups[patientAgeGroup] = {
+                            patients: 1,
+                            population: 0, // ไม่มีข้อมูลประชากร
+                            startAge: 0,
+                            endAge: 999
+                        };
+                        patientsClassified++;
+                        console.log(`🆕 Created new age group: "${patientAgeGroup}" with 1 patient`);
                     }
                 } else {
-                    console.log(`⚠️ Patient ${index + 1} has no valid age data:`, {
-                        ageYear: patient.ageYear,
+                    console.log(`⚠️ Patient ${index + 1} has no age group data:`, {
+                        ageGroup: patient.ageGroup,
                         ageYears: patient.ageYears,
-                        'อายุปี': patient['อายุปี'],
-                        age: patient.age
+                        ageYear: patient.ageYear
                     });
                 }
             });
             
             console.log(`📊 Age group classification complete:`);
             console.log(`   - Total patients: ${patients.length}`);
-            console.log(`   - Patients with age data: ${patientsWithAge}`);
+            console.log(`   - Patients with age group data: ${patientsWithAgeGroup}`);
             console.log(`   - Patients successfully classified: ${patientsClassified}`);
             console.log(`   - Age group counts:`, Object.entries(ageGroups).map(([group, data]) => `${group}: ${data.patients} patients`));
             console.log(`📋 Detailed age group breakdown:`);
