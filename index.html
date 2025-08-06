@@ -688,6 +688,28 @@
                         </div>
                     </div>
 
+                    <!-- อัตราป่วยจำแนกตามกลุ่มอายุ (3 อันดับสูงสุด) -->
+                    <div class="glass-card p-6 mb-8">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">อัตราป่วยจำแนกตามกลุ่มอายุ (3 อันดับสูงสุด)</h3>
+                        <div id="topAgeGroupsRateContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Top age groups rate will be populated here -->
+                            <div class="text-center text-gray-500 col-span-full py-8">
+                                <p>ไม่มีข้อมูลกลุ่มอายุ</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุ (3 อันดับสูงสุด) -->
+                    <div class="glass-card p-6 mb-8">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">ร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุ (3 อันดับสูงสุด)</h3>
+                        <div id="topAgeGroupsPercentageContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Top age groups percentage will be populated here -->
+                            <div class="text-center text-gray-500 col-span-full py-8">
+                                <p>ไม่มีข้อมูลกลุ่มอายุ</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Epidemic Curve -->
                     <div class="glass-card p-6">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Epidemic Curve - เส้นโค้งการระบาด</h3>
@@ -2178,7 +2200,106 @@
                 // คำนวณสถิติกลุ่มอายุ - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
                 const ageGroupStats = calculateAgeGroupStats(filteredPatients, agePopulationArray);
                 
-                // ลบการสร้างการ์ดอัตราป่วยและร้อยละกลุ่มอายุออก (ตามคำขอผู้ใช้)
+                // สร้างการแสดงผลอัตราป่วยและร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุ
+                const rateContainer = document.getElementById('topAgeGroupsRateContainer');
+                const percentageContainer = document.getElementById('topAgeGroupsPercentageContainer');
+                
+                if (!rateContainer || !percentageContainer) {
+                    console.error('Age groups containers not found');
+                    return;
+                }
+
+                // ตรวจสอบว่ามีข้อมูลหรือไม่
+                if (!ageGroupStats.topThree || ageGroupStats.topThree.length === 0) {
+                    rateContainer.innerHTML = `
+                        <div class="text-center text-gray-500 col-span-full py-8">
+                            <p>ไม่มีข้อมูลกลุ่มอายุ</p>
+                        </div>
+                    `;
+                    percentageContainer.innerHTML = `
+                        <div class="text-center text-gray-500 col-span-full py-8">
+                            <p>ไม่มีข้อมูลกลุ่มอายุ</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // สร้างการ์ดสำหรับอัตราป่วย
+                const rankColors = ['bg-yellow-100 border-yellow-300', 'bg-gray-100 border-gray-300', 'bg-orange-100 border-orange-300'];
+                const rateCards = ageGroupStats.topThree.map((data, index) => {
+                    const colorClass = rankColors[index] || 'bg-gray-100 border-gray-300';
+                    return `
+                        <div class="border-2 ${colorClass} rounded-lg p-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-gray-800 mb-1">#${index + 1}</div>
+                                <div class="text-lg font-semibold text-blue-600 mb-2">${data.ageGroup}</div>
+                                <div class="text-sm text-gray-600 mb-2">
+                                    ผู้ป่วย: <span class="font-semibold">${data.patients.toLocaleString()}</span> ราย
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">
+                                    ประชากร: <span class="font-semibold">${parseInt(data.population).toLocaleString()}</span> คน
+                                </div>
+                                <div class="text-xl font-bold text-red-600">
+                                    ${data.rate}
+                                </div>
+                                <div class="text-xs text-gray-500">ต่อแสนประชากร</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // สร้างปุ่มดูข้อมูลเพิ่มเติมสำหรับอัตราป่วย
+                const rateViewMoreButton = `
+                    <div class="col-span-full mt-4 text-center">
+                        <button onclick="showAllAgeGroupsRanking('${diseaseCode}', 'rate')" 
+                                class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                            <svg class="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
+                            </svg>
+                            ดูข้อมูลกลุ่มอายุทั้งหมด
+                        </button>
+                    </div>
+                `;
+
+                rateContainer.innerHTML = rateCards + rateViewMoreButton;
+
+                // สร้างการ์ดสำหรับร้อยละผู้ป่วย
+                const percentageCards = ageGroupStats.percentageTop.map((data, index) => {
+                    const colorClass = rankColors[index] || 'bg-gray-100 border-gray-300';
+                    return `
+                        <div class="border-2 ${colorClass} rounded-lg p-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-gray-800 mb-1">#${index + 1}</div>
+                                <div class="text-lg font-semibold text-purple-600 mb-2">${data.ageGroup}</div>
+                                <div class="text-sm text-gray-600 mb-2">
+                                    ผู้ป่วย: <span class="font-semibold">${data.patients.toLocaleString()}</span> ราย
+                                </div>
+                                <div class="text-sm text-gray-600 mb-2">
+                                    จากทั้งหมด: <span class="font-semibold">${filteredPatients.length.toLocaleString()}</span> ราย
+                                </div>
+                                <div class="text-xl font-bold text-green-600">
+                                    ${data.percentage}%
+                                </div>
+                                <div class="text-xs text-gray-500">ของผู้ป่วยทั้งหมด</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // สร้างปุ่มดูข้อมูลเพิ่มเติมสำหรับร้อยละ
+                const percentageViewMoreButton = `
+                    <div class="col-span-full mt-4 text-center">
+                        <button onclick="showAllAgeGroupsRanking('${diseaseCode}', 'percentage')" 
+                                class="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                            <svg class="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
+                            </svg>
+                            ดูข้อมูลกลุ่มอายุทั้งหมด
+                        </button>
+                    </div>
+                `;
+
+                percentageContainer.innerHTML = percentageCards + percentageViewMoreButton;
                 
             } catch (error) {
                 console.error('Error in age group ranking (functionality removed):', error);
@@ -2314,79 +2435,70 @@
                 const agePopulationData = agePopulationSnapshot.val();
                 
                 if (!patients || !agePopulationData) {
-                    alert('ไม่พบข้อมูลผู้ป่วยหรือข้อมูลประชากรตามอายุ');
+                    alert('ไม่มีข้อมูลผู้ป่วยหรือข้อมูลประชากรตามอายุ');
                     return;
                 }
 
                 // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
-                const allPatients = Object.values(patients);
-                const filteredPatients = allPatients.filter(patient => 
-                    patient.diseaseCode === diseaseCode || patient.โรค === diseaseCode
+                const allPatientsData = Object.values(patients);
+                const filteredPatientsData = allPatientsData.filter(patient => 
+                    patient.diseaseCode === diseaseCode || 
+                    patient.โรค === diseaseCode ||
+                    patient.รหัสโรค === diseaseCode
                 );
 
-                // คำนวณสถิติกลุ่มอายุทั้งหมด - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
-                const ageGroupStats = calculateAgeGroupStats(filteredPatients, agePopulationData);
+                // แปลง agePopulationData เป็น array และแปลงข้อมูลเก่า
+                let agePopulationArray = Array.isArray(agePopulationData) 
+                    ? agePopulationData 
+                    : Object.values(agePopulationData);
+                agePopulationArray = convertLegacyAgePopulationData(agePopulationArray);
+
+                // คำนวณสถิติกลุ่มอายุ
+                const ageGroupStats = calculateAgeGroupStats(filteredPatientsData, agePopulationArray);
                 
-                // เรียงลำดับตามประเภทที่เลือก
-                let sortedStats, titleText, unitText, colorClass;
-                if (type === 'percentage') {
-                    sortedStats = ageGroupStats.percentageTop;
-                    titleText = 'ร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุทั้งหมด';
-                    unitText = '%';
-                    colorClass = 'text-green-600';
-                } else {
-                    sortedStats = ageGroupStats.topThree;
-                    titleText = 'อัตราป่วยจำแนกตามกลุ่มอายุทั้งหมด';
-                    unitText = 'ต่อแสนประชากร';
-                    colorClass = 'text-red-600';
-                }
+                // เลือกข้อมูลที่จะแสดงตาม type
+                const dataToShow = type === 'rate' ? ageGroupStats.allData : ageGroupStats.allData;
+                const sortKey = type === 'rate' ? 'rate' : 'percentage';
+                const sortedData = dataToShow.sort((a, b) => {
+                    const aValue = type === 'rate' ? parseFloat(a.rate) : a.percentage;
+                    const bValue = type === 'rate' ? parseFloat(b.rate) : b.percentage;
+                    return bValue - aValue;
+                });
+
+                const title = type === 'rate' ? 'อัตราป่วยตามกลุ่มอายุทั้งหมด - ต่อแสนประชากร' : 'ร้อยละของผู้ป่วยตามกลุ่มอายุทั้งหมด';
+                const valueLabel = type === 'rate' ? 'ต่อแสนประชากร' : 'ของผู้ป่วยทั้งหมด';
+                const valueColor = type === 'rate' ? 'text-red-600' : 'text-green-600';
 
                 // สร้าง popup content
-                const rowsHTML = sortedStats.map((data, index) => `
-                    <tr class="border-b border-gray-200 hover:bg-gray-50">
-                        <td class="py-3 px-4 text-center">
-                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${index < 3 ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'} font-semibold text-sm">
-                                ${index + 1}
-                            </span>
-                        </td>
-                        <td class="py-3 px-4 font-medium text-gray-900">${data.ageGroup}</td>
-                        <td class="py-3 px-4 text-center">${data.patients.toLocaleString()}</td>
-                        <td class="py-3 px-4 text-center">${parseInt(data.population).toLocaleString()}</td>
-                        <td class="py-3 px-4 text-center">
-                            <span class="font-bold ${colorClass}">
-                                ${type === 'percentage' ? data.percentage : data.rate} ${unitText}
-                            </span>
-                        </td>
-                    </tr>
-                `).join('');
-
                 const popupContent = `
                     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="closeAllAgeGroupsModal()">
-                        <div class="bg-white rounded-xl shadow-2xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden" onclick="event.stopPropagation()">
-                            <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 flex justify-between items-center">
-                                <h2 class="text-2xl font-bold">${titleText}</h2>
-                                <button onclick="closeAllAgeGroupsModal()" class="text-white hover:text-gray-200 text-2xl font-bold">&times;</button>
-                            </div>
-                            <div class="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-                                <div class="mb-4 text-sm text-gray-600">
-                                    <p><strong>โรค:</strong> ${diseaseCode}</p>
-                                    <p><strong>ผู้ป่วยทั้งหมด:</strong> ${filteredPatients.length.toLocaleString()} ราย</p>
+                        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-hidden" onclick="event.stopPropagation()">
+                            <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
+                                <div class="flex justify-between items-center">
+                                    <h2 class="text-xl font-bold">${title}</h2>
+                                    <button onclick="closeAllAgeGroupsModal()" class="text-white hover:text-gray-200 text-2xl font-bold">&times;</button>
                                 </div>
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full bg-white">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">อันดับ</th>
-                                                <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">กลุ่มอายุ</th>
-                                                <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ผู้ป่วย (ราย)</th>
-                                                <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ประชากร (คน)</th>
-                                                <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">${type === 'percentage' ? 'ร้อยละ' : 'อัตราป่วย'}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="bg-white divide-y divide-gray-200">
-                                            ${rowsHTML}
-                                        </tbody>
-                                    </table>
+                            </div>
+                            <div class="p-6 overflow-y-auto max-h-[60vh]">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    ${sortedData.map((data, index) => {
+                                        const rankNumber = index + 1;
+                                        const populationText = data.population > 0 ? parseInt(data.population).toLocaleString() : 'ไม่มีข้อมูล';
+                                        const valueText = type === 'rate' ? (data.population > 0 ? data.rate : 'ไม่สามารถคำนวณได้') : `${data.percentage}%`;
+                                        const rankColor = index < 3 ? 'border-yellow-300 bg-yellow-50' : 'border-gray-300 bg-gray-50';
+                                        
+                                        return `
+                                            <div class="border-2 ${rankColor} rounded-lg p-4 text-center">
+                                                <div class="text-lg font-bold ${index < 3 ? 'text-yellow-700' : 'text-gray-700'} mb-2">อันดับที่ ${rankNumber}</div>
+                                                <h4 class="font-semibold text-gray-800 mb-1">${data.ageGroup}</h4>
+                                                <div class="text-xl font-bold ${valueColor} mb-1">${valueText}</div>
+                                                <div class="text-sm ${valueColor.replace('600', '500')} mb-2">${valueLabel}</div>
+                                                <div class="text-sm text-gray-600">จำนวนผู้ป่วย: ${data.patients.toLocaleString()} ราย</div>
+                                                ${type === 'rate' ? `<div class="text-xs text-gray-500">ประชากร: ${populationText} คน</div>` : 
+                                                `<div class="text-xs text-gray-500">จากทั้งหมด: ${filteredPatientsData.length.toLocaleString()} ราย</div>`}
+                                            </div>
+                                        `;
+                                    }).join('')}
                                 </div>
                             </div>
                         </div>
@@ -3268,7 +3380,11 @@
             const sortedByPercentage = [...stats].sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage));
             const percentageTop = sortedByPercentage.slice(0, 3);
             
-            return { topThree, percentageTop };
+            return { 
+                topThree, 
+                percentageTop, 
+                allData: stats // เพิ่ม allData สำหรับ popup
+            };
         }
 
         // Calculate district statistics
