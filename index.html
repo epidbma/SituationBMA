@@ -2183,6 +2183,9 @@
                 // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
                 const allPatients = Object.values(patients);
                 
+                console.log('🔍 Filtering patients for disease:', diseaseCode);
+                console.log('- Total patients in database:', allPatients.length);
+                
                 // Debug: ตรวจสอบฟิลด์โรคที่มีอยู่ในข้อมูลผู้ป่วย
                 const samplePatient = allPatients[0];
                 if (samplePatient) {
@@ -2192,7 +2195,17 @@
                         โรค: samplePatient.โรค,
                         รหัสโรค: samplePatient.รหัสโรค
                     });
+                    console.log('- Sample patient age fields:', {
+                        ageYears: samplePatient.ageYears,
+                        ageYear: samplePatient.ageYear,
+                        'อายุปี': samplePatient['อายุปี'],
+                        age: samplePatient.age
+                    });
                 }
+                
+                // แสดงรายการโรคที่มีในฐานข้อมูลก่อนกรอง
+                const uniqueDiseases = [...new Set(allPatients.map(p => p.diseaseCode).filter(Boolean))];
+                console.log('- Available disease codes in database:', uniqueDiseases);
                 
                 const filteredPatients = allPatients.filter(patient => 
                     patient.diseaseCode === diseaseCode || 
@@ -2201,6 +2214,24 @@
                 );
                 
                 console.log('- Filtered patients count:', filteredPatients.length);
+                
+                // Debug: แสดงผู้ป่วยที่กรองได้บางรายเพื่อตรวจสอบ
+                if (filteredPatients.length > 0) {
+                    console.log('- Sample filtered patients (first 3):');
+                    filteredPatients.slice(0, 3).forEach((patient, index) => {
+                        console.log(`  Patient ${index + 1}:`, {
+                            diseaseCode: patient.diseaseCode,
+                            ageYears: patient.ageYears,
+                            ageYear: patient.ageYear,
+                            'อายุปี': patient['อายุปี'],
+                            age: patient.age,
+                            finalAge: patient.ageYears || patient.ageYear || patient['อายุปี'] || patient.age
+                        });
+                    });
+                } else {
+                    console.log('❌ No patients found for disease code:', diseaseCode);
+                    console.log('   Try one of these disease codes instead:', uniqueDiseases.slice(0, 5));
+                }
 
                 // แปลง agePopulationData เป็น array ถ้าจำเป็น
                 let agePopulationArray = Array.isArray(agePopulationData) 
@@ -3291,7 +3322,7 @@
                 return null;
             }
             
-            console.log(`🔍 getAgeGroupFromAge: Looking for age group for age ${age}`);
+            console.log(`🔍 getAgeGroupFromAge: Looking for age group for age ${age} (type: ${typeof age})`);
             console.log(`   Available groups:`, agePopulation.map(g => `${g.startAge}-${g.endAge} (${g.ageGroup || 'auto-generated'})`));
             
             // Find the age group that contains this age
@@ -3300,6 +3331,8 @@
                 const endAge = parseInt(group.endAge || 999);
                 
                 console.log(`   Checking group ${startAge}-${endAge}: ${age} >= ${startAge} && ${age} <= ${endAge} = ${age >= startAge && age <= endAge}`);
+                console.log(`     Data types: age(${typeof age}), startAge(${typeof startAge}), endAge(${typeof endAge})`);
+                console.log(`     Raw values: startAge(${group.startAge}), endAge(${group.endAge})`);
                 
                 // Check if patient's age falls within this age group range
                 if (age >= startAge && age <= endAge) {
