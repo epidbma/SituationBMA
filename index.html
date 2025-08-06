@@ -3306,10 +3306,24 @@
                 };
             });
             
+            // Debug: ดูรูปแบบข้อมูลกลุ่มอายุ
+            console.log('🔍 Age Population Groups Available:', Object.keys(ageGroups));
+            console.log('🔍 Sample Age Population Data:', agePopulation.slice(0, 3));
+            
             // Count patients by age group using existing ageGroup field from database
             
             // Debug: ตรวจสอบข้อมูลผู้ป่วยตัวอย่าง 5 รายแรก
             if (patients.length > 0) {
+                console.log('🔍 Sample Patient Age Groups:');
+                patients.slice(0, 10).forEach((patient, index) => {
+                    console.log(`  Patient ${index + 1}:`, {
+                        ageGroup: patient.ageGroup,
+                        ageYears: patient.ageYears,
+                        ageYear: patient.ageYear,
+                        age: patient.age,
+                        diseaseCode: patient.diseaseCode
+                    });
+                });
             }
             
             let patientsWithAgeGroup = 0;
@@ -3342,12 +3356,21 @@
                     patientsWithAgeGroup++;
                     
                     // Debug: แสดงรายละเอียดการจำแนกกลุ่มอายุ
+                    if (debugCount < 10) {
+                        console.log(`🔍 Processing Patient ${index + 1}:`, {
+                            patientAgeGroup: patientAgeGroup,
+                            foundInPopulation: !!ageGroups[patientAgeGroup],
+                            availableGroups: Object.keys(ageGroups)
+                        });
+                    }
                     
                     if (ageGroups[patientAgeGroup]) {
                         ageGroups[patientAgeGroup].patients++;
                         patientsClassified++;
-                        
+                        console.log(`✅ Matched: "${patientAgeGroup}" - Total patients in group: ${ageGroups[patientAgeGroup].patients}`);
                     } else {
+                        console.log(`❌ No match found for: "${patientAgeGroup}"`);
+                        console.log(`   Available groups:`, Object.keys(ageGroups));
                         
                         // สร้างกลุ่มอายุใหม่ถ้าไม่มีในข้อมูลประชากร
                         ageGroups[patientAgeGroup] = {
@@ -3359,6 +3382,11 @@
                         patientsClassified++;
                     }
                 } else {
+                    console.log(`⚠️ Patient ${index + 1} has no age group data:`, {
+                        ageGroup: patient.ageGroup,
+                        ageYears: patient.ageYears,
+                        ageYear: patient.ageYear
+                    });
                 }
             });
             
@@ -3379,6 +3407,18 @@
             // Sort by percentage for top 3
             const sortedByPercentage = [...stats].sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage));
             const percentageTop = sortedByPercentage.slice(0, 3);
+            
+            // Debug: แสดงผลลัพธ์การคำนวณ
+            console.log('📊 Age Group Stats Summary:');
+            console.log(`  - Total patients processed: ${totalPatients}`);
+            console.log(`  - Patients with age group: ${patientsWithAgeGroup}`);
+            console.log(`  - Patients classified: ${patientsClassified}`);
+            console.log('📊 Final Age Group Results:');
+            stats.forEach(stat => {
+                if (stat.patients > 0) {
+                    console.log(`  ${stat.ageGroup}: ${stat.patients} patients, rate: ${stat.rate}, percentage: ${stat.percentage}%`);
+                }
+            });
             
             return { 
                 topThree, 
