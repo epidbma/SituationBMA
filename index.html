@@ -2250,6 +2250,8 @@
                     filteredPatients.slice(0, 3).forEach((patient, index) => {
                         console.log(`  Patient ${index + 1}:`, {
                             diseaseCode: patient.diseaseCode,
+                            ageGroup: patient.ageGroup,
+                            hasAgeGroup: patient.hasOwnProperty('ageGroup'),
                             ageYears: patient.ageYears,
                             ageYear: patient.ageYear,
                             'อายุปี': patient['อายุปี'],
@@ -3439,6 +3441,21 @@
             console.log(`📊 Starting age group counting from database for ${patients.length} patients`);
             console.log(`📊 Available age groups:`, Object.keys(ageGroups));
             
+            // Debug: ตรวจสอบข้อมูลผู้ป่วยตัวอย่าง 5 รายแรก
+            if (patients.length > 0) {
+                console.log(`📊 Sample patients (first 5):`);
+                patients.slice(0, 5).forEach((patient, index) => {
+                    console.log(`  Patient ${index + 1}:`, {
+                        ageGroup: patient.ageGroup,
+                        ageYears: patient.ageYears,
+                        ageYear: patient.ageYear,
+                        diseaseCode: patient.diseaseCode,
+                        hasAgeGroup: patient.hasOwnProperty('ageGroup'),
+                        ageGroupType: typeof patient.ageGroup
+                    });
+                });
+            }
+            
             let patientsWithAgeGroup = 0;
             let patientsClassified = 0;
             let debugCount = 0;
@@ -3447,10 +3464,24 @@
                 // ใช้ฟิลด์ ageGroup ที่มีอยู่แล้วในฐานข้อมูลผู้ป่วย
                 let patientAgeGroup = patient.ageGroup;
                 
+                // ถ้าไม่มี ageGroup ให้คำนวณจากอายุ
+                if (!patientAgeGroup || patientAgeGroup === '-' || patientAgeGroup === '') {
+                    const patientAge = patient.ageYears !== undefined ? patient.ageYears 
+                        : patient.ageYear !== undefined ? patient.ageYear 
+                        : patient['อายุปี'] !== undefined ? patient['อายุปี'] 
+                        : patient.age;
+                    
+                    if (patientAge !== undefined && patientAge !== null && patientAge >= 0) {
+                        patientAgeGroup = getAgeGroupFromAge(patientAge, agePopulation);
+                        console.log(`🔄 Calculated age group for patient ${index + 1}: age ${patientAge} → "${patientAgeGroup}"`);
+                    }
+                }
+                
                 // Debug บางรายการแรก
                 if (debugCount < 5) {
                     console.log(`📊 Patient ${index + 1}:`, {
                         ageGroup: patient.ageGroup,
+                        calculatedAgeGroup: patientAgeGroup,
                         ageYears: patient.ageYears,
                         ageYear: patient.ageYear,
                         'อายุปี': patient['อายุปี'],
