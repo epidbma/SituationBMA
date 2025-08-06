@@ -1399,7 +1399,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.diseaseCode}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${getDiseaseName(patient.diseaseCode)}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.gender}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageYear || patient.ageYears || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageYears || patient.ageYear || '-'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageMonths}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageDays}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.subdistrict}</td>
@@ -2059,26 +2059,9 @@
 
                 // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
                 const allPatients = Object.values(patients);
-                console.log('🔍 [Summary] Total patients in database:', allPatients.length);
-                console.log('🔍 [Summary] Looking for disease code:', diseaseCode);
-                
-                // Debug: ตรวจสอบฟิลด์โรคในผู้ป่วยตัวอย่าง
-                if (allPatients.length > 0) {
-                    const samplePatient = allPatients[0];
-                    console.log('🔍 [Summary] Sample patient disease fields:', {
-                        diseaseCode: samplePatient.diseaseCode,
-                        โรค: samplePatient.โรค,
-                        รหัสโรค: samplePatient.รหัสโรค
-                    });
-                }
-                
                 const filteredPatients = allPatients.filter(patient => 
-                    patient.diseaseCode && patient.diseaseCode.toString().trim() === diseaseCode.toString().trim() ||
-                    patient.โรค && patient.โรค.toString().trim() === diseaseCode.toString().trim() ||
-                    patient.รหัสโรค && patient.รหัสโรค.toString().trim() === diseaseCode.toString().trim()
+                    patient.diseaseCode && patient.diseaseCode.toString().trim() === diseaseCode.toString().trim()
                 );
-                
-                console.log('🔍 [Summary] Filtered patients count:', filteredPatients.length);
 
                 // นับจำนวนผู้ป่วยแต่ละเขต
                 const districtCount = {};
@@ -2381,16 +2364,9 @@
 
                 // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
                 const allPatients = Object.values(patients);
-                console.log('🔍 [District] Total patients in database:', allPatients.length);
-                console.log('🔍 [District] Looking for disease code:', diseaseCode);
-                
                 const filteredPatients = allPatients.filter(patient => 
-                    patient.diseaseCode && patient.diseaseCode.toString().trim() === diseaseCode.toString().trim() ||
-                    patient.โรค && patient.โรค.toString().trim() === diseaseCode.toString().trim() ||
-                    patient.รหัสโรค && patient.รหัสโรค.toString().trim() === diseaseCode.toString().trim()
+                    patient.diseaseCode && patient.diseaseCode.toString().trim() === diseaseCode.toString().trim()
                 );
-                
-                console.log('🔍 [District] Filtered patients count:', filteredPatients.length);
 
                 // นับจำนวนผู้ป่วยแต่ละเขต
                 const districtCount = {};
@@ -2503,26 +2479,9 @@
 
                 // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
                 const allPatients = Object.values(patients);
-                console.log('🔍 [DetailReport] Total patients in database:', allPatients.length);
-                console.log('🔍 [DetailReport] Looking for disease code:', diseaseCode);
-                
-                // Debug: ตรวจสอบฟิลด์โรคในผู้ป่วยตัวอย่าง
-                if (allPatients.length > 0) {
-                    const samplePatient = allPatients[0];
-                    console.log('🔍 [DetailReport] Sample patient disease fields:', {
-                        diseaseCode: samplePatient.diseaseCode,
-                        โรค: samplePatient.โรค,
-                        รหัสโรค: samplePatient.รหัสโรค
-                    });
-                }
-                
                 const filteredPatients = allPatients.filter(patient => 
-                    patient.diseaseCode === diseaseCode || 
-                    patient.โรค === diseaseCode ||
-                    patient.รหัสโรค === diseaseCode
+                    patient.diseaseCode === diseaseCode || patient.โรค === diseaseCode
                 );
-                
-                console.log('🔍 [DetailReport] Filtered patients count:', filteredPatients.length);
 
                 // คำนวณสถิติกลุ่มอายุทั้งหมด
                 const ageGroupStats = calculateAgeGroupStats(filteredPatients, agePopulationData);
@@ -3341,9 +3300,6 @@
 
         // Calculate age group statistics
         function calculateAgeGroupStats(patients, agePopulation) {
-            console.log(`📊 === Starting calculateAgeGroupStats ===`);
-            console.log(`📊 Input: ${patients.length} patients, ${agePopulation?.length || 0} age groups`);
-            
             const ageGroups = {};
             
             // Initialize age groups using new structure
@@ -3378,8 +3334,8 @@
             let debugCount = 0;
             
             patients.forEach((patient, index) => {
-                // ตรวจสอบฟิลด์อายุจากหลายแหล่ง - เพิ่ม ageYear (เอกพจน์) ตามที่ user ระบุ
-                let patientAge = patient.ageYear || patient.ageYears || patient['อายุปี'] || patient.age;
+                // ตรวจสอบฟิลด์อายุจากหลายแหล่ง - เปลี่ยนลำดับให้ ageYears มาก่อน
+                let patientAge = patient.ageYears || patient.ageYear || patient['อายุปี'] || patient.age;
                 
                 // Debug บางรายการแรก
                 if (debugCount < 5) {
