@@ -1423,7 +1423,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.diseaseCode}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${getDiseaseName(patient.diseaseCode)}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.gender}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageYears || patient.ageYear || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageYears !== undefined ? patient.ageYears : patient.ageYear !== undefined ? patient.ageYear : 0}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">${ageGroup}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageMonths || '-'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageDays || '-'}</td>
@@ -3365,8 +3365,22 @@
                     window.agePopulationData = agePopulationArray;
                 }
                 
-                // ใช้ฟังก์ชันที่มีอยู่แล้วเพื่อหากลุ่มอายุ
-                const patientAge = patient.ageYears || patient.ageYear || patient['อายุปี'] || patient.age;
+                // ใช้ฟังก์ชันที่มีอยู่แล้วเพื่อหากลุ่มอายุ - รวมอายุ 0 ปี
+                let patientAge = patient.ageYears !== undefined ? patient.ageYears 
+                    : patient.ageYear !== undefined ? patient.ageYear 
+                    : patient['อายุปี'] !== undefined ? patient['อายุปี'] 
+                    : patient.age;
+                
+                // แปลงเป็นตัวเลข และยอมรับค่า 0
+                if (patientAge !== undefined && patientAge !== null && patientAge !== '') {
+                    patientAge = parseInt(patientAge);
+                    if (isNaN(patientAge) || patientAge < 0) {
+                        patientAge = 0; // กรณีไม่มีข้อมูลหรือข้อมูลผิดพลาด ให้ถือว่าอายุ 0 ปี
+                    }
+                } else {
+                    patientAge = 0; // กรณีไม่มีข้อมูลให้ถือว่าอายุ 0 ปี
+                }
+                
                 const ageGroup = getAgeGroupFromAge(patientAge, agePopulationArray);
                 
                 return ageGroup || '-';
@@ -3454,8 +3468,19 @@
             let debugCount = 0;
             
             patients.forEach((patient, index) => {
-                // ตรวจสอบฟิลด์อายุจากหลายแหล่ง - เปลี่ยนลำดับให้ ageYears มาก่อน
-                let patientAge = patient.ageYears || patient.ageYear || patient['อายุปี'] || patient.age;
+                // ตรวจสอบฟิลด์อายุจากหลายแหล่ง - เปลี่ยนลำดับให้ ageYears มาก่อน และรวมอายุ 0 ปี
+                let patientAge = patient.ageYears !== undefined ? patient.ageYears 
+                    : patient.ageYear !== undefined ? patient.ageYear 
+                    : patient['อายุปี'] !== undefined ? patient['อายุปี'] 
+                    : patient.age;
+                
+                // แปลงเป็นตัวเลข และยอมรับค่า 0
+                if (patientAge !== undefined && patientAge !== null && patientAge !== '') {
+                    patientAge = parseInt(patientAge);
+                    if (isNaN(patientAge)) {
+                        patientAge = undefined;
+                    }
+                }
                 
                 // Debug บางรายการแรก
                 if (debugCount < 5) {
@@ -3469,7 +3494,8 @@
                     debugCount++;
                 }
                 
-                if (patientAge || patientAge === 0) {
+                // ตรวจสอบว่ามีข้อมูลอายุที่ถูกต้องหรือไม่ (รวมอายุ 0 ปี)
+                if (patientAge !== undefined && patientAge !== null && patientAge >= 0) {
                     patientsWithAge++;
                     // Calculate age group from patient's age using startAge/endAge ranges
                     const ageGroup = getAgeGroupFromAge(patientAge, agePopulation);
