@@ -2174,14 +2174,53 @@
                     throw new Error('ไม่พบข้อมูลผู้ป่วยหรือข้อมูลประชากรตามอายุ');
                 }
 
+                console.log('🔍 Age Groups Ranking Debug Info:');
+                console.log('- Disease Code:', diseaseCode);
+                console.log('- Total patients in DB:', Object.keys(patients).length);
+                console.log('- Age population data type:', Array.isArray(agePopulationData) ? 'Array' : 'Object');
+                console.log('- Age population count:', Array.isArray(agePopulationData) ? agePopulationData.length : Object.keys(agePopulationData).length);
+
                 // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
                 const allPatients = Object.values(patients);
+                
+                // Debug: ตรวจสอบฟิลด์โรคที่มีอยู่ในข้อมูลผู้ป่วย
+                const samplePatient = allPatients[0];
+                if (samplePatient) {
+                    console.log('- Sample patient fields:', Object.keys(samplePatient));
+                    console.log('- Sample patient disease fields:', {
+                        diseaseCode: samplePatient.diseaseCode,
+                        โรค: samplePatient.โรค,
+                        รหัสโรค: samplePatient.รหัสโรค
+                    });
+                }
+                
                 const filteredPatients = allPatients.filter(patient => 
-                    patient.diseaseCode === diseaseCode || patient.โรค === diseaseCode
+                    patient.diseaseCode === diseaseCode || 
+                    patient.โรค === diseaseCode ||
+                    patient.รหัสโรค === diseaseCode
                 );
+                
+                console.log('- Filtered patients count:', filteredPatients.length);
+
+                // แปลง agePopulationData เป็น array ถ้าจำเป็น
+                const agePopulationArray = Array.isArray(agePopulationData) 
+                    ? agePopulationData 
+                    : Object.values(agePopulationData);
+                
+                console.log('- Age population array length:', agePopulationArray.length);
+                if (agePopulationArray.length > 0) {
+                    console.log('- Sample age group:', agePopulationArray[0]);
+                }
 
                 // คำนวณสถิติกลุ่มอายุ
-                const ageGroupStats = calculateAgeGroupStats(filteredPatients, agePopulationData);
+                const ageGroupStats = calculateAgeGroupStats(filteredPatients, agePopulationArray);
+                
+                console.log('🎯 Age Group Stats Result:', {
+                    topThreeLength: ageGroupStats.topThree.length,
+                    percentageTopLength: ageGroupStats.percentageTop.length,
+                    topThree: ageGroupStats.topThree,
+                    percentageTop: ageGroupStats.percentageTop
+                });
                 
                 // สร้างการ์ดสำหรับอัตราป่วยตามกลุ่มอายุ (3 อันดับสูงสุด)
                 const rateContainer = document.getElementById('topAgeGroupsRateContainer');
@@ -3190,12 +3229,10 @@
                 if (age >= startAge && age <= endAge) {
                     // Return the age group label (either predefined or auto-generated)
                     const ageGroupLabel = group.ageGroup || `${startAge}-${endAge >= 999 ? '999+' : endAge} ปี`;
-                    console.log(`🎯 Age ${age} matched to group: ${ageGroupLabel} (range: ${startAge}-${endAge})`);
                     return ageGroupLabel;
                 }
             }
             
-            console.log(`⚠️ Age ${age} did not match any age group`);
             return null;
         }
 
@@ -3218,21 +3255,33 @@
             console.log(`📊 Starting age group classification for ${patients.length} patients`);
             console.log(`📊 Available age groups:`, agePopulation.map(g => `${g.startAge}-${g.endAge}`));
             
+            // Debug: ตรวจสอบข้อมูลผู้ป่วยตัวอย่าง
+            if (patients.length > 0) {
+                const samplePatient = patients[0];
+                console.log(`📊 Sample patient fields:`, Object.keys(samplePatient));
+                console.log(`📊 Sample patient age data:`, {
+                    ageYears: samplePatient.ageYears,
+                    'อายุปี': samplePatient['อายุปี'],
+                    age: samplePatient.age
+                });
+            }
+            
             let patientsWithAge = 0;
             let patientsClassified = 0;
             
             patients.forEach(patient => {
-                // Always use ageYears to determine age group - don't rely on pre-assigned ageGroup
-                if (patient.ageYears || patient.ageYears === 0) {
+                // ตรวจสอบฟิลด์อายุจากหลายแหล่ง
+                let patientAge = patient.ageYears || patient['อายุปี'] || patient.age;
+                
+                if (patientAge || patientAge === 0) {
                     patientsWithAge++;
                     // Calculate age group from patient's age using startAge/endAge ranges
-                    const ageGroup = getAgeGroupFromAge(patient.ageYears, agePopulation);
+                    const ageGroup = getAgeGroupFromAge(patientAge, agePopulation);
                     if (ageGroup && ageGroups[ageGroup]) {
                         ageGroups[ageGroup].patients++;
                         patientsClassified++;
                     }
                 }
-                // Note: Patients without ageYears data will not be counted in age group statistics
             });
             
             console.log(`📊 Age group classification complete:`);
