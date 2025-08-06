@@ -2203,13 +2203,24 @@
                 console.log('- Filtered patients count:', filteredPatients.length);
 
                 // แปลง agePopulationData เป็น array ถ้าจำเป็น
-                const agePopulationArray = Array.isArray(agePopulationData) 
+                let agePopulationArray = Array.isArray(agePopulationData) 
                     ? agePopulationData 
                     : Object.values(agePopulationData);
+                
+                // แปลงข้อมูลเก่าให้เป็นโครงสร้างใหม่
+                agePopulationArray = convertLegacyAgePopulationData(agePopulationArray);
                 
                 console.log('- Age population array length:', agePopulationArray.length);
                 if (agePopulationArray.length > 0) {
                     console.log('- Sample age group:', agePopulationArray[0]);
+                    console.log('- All age groups structure:', agePopulationArray.map(g => ({
+                        year: g.year,
+                        startAge: g.startAge,
+                        endAge: g.endAge,
+                        total: g.total,
+                        hasStartAge: g.hasOwnProperty('startAge'),
+                        hasEndAge: g.hasOwnProperty('endAge')
+                    })));
                 }
 
                 // คำนวณสถิติกลุ่มอายุ
@@ -2886,6 +2897,54 @@
             }
         }
 
+        // Helper function to convert old age population data to new structure
+        function convertLegacyAgePopulationData(data) {
+            if (!Array.isArray(data)) return data;
+            
+            return data.map(item => {
+                // ถ้ามี startAge และ endAge แล้ว ใช้ข้อมูลเดิม
+                if (item.hasOwnProperty('startAge') && item.hasOwnProperty('endAge')) {
+                    return item;
+                }
+                
+                // ถ้ามี ageGroup แต่ไม่มี startAge/endAge ให้พยายามแปลง
+                if (item.ageGroup && !item.hasOwnProperty('startAge')) {
+                    console.log(`🔄 Converting legacy age group: ${item.ageGroup}`);
+                    
+                    // พยายามแปลงจาก ageGroup string เป็น startAge/endAge
+                    const ageGroupStr = item.ageGroup.toString();
+                    let startAge = 0;
+                    let endAge = 999;
+                    
+                    // รูปแบบ "0-4 ปี", "5-14 ปี", "80+ ปี"
+                    const rangeMatch = ageGroupStr.match(/(\d+)-(\d+)/);
+                    const plusMatch = ageGroupStr.match(/(\d+)\+/);
+                    
+                    if (rangeMatch) {
+                        startAge = parseInt(rangeMatch[1]);
+                        endAge = parseInt(rangeMatch[2]);
+                    } else if (plusMatch) {
+                        startAge = parseInt(plusMatch[1]);
+                        endAge = 999;
+                    }
+                    
+                    return {
+                        ...item,
+                        startAge,
+                        endAge
+                    };
+                }
+                
+                // ถ้าไม่มีข้อมูลใดๆ ให้ใช้ค่า default
+                console.log(`⚠️ Age population item missing age group info:`, item);
+                return {
+                    ...item,
+                    startAge: 0,
+                    endAge: 999
+                };
+            });
+        }
+
         async function deleteFromFirebase(path) {
             try {
                 const { database, ref, remove } = window.firebaseDB;
@@ -3084,12 +3143,15 @@
         async function generateReportContent(diseaseCode, startDate, endDate) {
             try {
                 // Load necessary data
-                const [diseases, patients, agePopulation, bangkokDistricts] = await Promise.all([
+                const [diseases, patients, rawAgePopulation, bangkokDistricts] = await Promise.all([
                     loadFromFirebase('diseases'),
                     loadFromFirebase('patients'),
                     loadFromFirebase('agePopulation'),
                     loadFromFirebase('bangkokDistricts')
                 ]);
+                
+                // Convert legacy age population data to new structure
+                const agePopulation = convertLegacyAgePopulationData(rawAgePopulation);
                 
                 // Find selected disease
                 const selectedDisease = diseases.find(d => d.code === diseaseCode);
@@ -10287,10 +10349,14 @@
             try {
                 const agePopulation = await loadFromFirebase('agePopulation');
                 
-                // Check for duplicate year (only if not editing the same record)
-                const existingYearRecord = agePopulation.findIndex(a => a.year === year.toString());
-                if (existingYearRecord !== -1 && existingYearRecord !== editIndex) {
-                    showNotification('ปีนี้มีข้อมูลแล้ว กรุณาแก้ไขข้อมูลเดิมแทน', 'error');
+                // Check for duplicate age range (only if not editing the same record)
+                const existingRecord = agePopulation.findIndex(a => 
+                    a.year === year.toString() && 
+                    parseInt(a.startAge) === startAge && 
+                    parseInt(a.endAge) === endAge
+                );
+                if (existingRecord !== -1 && existingRecord !== editIndex) {
+                    showNotification('กลุ่มอายุนี้ในปีนี้มีข้อมูลแล้ว กรุณาแก้ไขข้อมูลเดิมแทน', 'error');
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
                     return;
