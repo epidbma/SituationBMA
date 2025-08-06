@@ -48,7 +48,6 @@
         
         // Initialize the application after Firebase is ready
         window.initializeFirebaseApp = function() {
-            console.log('🔥 Firebase connected to Asia Southeast region!');
             
             // Update Firebase status indicator
             const firebaseStatus = document.getElementById('firebaseStatus');
@@ -1242,9 +1241,7 @@
                             diseaseCache[disease.code] = disease.name;
                         }
                     });
-                    console.log('Loaded diseases:', Object.keys(diseaseCache).length);
                 } else {
-                    console.log('No diseases data available');
                 }
             } catch (error) {
                 console.error('Error loading diseases:', error);
@@ -1257,7 +1254,6 @@
         }
 
         async function displayPatients() {
-            console.log('Starting to display patients...');
             if (!window.firebaseDB) {
                 console.error('Firebase not initialized');
                 return;
@@ -1273,10 +1269,8 @@
             }
 
             const patientRef = ref(database, 'patients');
-            console.log('Patient reference created');
             
             onValue(patientRef, async (snapshot) => {
-                console.log('Received Firebase snapshot');
                 const data = snapshot.val();
                 const tableBody = document.getElementById('patientTableBody');
                 if (!tableBody) {
@@ -1285,7 +1279,6 @@
                 }
 
                 if (data) {
-                    console.log('Found patient data:', Object.keys(data).length, 'records');
                     // เก็บข้อมูลทั้งหมดใน allPatients
                     window.allPatients = Object.entries(data).map(([key, patient]) => ({
                         ...patient,
@@ -1298,7 +1291,6 @@
                     // สร้างสรุปข้อมูลโรค
                     createDiseaseSummary();
                 } else {
-                    console.log('No patient data found');
                     window.allPatients = [];
                     tableBody.innerHTML = `
                         <tr>
@@ -1499,12 +1491,9 @@
 
         // Call displayPatients when the page loads
         window.addEventListener('load', () => {
-            console.log('Page loaded, checking Firebase...');
             if (window.firebaseDB) {
-                console.log('Firebase available, displaying patients...');
                 displayPatients();
             } else {
-                console.log('Firebase not available yet');
             }
         });
 
@@ -1669,7 +1658,6 @@
         // System Overview Functions - แสดงข้อมูลสถิติจริง
         async function loadSystemOverview() {
             try {
-                console.log('Loading system overview data...');
                 
                 // โหลดข้อมูลผู้ป่วยเพื่อนับจำนวนโรคที่มีผู้ป่วยจริง
                 const { database, ref, get } = window.firebaseDB;
@@ -1712,7 +1700,6 @@
                     weekDateRangeElement.classList.add('cursor-help', 'text-orange-600');
                 }
                 
-                console.log('System overview loaded successfully');
             } catch (error) {
                 console.error('Error loading system overview:', error);
                 // แสดงข้อมูลเริ่มต้นหากเกิดข้อผิดพลาด
@@ -1870,7 +1857,6 @@
                     });
                 }
                 
-                console.log('Disease map loaded:', diseaseMap.size, 'diseases');
                 
                 // สร้าง object เพื่อเก็บโรคที่ไม่ซ้ำ พร้อมนับจำนวนผู้ป่วย
                 const diseaseCount = {};
@@ -1911,8 +1897,6 @@
                     select.appendChild(option);
                 });
                 
-                console.log(`Loaded ${sortedDiseases.length} diseases from patient database`);
-                
             } catch (error) {
                 console.error('Error loading disease options:', error);
                 const select = document.getElementById('diseaseSelect');
@@ -1941,12 +1925,8 @@
                 const patients = snapshot.val();
                 
                 if (!patients) {
-                    console.log('No patient data found');
                     return;
                 }
-                
-                console.log('Selected disease CODE:', selectedDisease);
-                console.log('Total patients in database:', Object.keys(patients).length);
                 
                 // กรองผู้ป่วยตามรหัสโรคที่เลือก - เอาแค่รหัสโรคเท่านั้น
                 const allPatients = Object.values(patients);
@@ -1959,13 +1939,6 @@
                     // ตรวจสอบว่ารหัสโรคตรงกันไหม (เฉพาะรหัส ไม่เกี่ยวชื่อ)
                     if (patient.diseaseCode && patient.diseaseCode.toString().trim() === selectedDisease.toString().trim()) {
                         totalCount++;
-                        
-                        console.log('Found matching patient:', {
-                            diseaseCode: patient.diseaseCode,
-                            gender: patient.gender,
-                            status: patient.patientStatus,
-                            deathDate: patient.deathDate
-                        });
                         
                         // นับตามเพศ
                         const gender = patient.gender;
@@ -1985,8 +1958,6 @@
                     }
                 });
                 
-                console.log('Final counts - Total:', totalCount, 'Male:', maleCount, 'Female:', femaleCount, 'Deaths:', deathCount);
-                
                 // คำนวณสัดส่วน
                 const malePercentage = totalCount > 0 ? (maleCount / totalCount * 100).toFixed(1) : 0;
                 const femalePercentage = totalCount > 0 ? (femaleCount / totalCount * 100).toFixed(1) : 0;
@@ -2003,14 +1974,6 @@
                 } else {
                     genderRatio = 'ไม่มีข้อมูล';
                 }
-                
-                console.log('About to update UI with:', {
-                    total: totalCount,
-                    male: maleCount,
-                    female: femaleCount,
-                    deaths: deathCount,
-                    ratio: genderRatio
-                });
                 
                 // อัปเดตข้อมูลในหน้าจอ
                 document.getElementById('totalPatients').textContent = totalCount.toLocaleString();
@@ -2033,8 +1996,6 @@
                 
                 // สร้างข้อมูลอันดับกลุ่มอายุ
                 await createTopAgeGroupsRanking(selectedDisease);
-                
-                console.log('UI updated successfully');
                 
             } catch (error) {
                 console.error('Error loading disease details:', error);
@@ -2181,38 +2142,16 @@
                     throw new Error('ไม่พบข้อมูลผู้ป่วยหรือข้อมูลประชากรตามอายุ');
                 }
 
-                console.log('🔍 Age Groups Ranking Debug Info:');
-                console.log('- Disease Code:', diseaseCode);
-                console.log('- Total patients in DB:', Object.keys(patients).length);
-                console.log('- Age population data type:', Array.isArray(agePopulationData) ? 'Array' : 'Object');
-                console.log('- Age population count:', Array.isArray(agePopulationData) ? agePopulationData.length : Object.keys(agePopulationData).length);
-
                 // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
                 const allPatients = Object.values(patients);
-                
-                console.log('🔍 Filtering patients for disease:', diseaseCode);
-                console.log('- Total patients in database:', allPatients.length);
                 
                 // Debug: ตรวจสอบฟิลด์โรคที่มีอยู่ในข้อมูลผู้ป่วย
                 const samplePatient = allPatients[0];
                 if (samplePatient) {
-                    console.log('- Sample patient fields:', Object.keys(samplePatient));
-                    console.log('- Sample patient disease fields:', {
-                        diseaseCode: samplePatient.diseaseCode,
-                        โรค: samplePatient.โรค,
-                        รหัสโรค: samplePatient.รหัสโรค
-                    });
-                    console.log('- Sample patient age fields:', {
-                        ageYears: samplePatient.ageYears,
-                        ageYear: samplePatient.ageYear,
-                        'อายุปี': samplePatient['อายุปี'],
-                        age: samplePatient.age
-                    });
                 }
                 
                 // แสดงรายการโรคที่มีในฐานข้อมูลก่อนกรอง
                 const uniqueDiseases = [...new Set(allPatients.map(p => p.diseaseCode).filter(Boolean))];
-                console.log('- Available disease codes in database:', uniqueDiseases);
                 
                 const filteredPatients = allPatients.filter(patient => 
                     patient.diseaseCode === diseaseCode || 
@@ -2220,26 +2159,9 @@
                     patient.รหัสโรค === diseaseCode
                 );
                 
-                console.log('- Filtered patients count:', filteredPatients.length);
-                
                 // Debug: แสดงผู้ป่วยที่กรองได้บางรายเพื่อตรวจสอบ
                 if (filteredPatients.length > 0) {
-                    console.log('- Sample filtered patients (first 3):');
-                    filteredPatients.slice(0, 3).forEach((patient, index) => {
-                        console.log(`  Patient ${index + 1}:`, {
-                            diseaseCode: patient.diseaseCode,
-                            ageGroup: patient.ageGroup,
-                            hasAgeGroup: patient.hasOwnProperty('ageGroup'),
-                            ageYears: patient.ageYears,
-                            ageYear: patient.ageYear,
-                            'อายุปี': patient['อายุปี'],
-                            age: patient.age,
-                            finalAge: patient.ageYears || patient.ageYear || patient['อายุปี'] || patient.age
-                        });
-                    });
                 } else {
-                    console.log('❌ No patients found for disease code:', diseaseCode);
-                    console.log('   Try one of these disease codes instead:', uniqueDiseases.slice(0, 5));
                 }
 
                 // แปลง agePopulationData เป็น array ถ้าจำเป็น
@@ -2250,31 +2172,13 @@
                 // แปลงข้อมูลเก่าให้เป็นโครงสร้างใหม่
                 agePopulationArray = convertLegacyAgePopulationData(agePopulationArray);
                 
-                console.log('- Age population array length:', agePopulationArray.length);
                 if (agePopulationArray.length > 0) {
-                    console.log('- Sample age group:', agePopulationArray[0]);
-                    console.log('- All age groups structure:', agePopulationArray.map(g => ({
-                        year: g.year,
-                        startAge: g.startAge,
-                        endAge: g.endAge,
-                        total: g.total,
-                        hasStartAge: g.hasOwnProperty('startAge'),
-                        hasEndAge: g.hasOwnProperty('endAge')
-                    })));
                 }
 
                 // คำนวณสถิติกลุ่มอายุ - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
                 const ageGroupStats = calculateAgeGroupStats(filteredPatients, agePopulationArray);
                 
-                console.log('🎯 Age Group Stats Result:', {
-                    topThreeLength: ageGroupStats.topThree.length,
-                    percentageTopLength: ageGroupStats.percentageTop.length,
-                    topThree: ageGroupStats.topThree,
-                    percentageTop: ageGroupStats.percentageTop
-                });
-                
                 // ลบการสร้างการ์ดอัตราป่วยและร้อยละกลุ่มอายุออก (ตามคำขอผู้ใช้)
-                console.log('ℹ️ Age group ranking cards removed from display');
                 
             } catch (error) {
                 console.error('Error in age group ranking (functionality removed):', error);
@@ -2541,8 +2445,6 @@
                     patient.diseaseCode && patient.diseaseCode.toString().trim() === diseaseCode.toString().trim()
                 );
                 
-                console.log('Disease patients for epidemic curve:', diseasePatients.length);
-                
                 // สร้างข้อมูลสำหรับแต่ละสัปดาห์การระบาด
                 const weeklyData = [];
                 const labels = [];
@@ -2571,11 +2473,8 @@
                     labels.push(`${week.weekNumber}/${week.year}`);
                 });
                 
-                console.log('Epidemic curve data:', { labels, data: weeklyData });
-                
                 // หาค่าสูงสุดในข้อมูลเพื่อกำหนด stepSize
                 const maxValue = Math.max(...weeklyData);
-                console.log('Max value in epidemic curve:', maxValue);
                 
                 // กำหนด stepSize ตามจำนวนผู้ป่วยสูงสุด
                 let stepSize;
@@ -2593,7 +2492,6 @@
                     stepSize = 1000;
                 }
                 
-                console.log('Using stepSize:', stepSize, 'for max value:', maxValue);
                 
                 // ลบ chart เก่าถ้ามี
                 if (epidemicChart) {
@@ -2753,7 +2651,6 @@
                 await set(ref(database, path), data);
                 // Clear localStorage after successful Firebase save
                 localStorage.removeItem(path.replace('/', '_'));
-                console.log(`✅ Saved to Firebase: ${path}`);
                 return true;
             } catch (error) {
                 console.error(`❌ Error saving to Firebase (${path}):`, error);
@@ -2769,7 +2666,6 @@
 
         async function loadFromFirebase(path) {
             try {
-                console.log(`🔄 Attempting to load from Firebase: ${path}`);
                 const { database, ref, get } = window.firebaseDB;
                 if (!database || !ref || !get) {
                     console.error('❌ Firebase DB functions not available');
@@ -2781,7 +2677,6 @@
                 // Try to get data from Firebase first
                 if (snapshot.exists()) {
                     data = snapshot.val();
-                    console.log(`✅ Loaded from Firebase: ${path}, Data:`, data);
                 }
 
                 // If data is an object with numeric keys, convert to array
@@ -2789,18 +2684,15 @@
                     const keys = Object.keys(data);
                     if (keys.every(key => !isNaN(key))) {
                         data = Object.values(data);
-                        console.log(`🔄 Converted object to array for ${path}, Length:`, data.length);
                     }
                 }
 
                 // If no data in Firebase, try localStorage
                 if (!data || (Array.isArray(data) && data.length === 0)) {
-                    console.log(`📭 No data found in Firebase: ${path}`);
                     try {
                         const localData = localStorage.getItem(path.replace('/', '_'));
                         if (localData) {
                             data = JSON.parse(localData);
-                            console.log(`✅ Loaded from localStorage: ${path}, Length:`, Array.isArray(data) ? data.length : 'not array');
                         }
                     } catch (localError) {
                         console.error(`❌ Error loading from localStorage: ${path}`, localError);
@@ -2809,23 +2701,19 @@
 
                 // If still no data, return empty array
                 if (!data) {
-                    console.log(`📭 No data found in both Firebase and localStorage: ${path}`);
                     return [];
                 }
 
                 // Process the data
                 if (Array.isArray(data)) {
-                    console.log(`✅ Got array data (${data.length} items)`);
                     return data;
                 }
                 
                 if (typeof data === 'object') {
                     const arrayData = Object.values(data);
-                    console.log(`🔄 Converted object to array (${arrayData.length} items)`);
                     return arrayData;
                 }
 
-                console.log(`⚠️ Unexpected data format: ${typeof data}`);
                 return [];
 
             } catch (error) {
@@ -2846,7 +2734,6 @@
                 
                 // ถ้ามี ageGroup แต่ไม่มี startAge/endAge ให้พยายามแปลง
                 if (item.ageGroup && !item.hasOwnProperty('startAge')) {
-                    console.log(`🔄 Converting legacy age group: ${item.ageGroup}`);
                     
                     // พยายามแปลงจาก ageGroup string เป็น startAge/endAge
                     const ageGroupStr = item.ageGroup.toString();
@@ -2873,7 +2760,6 @@
                 }
                 
                 // ถ้าไม่มีข้อมูลใดๆ ให้ใช้ค่า default
-                console.log(`⚠️ Age population item missing age group info:`, item);
                 return {
                     ...item,
                     startAge: 0,
@@ -2886,7 +2772,6 @@
             try {
                 const { database, ref, remove } = window.firebaseDB;
                 await remove(ref(database, path));
-                console.log(`🗑️ Deleted from Firebase: ${path}`);
                 return true;
             } catch (error) {
                 console.error(`❌ Error deleting from Firebase (${path}):`, error);
@@ -2896,7 +2781,6 @@
 
         // Initialize data structure with Firebase
         async function initializeData() {
-            console.log('🔄 Initializing data with Firebase...');
             
             // Initialize all data collections
             const collections = [
@@ -2918,14 +2802,12 @@
                     ];
                     await saveToFirebase('diseases', sampleDiseases);
                     localStorage.setItem(collection, JSON.stringify(sampleDiseases));
-                    console.log('✅ Initialized sample diseases data');
                 } else {
                     // Keep a local cache for faster access
                     localStorage.setItem(collection, JSON.stringify(data));
                 }
             }
             
-            console.log('✅ Data initialization complete');
         }
 
         // Page navigation with animation
@@ -3313,22 +3195,9 @@
             });
             
             // Count patients by age group using existing ageGroup field from database
-            console.log(`📊 Starting age group counting from database for ${patients.length} patients`);
-            console.log(`📊 Available age groups:`, Object.keys(ageGroups));
             
             // Debug: ตรวจสอบข้อมูลผู้ป่วยตัวอย่าง 5 รายแรก
             if (patients.length > 0) {
-                console.log(`📊 Sample patients (first 5):`);
-                patients.slice(0, 5).forEach((patient, index) => {
-                    console.log(`  Patient ${index + 1}:`, {
-                        ageGroup: patient.ageGroup,
-                        ageYears: patient.ageYears,
-                        ageYear: patient.ageYear,
-                        diseaseCode: patient.diseaseCode,
-                        hasAgeGroup: patient.hasOwnProperty('ageGroup'),
-                        ageGroupType: typeof patient.ageGroup
-                    });
-                });
             }
             
             let patientsWithAgeGroup = 0;
@@ -3348,20 +3217,11 @@
                     
                     if (patientAge !== undefined && patientAge !== null && patientAge >= 0) {
                         patientAgeGroup = getAgeGroupFromAge(patientAge, agePopulation);
-                        console.log(`🔄 Calculated age group for patient ${index + 1}: age ${patientAge} → "${patientAgeGroup}"`);
                     }
                 }
                 
                 // Debug บางรายการแรก
                 if (debugCount < 5) {
-                    console.log(`📊 Patient ${index + 1}:`, {
-                        ageGroup: patient.ageGroup,
-                        calculatedAgeGroup: patientAgeGroup,
-                        ageYears: patient.ageYears,
-                        ageYear: patient.ageYear,
-                        'อายุปี': patient['อายุปี'],
-                        age: patient.age
-                    });
                     debugCount++;
                 }
                 
@@ -3370,16 +3230,12 @@
                     patientsWithAgeGroup++;
                     
                     // Debug: แสดงรายละเอียดการจำแนกกลุ่มอายุ
-                    console.log(`🔍 Processing patient ${index + 1}: ageGroup "${patientAgeGroup}"`);
-                    console.log(`   Available age groups:`, Object.keys(ageGroups));
                     
                     if (ageGroups[patientAgeGroup]) {
                         ageGroups[patientAgeGroup].patients++;
                         patientsClassified++;
                         
-                        console.log(`✅ Patient classified successfully: ageGroup "${patientAgeGroup}" (total in group: ${ageGroups[patientAgeGroup].patients})`);
                     } else {
-                        console.log(`⚠️ Age group "${patientAgeGroup}" not found in population data:`, Object.keys(ageGroups));
                         
                         // สร้างกลุ่มอายุใหม่ถ้าไม่มีในข้อมูลประชากร
                         ageGroups[patientAgeGroup] = {
@@ -3389,25 +3245,9 @@
                             endAge: 999
                         };
                         patientsClassified++;
-                        console.log(`🆕 Created new age group: "${patientAgeGroup}" with 1 patient`);
                     }
                 } else {
-                    console.log(`⚠️ Patient ${index + 1} has no age group data:`, {
-                        ageGroup: patient.ageGroup,
-                        ageYears: patient.ageYears,
-                        ageYear: patient.ageYear
-                    });
                 }
-            });
-            
-            console.log(`📊 Age group classification complete:`);
-            console.log(`   - Total patients: ${patients.length}`);
-            console.log(`   - Patients with age group data: ${patientsWithAgeGroup}`);
-            console.log(`   - Patients successfully classified: ${patientsClassified}`);
-            console.log(`   - Age group counts:`, Object.entries(ageGroups).map(([group, data]) => `${group}: ${data.patients} patients`));
-            console.log(`📋 Detailed age group breakdown:`);
-            Object.entries(ageGroups).forEach(([group, data]) => {
-                console.log(`   ${group}: ${data.patients} patients, population: ${data.population}, rate: ${data.population > 0 ? ((data.patients / data.population) * 100000).toFixed(2) : '0.00'} per 100k`);
             });
             
             // Calculate rates and percentages
@@ -3502,7 +3342,6 @@
             if (!file) return;
 
             const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
-            console.log(`📊 File size: ${fileSizeMB} MB`);
             
             // Enhanced file size warnings with performance tips
             if (file.size > 100 * 1024 * 1024) { // 100MB+
@@ -3630,7 +3469,6 @@
                     blankrows: false // Skip blank rows
                 });
                 
-                console.log(`📊 Parsed ${jsonData.length.toLocaleString()} records from Excel`);
                 
                 // Clear the workbook from memory immediately
                 workbook.Sheets = null;
@@ -3755,7 +3593,6 @@
             const phaseText = phase === 'validation' ? 'ตรวจสอบข้อมูล' : 'บันทึกข้อมูล';
             document.getElementById('currentBatchInfo').textContent = `เริ่ม${phaseText}แบบ batch`;
             
-            console.log(`📊 Batch Info: ${totalRecords.toLocaleString()} records, ${batchSize.toLocaleString()} per batch, ${totalBatches} batches total`);
         }
         
         // Update batch progress
@@ -3783,7 +3620,6 @@
                 }, 100);
             }
             
-            console.log(`📈 Batch Progress: ${phase} ${currentBatch}/${totalBatches} (${batchPercentage}%) - Records ${startIndex + 1}-${endIndex}`);
         }
         
         // Cancel import process
@@ -3856,7 +3692,6 @@
                 document.getElementById('importProgressContainer').classList.add('hidden');
                 
                 // Auto-refresh data to show what was imported before cancellation
-                console.log('🔄 Auto-refreshing data after cancellation...');
                 await autoRefreshData('cancel', window.allPatients ? window.allPatients.length : 0);
                 
                 // Show final cancellation message
@@ -3967,7 +3802,6 @@
                     // Start processing
                     processRecords();            // Determine batch size for progress display only
             const batchSize = Math.max(100, Math.floor(totalRecords / 20));
-            console.log(`📊 Using batch size for progress: ${batchSize.toLocaleString()} for ${totalRecords.toLocaleString()} records`);
             
             // Show batch processing info (for progress display)
             showBatchProcessingInfo(totalRecords, batchSize);
@@ -3977,7 +3811,6 @@
             // Process records one by one
         function processRecord(index) {
             if (importCancelled) {
-                console.log(`🛑 Import cancelled at record ${index + 1}`);
                 return;
             }
             
@@ -4081,7 +3914,6 @@
 
         // Legacy function for backward compatibility
         function processDataInChunks(jsonData) {
-            console.log('🔄 Redirecting to high-performance processing...');
             processDataWithHighPerformance(jsonData);
         }
         
@@ -4554,7 +4386,6 @@
                 document.getElementById('importProgressContainer').classList.add('hidden');
                 
                 // Auto-refresh data after import
-                console.log('🔄 Auto-refreshing data after import...');
                 await autoRefreshData('import', saved);
                 
                 showImportSuccessNotification(saved, valid, errors);
@@ -4564,7 +4395,6 @@
         // Legacy function - no longer used with real-time import
         async function finishImport(filteredData, validRecords, errorRecords) {
             // This function is kept for compatibility but not used in real-time import
-            console.log('Legacy finishImport called - using real-time import instead');
         }
 
         // Save to Firebase with chunked uploads for large datasets
@@ -4603,7 +4433,6 @@
                             
                             updateImportStatus(`บันทึกลง Firebase: ${savedRecords.toLocaleString()}/${totalRecords.toLocaleString()} รายการ (${percentage}%) - กลุ่มที่ ${currentChunk}/${totalChunks}`);
                             
-                            console.log(`✅ Saved chunk ${currentChunk}/${totalChunks}: ${chunk.length} records`);
                             
                             // หน่วงเวลาเล็กน้อยเพื่อไม่ให้ Firebase ถูก rate limit
                             if (currentChunk < totalChunks) {
@@ -4620,7 +4449,6 @@
                                 const retryChunkRef = ref(database, `${path}/chunk_${currentChunk}`);
                                 await set(retryChunkRef, chunk);
                                 savedRecords += chunk.length;
-                                console.log(`✅ Retry successful for chunk ${currentChunk}`);
                             } catch (retryError) {
                                 console.error(`❌ Retry failed for chunk ${currentChunk}:`, retryError);
                                 throw retryError;
@@ -4651,7 +4479,6 @@
                     updateImportStatus(`✅ บันทึก ${totalRecords.toLocaleString()} รายการลง Firebase สำเร็จ!`);
                 }
                 
-                console.log(`✅ Successfully saved ${totalRecords.toLocaleString()} records to Firebase: ${path}`);
                 return true;
                 
             } catch (error) {
@@ -4729,18 +4556,12 @@
                             document.getElementById('importProgressContainer').classList.add('hidden');
                             
                             // รีเฟรชข้อมูลจาก Firebase ก่อนแสดงตาราง
-                            console.log('🔄 Refreshing data from Firebase...');
                             await initializeData();
                             
                             loadPatientsTable();
                             showImportSuccessNotification(totalRecords, validRecords, errorRecords);
                             
                             // แสดงข้อมูลสถิติ memory
-                            console.log(`💾 Data saved successfully:`);
-                            console.log(`   - Total records: ${totalRecords.toLocaleString()}`);
-                            console.log(`   - Firebase: ${firebaseSaved ? 'Yes' : 'No'}`);
-                            console.log(`   - LocalStorage chunks: ${chunks.length}`);
-                            console.log(`   - Memory freed: ~${Math.round(totalRecords * 0.5 / 1024)} MB`);
                         }, 1000);
                         
                     } catch (error) {
@@ -4765,7 +4586,6 @@
                                 document.getElementById('importProgressContainer').classList.add('hidden');
                                 
                                 // รีเฟรชข้อมูลจาก Firebase ก่อนแสดงตาราง
-                                console.log('🔄 Refreshing data from Firebase...');
                                 await initializeData();
                                 
                                 loadPatientsTable();
@@ -4856,7 +4676,6 @@
                         document.getElementById('importProgressContainer').classList.add('hidden');
                         
                         // รีเฟรชข้อมูลจาก Firebase ก่อนแสดงตาราง
-                        console.log('🔄 Refreshing data from Firebase...');
                         await initializeData();
                         
                         loadPatientsTable();
@@ -4960,18 +4779,15 @@
 
         // Load patients table with pagination
         async function loadPatientsTable(searchTerm = '') {
-            console.log('🔄 Loading patients table...');
             
             // Use global variables if available (for real-time import)
             if (window.allPatients && Array.isArray(window.allPatients) && window.allPatients.length > 0) {
                 allPatients = window.allPatients;
-                console.log(`📊 Using cached patients data: ${allPatients.length}`);
             } else {
                 // ลองโหลดจาก Firebase ก่อน
                 const firebaseData = await loadFromFirebase('patients');
                 if (Array.isArray(firebaseData)) {
                     allPatients = firebaseData;
-                    console.log(`📊 Total patients loaded from Firebase: ${allPatients.length}`);
                 } else {
                     console.error('❌ Firebase data is not an array:', firebaseData);
                     allPatients = [];
@@ -4979,14 +4795,12 @@
                 
                 // หากไม่มีข้อมูลใน Firebase ลองโหลดจาก localStorage
                 if (allPatients.length === 0) {
-                    console.log('🔍 No data from Firebase, checking localStorage...');
                     const localData = localStorage.getItem('patients');
                     if (localData) {
                         try {
                             const parsedData = JSON.parse(localData);
                             if (Array.isArray(parsedData) && parsedData.length > 0) {
                                 allPatients = parsedData;
-                                console.log(`✅ Loaded ${allPatients.length} patients from localStorage`);
                             }
                         } catch (error) {
                             console.error('❌ Error parsing localStorage patients data:', error);
@@ -5038,7 +4852,6 @@
 
             // Calculate pagination
             const totalRecords = filteredPatients.length;
-            console.log(`📊 Filtered patients: ${totalRecords}`);
             const totalPages = Math.ceil(totalRecords / recordsPerPage);
             const startIndex = (currentPage - 1) * recordsPerPage;
             const endIndex = Math.min(startIndex + recordsPerPage, totalRecords);
@@ -5073,7 +4886,6 @@
             updatePaginationInfo(totalRecords, currentPage, totalPages);
             updatePaginationControls(totalPages);
             
-            console.log(`Table updated: Page ${currentPage}/${totalPages}, showing ${currentPageData.length} of ${totalRecords} records`);
         }
 
         // Update pagination information display
@@ -7857,7 +7669,6 @@
                 window.allPatients = [];
                 
                 // Auto-refresh data after delete
-                console.log('🔄 Auto-refreshing data after delete...');
                 await autoRefreshData('delete', deletedCount);
                 
                 // Show success message
@@ -7882,7 +7693,6 @@
         // Auto-refresh data after operations
         async function autoRefreshData(operation, count) {
             try {
-                console.log(`🔄 Auto-refreshing after ${operation} operation (${count} records)...`);
                 
                 // Force refresh from Firebase
                 await initializeData();
@@ -7912,7 +7722,6 @@
                     refreshDiv.remove();
                 }, 2000);
                 
-                console.log(`✅ Auto-refresh completed after ${operation}`);
                 
             } catch (error) {
                 console.error(`❌ Error in auto-refresh after ${operation}:`, error);
@@ -7938,7 +7747,6 @@
 
         // Refresh patients data from Firebase
         async function refreshPatientsData() {
-            console.log('🔄 Manual refresh requested...');
             
             // Show loading indicator
             const button = event.target;
