@@ -2183,7 +2183,19 @@
                 
                 // Debug: แสดงผู้ป่วยที่กรองได้บางรายเพื่อตรวจสอบ
                 if (filteredPatients.length > 0) {
+                    console.log('🔍 Sample Filtered Patients (first 10):');
+                    filteredPatients.slice(0, 10).forEach((patient, index) => {
+                        console.log(`  Patient ${index + 1}:`, {
+                            diseaseCode: patient.diseaseCode,
+                            ageGroup: patient.ageGroup,
+                            ageYears: patient.ageYears,
+                            ageYear: patient.ageYear,
+                            age: patient.age,
+                            'อายุปี': patient['อายุปี']
+                        });
+                    });
                 } else {
+                    console.log('❌ No patients found for disease code:', diseaseCode);
                 }
 
                 // แปลง agePopulationData เป็น array ถ้าจำเป็น
@@ -2195,6 +2207,16 @@
                 agePopulationArray = convertLegacyAgePopulationData(agePopulationArray);
                 
                 if (agePopulationArray.length > 0) {
+                    console.log('🔍 Age Population Data (first 5):');
+                    agePopulationArray.slice(0, 5).forEach((group, index) => {
+                        console.log(`  Group ${index + 1}:`, {
+                            ageGroup: group.ageGroup,
+                            startAge: group.startAge,
+                            endAge: group.endAge,
+                            total: group.total,
+                            population: group.population
+                        });
+                    });
                 }
 
                 // คำนวณสถิติกลุ่มอายุ - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
