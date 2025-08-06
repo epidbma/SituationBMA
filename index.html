@@ -3276,25 +3276,41 @@
 
         // Helper function to determine age group from patient's age
         function getAgeGroupFromAge(ageValue, agePopulation) {
-            if (!ageValue && ageValue !== 0) return null;
-            if (!agePopulation || !Array.isArray(agePopulation)) return null;
+            if (!ageValue && ageValue !== 0) {
+                console.log(`🚫 getAgeGroupFromAge: Invalid age value:`, ageValue);
+                return null;
+            }
+            if (!agePopulation || !Array.isArray(agePopulation)) {
+                console.log(`🚫 getAgeGroupFromAge: Invalid agePopulation:`, agePopulation);
+                return null;
+            }
             
             const age = parseInt(ageValue);
-            if (isNaN(age) || age < 0) return null;
+            if (isNaN(age) || age < 0) {
+                console.log(`🚫 getAgeGroupFromAge: Invalid age after parsing:`, age, 'from', ageValue);
+                return null;
+            }
+            
+            console.log(`🔍 getAgeGroupFromAge: Looking for age group for age ${age}`);
+            console.log(`   Available groups:`, agePopulation.map(g => `${g.startAge}-${g.endAge} (${g.ageGroup || 'auto-generated'})`));
             
             // Find the age group that contains this age
             for (const group of agePopulation) {
                 const startAge = parseInt(group.startAge || 0);
                 const endAge = parseInt(group.endAge || 999);
                 
+                console.log(`   Checking group ${startAge}-${endAge}: ${age} >= ${startAge} && ${age} <= ${endAge} = ${age >= startAge && age <= endAge}`);
+                
                 // Check if patient's age falls within this age group range
                 if (age >= startAge && age <= endAge) {
                     // Return the age group label (either predefined or auto-generated)
                     const ageGroupLabel = group.ageGroup || `${startAge}-${endAge >= 999 ? '999+' : endAge} ปี`;
+                    console.log(`✅ getAgeGroupFromAge: Found match! Age ${age} → group "${ageGroupLabel}"`);
                     return ageGroupLabel;
                 }
             }
             
+            console.log(`❌ getAgeGroupFromAge: No group found for age ${age}`);
             return null;
         }
 
@@ -3353,24 +3369,45 @@
                     patientsWithAge++;
                     // Calculate age group from patient's age using startAge/endAge ranges
                     const ageGroup = getAgeGroupFromAge(patientAge, agePopulation);
+                    
+                    // Debug: แสดงรายละเอียดการจำแนกกลุ่มอายุ
+                    console.log(`🔍 Processing patient ${index + 1}: age ${patientAge} → group "${ageGroup}"`);
+                    console.log(`   Available age groups:`, Object.keys(ageGroups));
+                    
                     if (ageGroup && ageGroups[ageGroup]) {
                         ageGroups[ageGroup].patients++;
                         patientsClassified++;
                         
-                        // Debug สำหรับผู้ป่วยที่จัดกลุ่มได้
-                        if (patientsClassified <= 3) {
-                            console.log(`📊 Patient classified: age ${patientAge} → group "${ageGroup}"`);
-                        }
+                        console.log(`✅ Patient classified successfully: age ${patientAge} → group "${ageGroup}" (total in group: ${ageGroups[ageGroup].patients})`);
                     } else if (ageGroup) {
-                        console.log(`⚠️ Age group "${ageGroup}" not found in ageGroups`, Object.keys(ageGroups));
+                        console.log(`⚠️ Age group "${ageGroup}" returned but not found in ageGroups:`, Object.keys(ageGroups));
+                    } else {
+                        console.log(`❌ No age group found for age ${patientAge}`);
+                        console.log(`   Age population structure:`, agePopulation.map(g => ({
+                            startAge: g.startAge,
+                            endAge: g.endAge,
+                            ageGroup: g.ageGroup
+                        })));
                     }
+                } else {
+                    console.log(`⚠️ Patient ${index + 1} has no valid age data:`, {
+                        ageYear: patient.ageYear,
+                        ageYears: patient.ageYears,
+                        'อายุปี': patient['อายุปี'],
+                        age: patient.age
+                    });
                 }
             });
             
             console.log(`📊 Age group classification complete:`);
+            console.log(`   - Total patients: ${patients.length}`);
             console.log(`   - Patients with age data: ${patientsWithAge}`);
             console.log(`   - Patients successfully classified: ${patientsClassified}`);
-            console.log(`   - Age group counts:`, Object.entries(ageGroups).map(([group, data]) => `${group}: ${data.patients}`));
+            console.log(`   - Age group counts:`, Object.entries(ageGroups).map(([group, data]) => `${group}: ${data.patients} patients`));
+            console.log(`📋 Detailed age group breakdown:`);
+            Object.entries(ageGroups).forEach(([group, data]) => {
+                console.log(`   ${group}: ${data.patients} patients, population: ${data.population}, rate: ${data.population > 0 ? ((data.patients / data.population) * 100000).toFixed(2) : '0.00'} per 100k`);
+            });
             
             // Calculate rates and percentages
             const totalPatients = patients.length;
