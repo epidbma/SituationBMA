@@ -1399,7 +1399,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.diseaseCode}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${getDiseaseName(patient.diseaseCode)}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.gender}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageYears}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageYear || patient.ageYears || '-'}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageMonths}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.ageDays}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${patient.subdistrict}</td>
@@ -3275,11 +3275,11 @@
         }
 
         // Helper function to determine age group from patient's age
-        function getAgeGroupFromAge(ageYears, agePopulation) {
-            if (!ageYears && ageYears !== 0) return null;
+        function getAgeGroupFromAge(ageValue, agePopulation) {
+            if (!ageValue && ageValue !== 0) return null;
             if (!agePopulation || !Array.isArray(agePopulation)) return null;
             
-            const age = parseInt(ageYears);
+            const age = parseInt(ageValue);
             if (isNaN(age) || age < 0) return null;
             
             // Find the age group that contains this age
@@ -3322,6 +3322,7 @@
                 const samplePatient = patients[0];
                 console.log(`📊 Sample patient fields:`, Object.keys(samplePatient));
                 console.log(`📊 Sample patient age data:`, {
+                    ageYear: samplePatient.ageYear,
                     ageYears: samplePatient.ageYears,
                     'อายุปี': samplePatient['อายุปี'],
                     age: samplePatient.age
@@ -3330,10 +3331,23 @@
             
             let patientsWithAge = 0;
             let patientsClassified = 0;
+            let debugCount = 0;
             
-            patients.forEach(patient => {
-                // ตรวจสอบฟิลด์อายุจากหลายแหล่ง
-                let patientAge = patient.ageYears || patient['อายุปี'] || patient.age;
+            patients.forEach((patient, index) => {
+                // ตรวจสอบฟิลด์อายุจากหลายแหล่ง - เพิ่ม ageYear (เอกพจน์) ตามที่ user ระบุ
+                let patientAge = patient.ageYear || patient.ageYears || patient['อายุปี'] || patient.age;
+                
+                // Debug บางรายการแรก
+                if (debugCount < 5) {
+                    console.log(`📊 Patient ${index + 1}:`, {
+                        ageYear: patient.ageYear,
+                        ageYears: patient.ageYears,
+                        'อายุปี': patient['อายุปี'],
+                        age: patient.age,
+                        finalAge: patientAge
+                    });
+                    debugCount++;
+                }
                 
                 if (patientAge || patientAge === 0) {
                     patientsWithAge++;
@@ -3342,6 +3356,13 @@
                     if (ageGroup && ageGroups[ageGroup]) {
                         ageGroups[ageGroup].patients++;
                         patientsClassified++;
+                        
+                        // Debug สำหรับผู้ป่วยที่จัดกลุ่มได้
+                        if (patientsClassified <= 3) {
+                            console.log(`📊 Patient classified: age ${patientAge} → group "${ageGroup}"`);
+                        }
+                    } else if (ageGroup) {
+                        console.log(`⚠️ Age group "${ageGroup}" not found in ageGroups`, Object.keys(ageGroups));
                     }
                 }
             });
