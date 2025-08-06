@@ -3186,11 +3186,16 @@
                 const startAge = parseInt(group.startAge || 0);
                 const endAge = parseInt(group.endAge || 999);
                 
+                // Check if patient's age falls within this age group range
                 if (age >= startAge && age <= endAge) {
-                    return group.ageGroup || `${startAge}-${endAge >= 999 ? '999+' : endAge} ปี`;
+                    // Return the age group label (either predefined or auto-generated)
+                    const ageGroupLabel = group.ageGroup || `${startAge}-${endAge >= 999 ? '999+' : endAge} ปี`;
+                    console.log(`🎯 Age ${age} matched to group: ${ageGroupLabel} (range: ${startAge}-${endAge})`);
+                    return ageGroupLabel;
                 }
             }
             
+            console.log(`⚠️ Age ${age} did not match any age group`);
             return null;
         }
 
@@ -3210,18 +3215,30 @@
             });
             
             // Count patients by age group
+            console.log(`📊 Starting age group classification for ${patients.length} patients`);
+            console.log(`📊 Available age groups:`, agePopulation.map(g => `${g.startAge}-${g.endAge}`));
+            
+            let patientsWithAge = 0;
+            let patientsClassified = 0;
+            
             patients.forEach(patient => {
-                // If patient already has ageGroup assigned, use it
-                if (patient.ageGroup && ageGroups[patient.ageGroup]) {
-                    ageGroups[patient.ageGroup].patients++;
-                } else if (patient.ageYears || patient.ageYears === 0) {
-                    // Calculate age group from patient's age
+                // Always use ageYears to determine age group - don't rely on pre-assigned ageGroup
+                if (patient.ageYears || patient.ageYears === 0) {
+                    patientsWithAge++;
+                    // Calculate age group from patient's age using startAge/endAge ranges
                     const ageGroup = getAgeGroupFromAge(patient.ageYears, agePopulation);
                     if (ageGroup && ageGroups[ageGroup]) {
                         ageGroups[ageGroup].patients++;
+                        patientsClassified++;
                     }
                 }
+                // Note: Patients without ageYears data will not be counted in age group statistics
             });
+            
+            console.log(`📊 Age group classification complete:`);
+            console.log(`   - Patients with age data: ${patientsWithAge}`);
+            console.log(`   - Patients successfully classified: ${patientsClassified}`);
+            console.log(`   - Age group counts:`, Object.entries(ageGroups).map(([group, data]) => `${group}: ${data.patients}`));
             
             // Calculate rates and percentages
             const totalPatients = patients.length;
