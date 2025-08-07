@@ -1833,6 +1833,9 @@
 
                 overviewGrid.innerHTML = overviewCards;
 
+                // โหลดตัวเลือกโรคในหน้าสรุปสถานการณ์
+                await loadDiseaseSelectOptions();
+
             } catch (error) {
                 console.error('Error loading summary database overview:', error);
                 const overviewGrid = document.getElementById('summaryDatabaseOverviewGrid');
@@ -1906,6 +1909,9 @@
                     const option = document.createElement('option');
                     option.value = diseaseCode;
                     
+                    // Debug: ตรวจสอบค่าที่กำลังตั้ง
+                    console.log(`🔍 Creating option with value: "${diseaseCode}" (type: ${typeof diseaseCode})`);
+                    
                     // ดึงชื่อโรคจาก Map
                     const diseaseName = diseaseMap.get(diseaseCode);
                     
@@ -1919,6 +1925,9 @@
                     select.appendChild(option);
                 });
                 
+                console.log(`✅ Created ${sortedDiseases.length} disease options in select`);
+                console.log('🔍 Final select options:', Array.from(select.options).map(opt => ({ value: opt.value, text: opt.textContent })));
+
             } catch (error) {
                 console.error('Error loading disease options:', error);
                 const select = document.getElementById('diseaseSelect');
@@ -1931,6 +1940,9 @@
             const selectedDisease = document.getElementById('diseaseSelect').value;
             const detailsContainer = document.getElementById('diseaseDetailsContainer');
             const noSelectionDiv = document.getElementById('noDiseaseSelected');
+            
+            console.log('🔍 loadDiseaseDetails called with selectedDisease:', selectedDisease);
+            console.log('🔍 Type of selectedDisease:', typeof selectedDisease);
             
             if (!selectedDisease) {
                 detailsContainer.classList.add('hidden');
@@ -2192,10 +2204,19 @@
                 // Debug: ตรวจสอบฟิลด์โรคที่มีอยู่ในข้อมูลผู้ป่วย
                 const samplePatient = allPatients[0];
                 if (samplePatient) {
+                    console.log('🔍 Sample patient fields:', Object.keys(samplePatient));
+                    console.log('🔍 Disease code from function parameter:', diseaseCode);
+                    console.log('🔍 Sample patient disease codes:', {
+                        diseaseCode: samplePatient.diseaseCode,
+                        'รหัสโรค': samplePatient['รหัสโรค'],
+                        โรค: samplePatient.โรค
+                    });
                 }
                 
                 // แสดงรายการโรคที่มีในฐานข้อมูลก่อนกรอง
                 const uniqueDiseases = [...new Set(allPatients.map(p => p.diseaseCode).filter(Boolean))];
+                console.log('🔍 Unique disease codes in database:', uniqueDiseases);
+                console.log('🔍 Looking for disease code:', diseaseCode);
                 
                 const filteredPatients = allPatients.filter(patient => 
                     patient.diseaseCode === diseaseCode || 
