@@ -2161,7 +2161,29 @@
                 const agePopulationData = agePopulationSnapshot.val();
                 
                 if (!patients || !agePopulationData) {
-                    throw new Error('ไม่พบข้อมูลผู้ป่วยหรือข้อมูลประชากรตามอายุ');
+                    console.error('❌ Missing data:', { 
+                        patients: !!patients, 
+                        agePopulationData: !!agePopulationData 
+                    });
+                    
+                    const rateContainer = document.getElementById('topAgeGroupsRateContainer');
+                    const percentageContainer = document.getElementById('topAgeGroupsPercentageContainer');
+                    
+                    if (rateContainer && percentageContainer) {
+                        rateContainer.innerHTML = `
+                            <div class="text-center text-gray-500 col-span-full py-8">
+                                <p>ไม่พบข้อมูลผู้ป่วยหรือข้อมูลประชากรตามอายุ</p>
+                                <p class="text-sm mt-2">กรุณาตรวจสอบข้อมูลในหน้าข้อมูลประกอบ</p>
+                            </div>
+                        `;
+                        percentageContainer.innerHTML = `
+                            <div class="text-center text-gray-500 col-span-full py-8">
+                                <p>ไม่พบข้อมูลผู้ป่วยหรือข้อมูลประชากรตามอายุ</p>
+                                <p class="text-sm mt-2">กรุณาตรวจสอบข้อมูลในหน้าข้อมูลประกอบ</p>
+                            </div>
+                        `;
+                    }
+                    return;
                 }
 
                 // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
@@ -2206,6 +2228,54 @@
                 // แปลงข้อมูลเก่าให้เป็นโครงสร้างใหม่
                 agePopulationArray = convertLegacyAgePopulationData(agePopulationArray);
                 
+                console.log('🔍 Age Population Data Check:');
+                console.log(`  - Raw data length: ${agePopulationArray.length}`);
+                console.log(`  - Sample data:`, agePopulationArray.slice(0, 3));
+                
+                // ตรวจสอบว่ามีข้อมูลประชากรตามอายุหรือไม่
+                if (!agePopulationArray || agePopulationArray.length === 0) {
+                    console.error('❌ No age population data found');
+                    
+                    const rateContainer = document.getElementById('topAgeGroupsRateContainer');
+                    const percentageContainer = document.getElementById('topAgeGroupsPercentageContainer');
+                    
+                    if (rateContainer && percentageContainer) {
+                        const noDataMessage = `
+                            <div class="text-center text-gray-500 col-span-full py-8">
+                                <p class="text-lg font-semibold mb-2">ไม่มีข้อมูลประชากรจำแนกตามอายุ</p>
+                                <p class="text-sm">กรุณาเพิ่มข้อมูลประชากรตามอายุในหน้า "ข้อมูลประกอบ" > "ประชากรกรุงเทพมหานครจำแนกตามอายุ"</p>
+                            </div>
+                        `;
+                        rateContainer.innerHTML = noDataMessage;
+                        percentageContainer.innerHTML = noDataMessage;
+                    }
+                    return;
+                }
+                
+                console.log('🔍 Filtered Patients Check:');
+                console.log(`  - Total patients: ${allPatients.length}`);
+                console.log(`  - Filtered patients: ${filteredPatients.length}`);
+                console.log(`  - Disease code: "${diseaseCode}"`);
+                
+                if (filteredPatients.length === 0) {
+                    console.error('❌ No patients found for disease code:', diseaseCode);
+                    
+                    const rateContainer = document.getElementById('topAgeGroupsRateContainer');
+                    const percentageContainer = document.getElementById('topAgeGroupsPercentageContainer');
+                    
+                    if (rateContainer && percentageContainer) {
+                        const noPatientMessage = `
+                            <div class="text-center text-gray-500 col-span-full py-8">
+                                <p class="text-lg font-semibold mb-2">ไม่พบผู้ป่วยโรค "${diseaseCode}"</p>
+                                <p class="text-sm">กรุณาตรวจสอบรหัสโรคในฐานข้อมูลผู้ป่วย</p>
+                            </div>
+                        `;
+                        rateContainer.innerHTML = noPatientMessage;
+                        percentageContainer.innerHTML = noPatientMessage;
+                    }
+                    return;
+                }
+                
                 if (agePopulationArray.length > 0) {
                     console.log('🔍 Age Population Data (first 5):');
                     agePopulationArray.slice(0, 5).forEach((group, index) => {
@@ -2232,17 +2302,32 @@
                 }
 
                 // ตรวจสอบว่ามีข้อมูลหรือไม่
+                console.log('🔍 Age Group Stats Results:');
+                console.log(`  - Top Three Length: ${ageGroupStats.topThree ? ageGroupStats.topThree.length : 0}`);
+                console.log(`  - Percentage Top Length: ${ageGroupStats.percentageTop ? ageGroupStats.percentageTop.length : 0}`);
+                console.log(`  - All Data Length: ${ageGroupStats.allData ? ageGroupStats.allData.length : 0}`);
+                
                 if (!ageGroupStats.topThree || ageGroupStats.topThree.length === 0) {
-                    rateContainer.innerHTML = `
+                    console.log('❌ No age group statistics found');
+                    
+                    const noDataMessage = `
                         <div class="text-center text-gray-500 col-span-full py-8">
-                            <p>ไม่มีข้อมูลกลุ่มอายุ</p>
+                            <div class="mb-4">
+                                <svg class="w-16 h-16 mx-auto text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <p class="text-lg font-semibold mb-2">ไม่สามารถคำนวณสถิติกลุ่มอายุได้</p>
+                            <div class="text-sm text-gray-500 space-y-1">
+                                <p>เหตุผลที่เป็นไปได้:</p>
+                                <p>• ผู้ป่วยไม่มีข้อมูลกลุ่มอายุในคอลัมน์ "ageGroup"</p>
+                                <p>• ข้อมูลประชากรตามอายุไม่ตรงกับกลุ่มอายุของผู้ป่วย</p>
+                                <p>• กรุณาตรวจสอบข้อมูลในหน้า "ข้อมูลประกอบ"</p>
+                            </div>
                         </div>
                     `;
-                    percentageContainer.innerHTML = `
-                        <div class="text-center text-gray-500 col-span-full py-8">
-                            <p>ไม่มีข้อมูลกลุ่มอายุ</p>
-                        </div>
-                    `;
+                    rateContainer.innerHTML = noDataMessage;
+                    percentageContainer.innerHTML = noDataMessage;
                     return;
                 }
 
@@ -3367,10 +3452,27 @@
 
         // Calculate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
         function calculateAgeGroupStats(patients, agePopulation) {
+            console.log('🔄 Starting calculateAgeGroupStats...');
+            console.log(`📊 Input data:`, {
+                patientsCount: patients ? patients.length : 0,
+                agePopulationCount: agePopulation ? agePopulation.length : 0
+            });
+            
+            // ตรวจสอบข้อมูลพื้นฐาน
+            if (!patients || !Array.isArray(patients) || patients.length === 0) {
+                console.error('❌ No patients data provided');
+                return { topThree: [], percentageTop: [], allData: [] };
+            }
+            
+            if (!agePopulation || !Array.isArray(agePopulation) || agePopulation.length === 0) {
+                console.error('❌ No age population data provided');
+                return { topThree: [], percentageTop: [], allData: [] };
+            }
+            
             const ageGroups = {};
             
             // Initialize age groups using population data
-            agePopulation.forEach(group => {
+            agePopulation.forEach((group, index) => {
                 const key = group.ageGroup || `${group.startAge || 0}-${group.endAge >= 999 ? '999+' : group.endAge || 0} ปี`;
                 ageGroups[key] = {
                     patients: 0,
@@ -3378,6 +3480,10 @@
                     startAge: parseInt(group.startAge || 0),
                     endAge: parseInt(group.endAge || 999)
                 };
+                
+                if (index < 5) {
+                    console.log(`🏗️ Initialized group "${key}":`, ageGroups[key]);
+                }
             });
             
             // Debug: ดูรูปแบบข้อมูลกลุ่มอายุที่มี
@@ -3492,14 +3598,36 @@
             
             // Debug: แสดงผลลัพธ์สุดท้าย
             console.log('📊 Final Age Group Statistics:');
-            console.log('🏆 Top 3 by Rate (per 100,000):');
-            topThree.forEach((stat, index) => {
-                console.log(`  ${index + 1}. ${stat.ageGroup}: ${stat.patients} patients, ${stat.rate} per 100k, ${stat.percentage}%`);
-            });
-            console.log('🏆 Top 3 by Percentage:');
-            percentageTop.forEach((stat, index) => {
-                console.log(`  ${index + 1}. ${stat.ageGroup}: ${stat.patients} patients (${stat.percentage}%), rate: ${stat.rate}`);
-            });
+            console.log(`  - Stats with patients: ${stats.length}`);
+            console.log(`  - Top 3 by rate: ${topThree.length}`);
+            console.log(`  - Top 3 by percentage: ${percentageTop.length}`);
+            
+            if (topThree.length > 0) {
+                console.log('🏆 Top 3 by Rate (per 100,000):');
+                topThree.forEach((stat, index) => {
+                    console.log(`  ${index + 1}. ${stat.ageGroup}: ${stat.patients} patients, ${stat.rate} per 100k, ${stat.percentage}%`);
+                });
+            } else {
+                console.log('⚠️ No rate-based statistics (no population data or no matches)');
+            }
+            
+            if (percentageTop.length > 0) {
+                console.log('🏆 Top 3 by Percentage:');
+                percentageTop.forEach((stat, index) => {
+                    console.log(`  ${index + 1}. ${stat.ageGroup}: ${stat.patients} patients (${stat.percentage}%), rate: ${stat.rate}`);
+                });
+            } else {
+                console.log('⚠️ No percentage-based statistics');
+            }
+            
+            // ตรวจสอบว่ามีข้อมูลใดๆ หรือไม่
+            if (stats.length === 0) {
+                console.error('❌ No age group statistics could be calculated');
+                console.log('💡 Possible causes:');
+                console.log('   - Patients have no ageGroup data in database');
+                console.log('   - Age groups in patients data do not match population data');
+                console.log('   - Population data is missing or invalid');
+            }
             
             return { 
                 topThree, 
