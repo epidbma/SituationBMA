@@ -2861,9 +2861,18 @@
             if (!Array.isArray(data)) return data;
             
             return data.map(item => {
-                // ถ้ามี startAge และ endAge แล้ว ใช้ข้อมูลเดิม
+                // ถ้ามี startAge และ endAge แล้ว ใช้ข้อมูลเดิม แต่สร้าง ageGroup ถ้ายังไม่มี
                 if (item.hasOwnProperty('startAge') && item.hasOwnProperty('endAge')) {
-                    return item;
+                    const result = { ...item };
+                    
+                    // สร้าง ageGroup ถ้ายังไม่มี
+                    if (!result.ageGroup) {
+                        const startAge = parseInt(result.startAge || 0);
+                        const endAge = parseInt(result.endAge || 999);
+                        result.ageGroup = endAge >= 999 ? `${startAge}+ ปี` : `${startAge}-${endAge} ปี`;
+                    }
+                    
+                    return result;
                 }
                 
                 // ถ้ามี ageGroup แต่ไม่มี startAge/endAge ให้พยายามแปลง
@@ -2893,12 +2902,17 @@
                     };
                 }
                 
-                // ถ้าไม่มีข้อมูลใดๆ ให้ใช้ค่า default
-                return {
+                // ถ้าไม่มีข้อมูลใดๆ ให้ใช้ค่า default และสร้าง ageGroup
+                const defaultItem = {
                     ...item,
                     startAge: 0,
                     endAge: 999
                 };
+                
+                // สร้าง ageGroup สำหรับข้อมูล default
+                defaultItem.ageGroup = '0+ ปี';
+                
+                return defaultItem;
             });
         }
 
@@ -2910,6 +2924,43 @@
             } catch (error) {
                 console.error(`❌ Error deleting from Firebase (${path}):`, error);
                 return false;
+            }
+        }
+
+        // Function to update existing age population data with ageGroup field
+        async function updateAgePopulationWithAgeGroup() {
+            try {
+                const agePopulation = await loadFromFirebase('agePopulation');
+                let updated = false;
+                
+                const updatedData = agePopulation.map(item => {
+                    // Check if ageGroup is missing or empty
+                    if (!item.ageGroup || item.ageGroup === '-' || item.ageGroup === '') {
+                        const startAge = parseInt(item.startAge || 0);
+                        const endAge = parseInt(item.endAge || 999);
+                        
+                        // Generate ageGroup based on startAge and endAge
+                        const newAgeGroup = endAge >= 999 ? `${startAge}+ ปี` : `${startAge}-${endAge} ปี`;
+                        updated = true;
+                        
+                        return {
+                            ...item,
+                            ageGroup: newAgeGroup
+                        };
+                    }
+                    return item;
+                });
+                
+                // Save updated data back to Firebase if any changes were made
+                if (updated) {
+                    await saveToFirebase('agePopulation', updatedData);
+                    console.log('✅ Updated age population data with ageGroup field');
+                }
+                
+                return updatedData;
+            } catch (error) {
+                console.error('❌ Error updating age population with ageGroup:', error);
+                return [];
             }
         }
 
@@ -3230,11 +3281,12 @@
         // Helper function to get age group for a patient in the table
         async function getPatientAgeGroup(patient) {
             try {
-                // ถ้าผู้ป่วยมี ageGroup อยู่แล้ว ให้ใช้เลย
-                if (patient.ageGroup && patient.ageGroup !== '-') {
+                // อันดับแรก: ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
+                if (patient.ageGroup && patient.ageGroup !== '-' && patient.ageGroup !== '') {
                     return patient.ageGroup;
                 }
 
+                // อันดับสอง: ถ้าไม่มี ageGroup ให้คำนวณจากอายุ
                 // ใช้ข้อมูลกลุ่มอายุจาก window object หากมี หรือโหลดจาก Firebase
                 let agePopulationArray = window.agePopulationData;
                 
@@ -3258,7 +3310,7 @@
                     window.agePopulationData = agePopulationArray;
                 }
                 
-                // ใช้ฟังก์ชันที่มีอยู่แล้วเพื่อหากลุ่มอายุ - รวมอายุ 0 ปี
+                // หาอายุของผู้ป่วยจากคอลัมน์ต่างๆ
                 let patientAge = patient.ageYears !== undefined ? patient.ageYears 
                     : patient.ageYear !== undefined ? patient.ageYear 
                     : patient['อายุปี'] !== undefined ? patient['อายุปี'] 
@@ -3322,130 +3374,137 @@
                 const key = group.ageGroup || `${group.startAge || 0}-${group.endAge >= 999 ? '999+' : group.endAge || 0} ปี`;
                 ageGroups[key] = {
                     patients: 0,
-                    population: group.total || group.population || 0,
+                    population: parseInt(group.total || group.population || 0),
                     startAge: parseInt(group.startAge || 0),
                     endAge: parseInt(group.endAge || 999)
                 };
             });
             
-            // Debug: ดูรูปแบบข้อมูลกลุ่มอายุ
-            console.log('🔍 Age Population Groups Available:', Object.keys(ageGroups));
-            console.log('🔍 Sample Age Population Data:', agePopulation.slice(0, 3));
+            // Debug: ดูรูปแบบข้อมูลกลุ่มอายุที่มี
+            console.log('🔍 Population Age Groups Available:', Object.keys(ageGroups));
+            console.log('🔍 Population Data Sample:', agePopulation.slice(0, 3));
             
-            // Count patients by age group using existing ageGroup field from database
+            // Count patients by age group - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
+            let patientsWithAgeGroup = 0;
+            let patientsMatched = 0;
+            let unmatchedGroups = new Set();
             
-            // Debug: ตรวจสอบข้อมูลผู้ป่วยตัวอย่าง 5 รายแรก
+            // Debug: ตรวจสอบข้อมูลผู้ป่วยตัวอย่าง
             if (patients.length > 0) {
-                console.log('🔍 Sample Patient Age Groups:');
-                patients.slice(0, 10).forEach((patient, index) => {
+                console.log('🔍 Sample Patient Data (first 5):');
+                patients.slice(0, 5).forEach((patient, index) => {
                     console.log(`  Patient ${index + 1}:`, {
                         ageGroup: patient.ageGroup,
-                        ageYears: patient.ageYears,
-                        ageYear: patient.ageYear,
-                        age: patient.age,
-                        diseaseCode: patient.diseaseCode
+                        ageYears: patient.ageYears || patient.ageYear || patient['อายุปี'],
+                        diseaseCode: patient.diseaseCode || patient['รหัสโรค']
                     });
                 });
             }
             
-            let patientsWithAgeGroup = 0;
-            let patientsClassified = 0;
-            let debugCount = 0;
-            
             patients.forEach((patient, index) => {
-                // ใช้ฟิลด์ ageGroup ที่มีอยู่แล้วในฐานข้อมูลผู้ป่วย
+                // ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
                 let patientAgeGroup = patient.ageGroup;
                 
-                // ถ้าไม่มี ageGroup ให้คำนวณจากอายุ
+                // ถ้าไม่มี ageGroup ให้พยายามคำนวณจากอายุ
                 if (!patientAgeGroup || patientAgeGroup === '-' || patientAgeGroup === '') {
                     const patientAge = patient.ageYears !== undefined ? patient.ageYears 
                         : patient.ageYear !== undefined ? patient.ageYear 
-                        : patient['อายุปี'] !== undefined ? patient['อายุปี'] 
+                        : patient['อายุปี'] !== undefined ? parseInt(patient['อายุปี']) 
                         : patient.age;
                     
-                    if (patientAge !== undefined && patientAge !== null && patientAge >= 0) {
+                    if (patientAge !== undefined && patientAge !== null && !isNaN(patientAge) && patientAge >= 0) {
+                        // ใช้ฟังก์ชันหากลุ่มอายุจากอายุจริง
                         patientAgeGroup = getAgeGroupFromAge(patientAge, agePopulation);
                     }
                 }
                 
-                // Debug บางรายการแรก
-                if (debugCount < 5) {
-                    debugCount++;
-                }
-                
-                // ตรวจสอบว่ามีข้อมูลกลุ่มอายุหรือไม่
+                // นับผู้ป่วยที่มีข้อมูลกลุ่มอายุ
                 if (patientAgeGroup && patientAgeGroup !== '-' && patientAgeGroup !== '') {
                     patientsWithAgeGroup++;
                     
-                    // Debug: แสดงรายละเอียดการจำแนกกลุ่มอายุ
-                    if (debugCount < 10) {
-                        console.log(`🔍 Processing Patient ${index + 1}:`, {
-                            patientAgeGroup: patientAgeGroup,
-                            foundInPopulation: !!ageGroups[patientAgeGroup],
-                            availableGroups: Object.keys(ageGroups)
-                        });
-                    }
-                    
+                    // ตรวจสอบว่ากลุ่มอายุนี้มีในข้อมูลประชากรหรือไม่
                     if (ageGroups[patientAgeGroup]) {
                         ageGroups[patientAgeGroup].patients++;
-                        patientsClassified++;
-                        console.log(`✅ Matched: "${patientAgeGroup}" - Total patients in group: ${ageGroups[patientAgeGroup].patients}`);
+                        patientsMatched++;
                     } else {
-                        console.log(`❌ No match found for: "${patientAgeGroup}"`);
-                        console.log(`   Available groups:`, Object.keys(ageGroups));
+                        // ลองหาแบบ normalize (ลบช่องว่างและเปรียบเทียบ)
+                        const normalizedPatientGroup = patientAgeGroup.replace(/\s+/g, '');
+                        let matched = false;
                         
-                        // สร้างกลุ่มอายุใหม่ถ้าไม่มีในข้อมูลประชากร
-                        ageGroups[patientAgeGroup] = {
-                            patients: 1,
-                            population: 0, // ไม่มีข้อมูลประชากร
-                            startAge: 0,
-                            endAge: 999
-                        };
-                        patientsClassified++;
+                        for (const [popGroup, data] of Object.entries(ageGroups)) {
+                            if (popGroup.replace(/\s+/g, '') === normalizedPatientGroup) {
+                                data.patients++;
+                                patientsMatched++;
+                                matched = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!matched) {
+                            unmatchedGroups.add(patientAgeGroup);
+                            
+                            // สร้างกลุ่มอายุใหม่สำหรับผู้ป่วยที่ไม่มีในข้อมูลประชากร
+                            ageGroups[patientAgeGroup] = {
+                                patients: 1,
+                                population: 0, // ไม่มีข้อมูลประชากร
+                                startAge: 0,
+                                endAge: 999
+                            };
+                            patientsMatched++;
+                        }
                     }
-                } else {
-                    console.log(`⚠️ Patient ${index + 1} has no age group data:`, {
-                        ageGroup: patient.ageGroup,
-                        ageYears: patient.ageYears,
-                        ageYear: patient.ageYear
-                    });
                 }
             });
             
+            // Debug: รายงานผลการจับคู่
+            console.log('📊 Age Group Matching Results:');
+            console.log(`  - Total patients: ${patients.length}`);
+            console.log(`  - Patients with age group data: ${patientsWithAgeGroup}`);
+            console.log(`  - Patients successfully matched: ${patientsMatched}`);
+            
+            if (unmatchedGroups.size > 0) {
+                console.log('⚠️ Unmatched patient age groups:', Array.from(unmatchedGroups));
+                console.log('🔍 Available population age groups:', Object.keys(ageGroups));
+            }
+            
             // Calculate rates and percentages
             const totalPatients = patients.length;
-            const stats = Object.entries(ageGroups).map(([ageGroup, data]) => ({
-                ageGroup,
-                patients: data.patients,
-                population: data.population,
-                rate: data.population > 0 ? ((data.patients / data.population) * 100000).toFixed(2) : '0.00',
-                percentage: totalPatients > 0 ? ((data.patients / totalPatients) * 100).toFixed(1) : '0.0'
-            }));
+            const stats = Object.entries(ageGroups)
+                .filter(([ageGroup, data]) => data.patients > 0) // แสดงเฉพาะกลุ่มที่มีผู้ป่วย
+                .map(([ageGroup, data]) => ({
+                    ageGroup,
+                    patients: data.patients,
+                    population: data.population,
+                    rate: data.population > 0 ? ((data.patients / data.population) * 100000).toFixed(2) : '0.00',
+                    percentage: totalPatients > 0 ? ((data.patients / totalPatients) * 100).toFixed(1) : '0.0'
+                }));
             
-            // Sort by rate for top 3
-            const sortedByRate = [...stats].sort((a, b) => parseFloat(b.rate) - parseFloat(a.rate));
+            // Sort by rate for top 3 (อัตราป่วยต่อแสนประชากร)
+            const sortedByRate = [...stats]
+                .filter(stat => parseFloat(stat.rate) > 0) // เฉพาะที่มีข้อมูลประชากร
+                .sort((a, b) => parseFloat(b.rate) - parseFloat(a.rate));
             const topThree = sortedByRate.slice(0, 3);
             
-            // Sort by percentage for top 3
-            const sortedByPercentage = [...stats].sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage));
+            // Sort by percentage for top 3 (ร้อยละของผู้ป่วย)
+            const sortedByPercentage = [...stats]
+                .sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage));
             const percentageTop = sortedByPercentage.slice(0, 3);
             
-            // Debug: แสดงผลลัพธ์การคำนวณ
-            console.log('📊 Age Group Stats Summary:');
-            console.log(`  - Total patients processed: ${totalPatients}`);
-            console.log(`  - Patients with age group: ${patientsWithAgeGroup}`);
-            console.log(`  - Patients classified: ${patientsClassified}`);
-            console.log('📊 Final Age Group Results:');
-            stats.forEach(stat => {
-                if (stat.patients > 0) {
-                    console.log(`  ${stat.ageGroup}: ${stat.patients} patients, rate: ${stat.rate}, percentage: ${stat.percentage}%`);
-                }
+            // Debug: แสดงผลลัพธ์สุดท้าย
+            console.log('📊 Final Age Group Statistics:');
+            console.log('🏆 Top 3 by Rate (per 100,000):');
+            topThree.forEach((stat, index) => {
+                console.log(`  ${index + 1}. ${stat.ageGroup}: ${stat.patients} patients, ${stat.rate} per 100k, ${stat.percentage}%`);
+            });
+            console.log('🏆 Top 3 by Percentage:');
+            percentageTop.forEach((stat, index) => {
+                console.log(`  ${index + 1}. ${stat.ageGroup}: ${stat.patients} patients (${stat.percentage}%), rate: ${stat.rate}`);
             });
             
             return { 
                 topThree, 
                 percentageTop, 
-                allData: stats // เพิ่ม allData สำหรับ popup
+                allData: stats // ข้อมูลทั้งหมดสำหรับ popup
             };
         }
 
@@ -6145,7 +6204,8 @@
         }
 
         async function loadAgePopulationTable() {
-            const agePopulation = await loadFromFirebase('agePopulation');
+            // Update existing data to ensure ageGroup field exists
+            const agePopulation = await updateAgePopulationWithAgeGroup();
             const content = document.getElementById('masterDataDetailContent');
             
             content.innerHTML = `
@@ -6179,6 +6239,7 @@
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">ปี (ค.ศ.)</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุเริ่มต้น</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">อายุสิ้นสุด</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">กลุ่มอายุ</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">จำนวนประชากร</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">ชาย</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">หญิง</th>
@@ -6187,12 +6248,26 @@
                         </thead>
                         <tbody>
                             ${agePopulation.length === 0 ? 
-                                '<tr><td colspan="7" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">👥</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลประชากรตามอายุ</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลประชากรแต่ละกลุ่มอายุ</p></td></tr>' :
-                                agePopulation.map((age, index) => `
+                                '<tr><td colspan="8" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">👥</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลประชากรตามอายุ</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลประชากรแต่ละกลุ่มอายุ</p></td></tr>' :
+                                agePopulation.map((age, index) => {
+                                    // สร้างกลุ่มอายุจาก startAge และ endAge เหมือนในส่วนอื่นๆ ของระบบ
+                                    let ageGroup = '-';
+                                    if (age.ageGroup) {
+                                        ageGroup = age.ageGroup;
+                                    } else if ((age.startAge || age.startAge === 0) && (age.endAge || age.endAge === 0)) {
+                                        const startAge = parseInt(age.startAge);
+                                        const endAge = parseInt(age.endAge);
+                                        if (!isNaN(startAge) && !isNaN(endAge)) {
+                                            ageGroup = endAge >= 999 ? `${startAge}+ ปี` : `${startAge}-${endAge} ปี`;
+                                        }
+                                    }
+                                    
+                                    return `
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
                                         <td class="px-6 py-4 font-semibold text-gray-900">${age.year}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${age.startAge || age.startAge === 0 ? age.startAge : '-'}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${age.endAge || age.endAge === 0 ? age.endAge : '-'}</td>
+                                        <td class="px-6 py-4 font-bold text-purple-600 bg-purple-50 rounded-lg">${ageGroup}</td>
                                         <td class="px-6 py-4 text-right font-semibold text-gray-900">${age.total ? parseInt(age.total).toLocaleString() : ''}</td>
                                         <td class="px-6 py-4 text-right text-blue-600">${age.male ? parseInt(age.male).toLocaleString() : ''}</td>
                                         <td class="px-6 py-4 text-right text-pink-600">${age.female ? parseInt(age.female).toLocaleString() : ''}</td>
@@ -6201,7 +6276,7 @@
                                             <button onclick="deleteAgePopulation(${index})" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg text-sm hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105">ลบ</button>
                                         </td>
                                     </tr>
-                                `).join('')
+                                `}).join('')
                             }
                         </tbody>
                     </table>
@@ -10312,7 +10387,7 @@
                     }
                     
                     try {
-                        let existingData = replaceExisting ? [] : await loadFromFirebase('agePopulation');
+                        let existingData = replaceExisting ? [] : await updateAgePopulationWithAgeGroup();
                         
                         // Update existing data with new data
                         for (const newItem of newData) {
@@ -10392,7 +10467,7 @@
             submitBtn.disabled = true;
             
             try {
-                const agePopulation = await loadFromFirebase('agePopulation');
+                const agePopulation = await updateAgePopulationWithAgeGroup();
                 
                 // Check for duplicate age range (only if not editing the same record)
                 const existingRecord = agePopulation.findIndex(a => 
@@ -10413,7 +10488,8 @@
                     endAge: parseInt(endAge),
                     male: male.toString(),
                     female: female.toString(),
-                    total: total.toString()
+                    total: total.toString(),
+                    ageGroup: endAge >= 999 ? `${startAge}+ ปี` : `${startAge}-${endAge} ปี`
                 };
                 
                 if (editIndex !== null) {
@@ -10450,7 +10526,7 @@
 
         // Delete age population function
         async function deleteAgePopulation(index) {
-            const agePopulation = await loadFromFirebase('agePopulation');
+            const agePopulation = await updateAgePopulationWithAgeGroup();
             const age = agePopulation[index];
             
             if (!age) {
