@@ -6089,33 +6089,60 @@
                 // แปลงข้อมูลเก่าให้เป็นโครงสร้างใหม่
                 agePopulationArray = convertLegacyAgePopulationData(agePopulationArray);
                 
-                // สร้างข้อมูลสถิติกลุ่มอายุ
-                const ageGroupStats = {};
+                console.log('🔍 Debug Patient Age Group Summary:');
+                console.log(`  - Total patients: ${allPatients.length}`);
+                console.log(`  - Age population groups: ${agePopulationArray.length}`);
                 
-                // เริ่มต้นกลุ่มอายุจากข้อมูลประชากร
-                agePopulationArray.forEach(item => {
-                    if (item.ageGroup) {
-                        ageGroupStats[item.ageGroup] = {
-                            patients: 0,
-                            population: parseInt(item.total) || 0,
-                            ageGroup: item.ageGroup
-                        };
-                    }
+                // ตัวอย่างข้อมูลผู้ป่วย
+                console.log('🔍 Sample patient ageGroup fields:');
+                allPatients.slice(0, 5).forEach((patient, index) => {
+                    console.log(`  Patient ${index + 1}:`, {
+                        ageGroup: patient.ageGroup,
+                        ageYears: patient.ageYears,
+                        ageYear: patient.ageYear,
+                        'อายุปี': patient['อายุปี']
+                    });
                 });
                 
-                // นับจำนวนผู้ป่วยในแต่ละกลุ่มอายุ
-                allPatients.forEach(patient => {
-                    if (patient.ageGroup) {
-                        // ปรับ normalize กลุ่มอายุ
-                        const normalizedAgeGroup = normalizeAgeGroup(patient.ageGroup);
-                        if (ageGroupStats[normalizedAgeGroup]) {
-                            ageGroupStats[normalizedAgeGroup].patients++;
-                        }
-                    }
+                // ตัวอย่างข้อมูลประชากร
+                console.log('🔍 Sample population ageGroup fields:');
+                agePopulationArray.slice(0, 5).forEach((pop, index) => {
+                    console.log(`  Population ${index + 1}:`, {
+                        ageGroup: pop.ageGroup,
+                        startAge: pop.startAge,
+                        endAge: pop.endAge,
+                        total: pop.total
+                    });
                 });
                 
-                // แปลงเป็น array และเรียงลำดับ
-                const statsArray = Object.values(ageGroupStats)
+                // ใช้ฟังก์ชัน calculateAgeGroupStats ที่มีอยู่แล้ว
+                const ageGroupStats = calculateAgeGroupStats(allPatients, agePopulationArray);
+                
+                console.log('🔍 Age Group Stats Result:', ageGroupStats);
+                
+                if (!ageGroupStats || !ageGroupStats.allData || ageGroupStats.allData.length === 0) {
+                    summaryContainer.innerHTML = `
+                        <div class="text-center text-gray-500 py-8">
+                            <svg class="w-12 h-12 mx-auto mb-3 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p class="text-lg font-semibold text-gray-700">ไม่มีข้อมูลที่แสดงได้</p>
+                            <p class="text-sm text-gray-500 mt-1">ไม่พบข้อมูลประชากรหรือผู้ป่วยที่สามารถจับคู่กลุ่มอายุได้</p>
+                            <details class="mt-4 text-xs text-left bg-gray-100 p-3 rounded">
+                                <summary class="font-semibold cursor-pointer">ข้อมูล Debug</summary>
+                                <div class="mt-2 space-y-1">
+                                    <p>จำนวนผู้ป่วย: ${allPatients.length}</p>
+                                    <p>จำนวนกลุ่มอายุประชากร: ${agePopulationArray.length}</p>
+                                    <p>ผลลัพธ์จาก calculateAgeGroupStats: ${JSON.stringify(ageGroupStats, null, 2)}</p>
+                                </div>
+                            </details>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // เรียงลำดับข้อมูลตามกลุ่มอายุ
+                const statsArray = ageGroupStats.allData
                     .filter(stat => stat.population > 0) // เฉพาะกลุ่มที่มีข้อมูลประชากร
                     .sort((a, b) => {
                         // เรียงตามกลุ่มอายุ (จากน้อยไปมาก)
@@ -6128,23 +6155,12 @@
                 const totalPatients = statsArray.reduce((sum, stat) => sum + stat.patients, 0);
                 const totalPopulation = statsArray.reduce((sum, stat) => sum + stat.population, 0);
                 
-                if (statsArray.length === 0) {
-                    summaryContainer.innerHTML = `
-                        <div class="text-center text-gray-500 py-8">
-                            <svg class="w-12 h-12 mx-auto mb-3 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <p class="text-lg font-semibold text-gray-700">ไม่มีข้อมูลที่แสดงได้</p>
-                            <p class="text-sm text-gray-500 mt-1">ไม่พบข้อมูลประชากรหรือผู้ป่วยที่สามารถจับคู่กลุ่มอายุได้</p>
-                        </div>
-                    `;
-                    return;
-                }
+                console.log(`🔍 Final stats: ${statsArray.length} groups, ${totalPatients} patients, ${totalPopulation} population`);
                 
                 // สร้าง HTML แสดงผล
                 const summaryCards = statsArray.map((stat, index) => {
-                    const rate = stat.population > 0 ? ((stat.patients / stat.population) * 100000).toFixed(2) : '0.00';
-                    const percentage = totalPatients > 0 ? ((stat.patients / totalPatients) * 100).toFixed(1) : '0.0';
+                    const rate = parseFloat(stat.rate) || 0;
+                    const percentage = parseFloat(stat.percentage) || 0;
                     
                     return `
                         <div class="bg-white rounded-lg p-4 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
@@ -6156,16 +6172,16 @@
                                         <div class="text-xs text-orange-600">ผู้ป่วย</div>
                                     </div>
                                     <div class="bg-gray-100 rounded-lg p-2">
-                                        <div class="text-lg font-semibold text-gray-700">${stat.population.toLocaleString()}</div>
+                                        <div class="text-lg font-semibold text-gray-700">${parseInt(stat.population).toLocaleString()}</div>
                                         <div class="text-xs text-gray-600">ประชากร</div>
                                     </div>
                                     <div class="grid grid-cols-2 gap-2 text-xs">
                                         <div class="bg-red-50 rounded p-1">
-                                            <div class="font-bold text-red-700">${rate}</div>
+                                            <div class="font-bold text-red-700">${rate.toFixed(2)}</div>
                                             <div class="text-red-600">ต่อแสน</div>
                                         </div>
                                         <div class="bg-blue-50 rounded p-1">
-                                            <div class="font-bold text-blue-700">${percentage}%</div>
+                                            <div class="font-bold text-blue-700">${percentage.toFixed(1)}%</div>
                                             <div class="text-blue-600">ร้อยละ</div>
                                         </div>
                                     </div>
@@ -6227,6 +6243,10 @@
                         </svg>
                         <p class="text-lg font-semibold">เกิดข้อผิดพลาด</p>
                         <p class="text-sm mt-1">ไม่สามารถโหลดข้อมูลสรุปผู้ป่วยได้</p>
+                        <details class="mt-4 text-xs text-left bg-red-50 p-3 rounded">
+                            <summary class="font-semibold cursor-pointer">รายละเอียดข้อผิดพลาด</summary>
+                            <pre class="mt-2 whitespace-pre-wrap">${error.message}</pre>
+                        </details>
                     </div>
                 `;
             }
