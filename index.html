@@ -1964,14 +1964,30 @@
                 
                 // กรองผู้ป่วยตามรหัสโรคที่เลือก - เอาแค่รหัสโรคเท่านั้น
                 const allPatients = Object.values(patients);
+                
+                // Debug: แสดงข้อมูลโรคที่มีอยู่
+                const uniqueDiseases = [...new Set(allPatients.map(p => p.diseaseCode).filter(Boolean))];
+                console.log('🔍 loadDiseaseDetails Debug:');
+                console.log(`  - Selected disease: "${selectedDisease}"`);
+                console.log(`  - Type: ${typeof selectedDisease}`);
+                console.log(`  - Total patients: ${allPatients.length}`);
+                console.log(`  - Unique diseases in DB: ${uniqueDiseases.length}`);
+                console.log(`  - Available diseases:`, uniqueDiseases);
+                
                 let totalCount = 0;
                 let maleCount = 0;
                 let femaleCount = 0;
                 let deathCount = 0;
                 
                 allPatients.forEach(patient => {
-                    // ตรวจสอบว่ารหัสโรคตรงกันไหม (เฉพาะรหัส ไม่เกี่ยวชื่อ)
-                    if (patient.diseaseCode && patient.diseaseCode.toString().trim() === selectedDisease.toString().trim()) {
+                    // ตรวจสอบว่ารหัสโรคตรงกันไหม (รองรับหลายรูปแบบ)
+                    const patientDiseaseCode = patient.diseaseCode;
+                    const isMatch = patientDiseaseCode === selectedDisease ||
+                                   patientDiseaseCode === selectedDisease.toString() ||
+                                   selectedDisease === patientDiseaseCode.toString() ||
+                                   (patientDiseaseCode && patientDiseaseCode.toString().trim() === selectedDisease.toString().trim());
+                    
+                    if (isMatch) {
                         totalCount++;
                         
                         // นับตามเพศ
@@ -1991,6 +2007,8 @@
                         }
                     }
                 });
+                
+                console.log(`🔍 Filtering result: Found ${totalCount} patients for disease "${selectedDisease}"`);
                 
                 // คำนวณสัดส่วน
                 const malePercentage = totalCount > 0 ? (maleCount / totalCount * 100).toFixed(1) : 0;
@@ -2311,18 +2329,70 @@
 
                 // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
                 const allPatients = Object.values(patients);
-                const filteredPatients = allPatients.filter(patient => 
-                    patient.diseaseCode === diseaseCode || 
-                    patient.โรค === diseaseCode ||
-                    patient.รหัสโรค === diseaseCode
-                );
+                
+                // Debug: ตรวจสอบข้อมูลโรคที่มีอยู่ในฐานข้อมูล
+                const uniqueDiseases = [...new Set(allPatients.map(p => p.diseaseCode).filter(Boolean))];
+                console.log('🔍 Available disease codes in database:', uniqueDiseases);
+                console.log('🔍 Looking for disease code:', diseaseCode);
+                console.log('🔍 Type of diseaseCode:', typeof diseaseCode);
+                
+                // ตัวอย่างข้อมูลผู้ป่วยก่อนกรอง
+                if (allPatients.length > 0) {
+                    console.log('🔍 Sample patients (first 5):');
+                    allPatients.slice(0, 5).forEach((patient, index) => {
+                        console.log(`  Patient ${index + 1}:`, {
+                            diseaseCode: patient.diseaseCode,
+                            โรค: patient.โรค,
+                            รหัสโรค: patient.รหัสโรค,
+                            'ชื่อโรค': patient['ชื่อโรค']
+                        });
+                    });
+                }
+                
+                // กรองผู้ป่วยด้วยเงื่อนไขที่หลากหลาย
+                const filteredPatients = allPatients.filter(patient => {
+                    const patientDiseaseCode = patient.diseaseCode;
+                    const patientDiseaseName = patient.โรค || patient['ชื่อโรค'];
+                    const patientDiseaseId = patient.รหัสโรค;
+                    
+                    // เปรียบเทียบแบบ exact match และ string comparison
+                    return patientDiseaseCode === diseaseCode ||
+                           patientDiseaseCode === diseaseCode.toString() ||
+                           diseaseCode === patientDiseaseCode.toString() ||
+                           patientDiseaseName === diseaseCode ||
+                           patientDiseaseId === diseaseCode ||
+                           // ลองเปรียบเทียบแบบ trim spaces
+                           (patientDiseaseCode && patientDiseaseCode.toString().trim() === diseaseCode.toString().trim()) ||
+                           (patientDiseaseName && patientDiseaseName.toString().trim() === diseaseCode.toString().trim()) ||
+                           (patientDiseaseId && patientDiseaseId.toString().trim() === diseaseCode.toString().trim());
+                });
                 
                 console.log('🔍 Age Groups Debug:');
                 console.log(`  - Total patients: ${allPatients.length}`);
                 console.log(`  - Filtered patients for disease ${diseaseCode}: ${filteredPatients.length}`);
                 
+                // Debug: แสดงผู้ป่วยที่กรองได้ (ถ้ามี)
+                if (filteredPatients.length > 0) {
+                    console.log('🔍 Sample filtered patients (first 5):');
+                    filteredPatients.slice(0, 5).forEach((patient, index) => {
+                        console.log(`  Filtered Patient ${index + 1}:`, {
+                            diseaseCode: patient.diseaseCode,
+                            โรค: patient.โรค,
+                            รหัสโรค: patient.รหัสโรค,
+                            ageGroup: patient.ageGroup
+                        });
+                    });
+                }
+                
                 if (filteredPatients.length === 0) {
                     console.error('❌ No patients found for disease code:', diseaseCode);
+                    
+                    // แสดงข้อมูล debug เพิ่มเติม
+                    console.log('🔍 Debugging information:');
+                    console.log('  - Total patients in database:', allPatients.length);
+                    console.log('  - Unique disease codes:', uniqueDiseases);
+                    console.log('  - Search term:', diseaseCode);
+                    console.log('  - Search term type:', typeof diseaseCode);
                     
                     const rateContainer = document.getElementById('topAgeGroupsRateContainer');
                     const percentageContainer = document.getElementById('topAgeGroupsPercentageContainer');
@@ -2330,8 +2400,23 @@
                     if (rateContainer && percentageContainer) {
                         const noPatientMessage = `
                             <div class="text-center text-gray-500 col-span-full py-8">
+                                <div class="mb-4">
+                                    <svg class="w-16 h-16 mx-auto text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
                                 <p class="text-lg font-semibold mb-2">ไม่พบผู้ป่วยโรค "${diseaseCode}"</p>
-                                <p class="text-sm">กรุณาตรวจสอบรหัสโรคในฐานข้อมูลผู้ป่วย</p>
+                                <div class="text-sm text-gray-600 space-y-2">
+                                    <p>ผู้ป่วยทั้งหมดในฐานข้อมูล: ${allPatients.length} ราย</p>
+                                    <p>รหัสโรคที่มีในระบบ: ${uniqueDiseases.length} โรค</p>
+                                    <details class="mt-4 text-xs">
+                                        <summary class="cursor-pointer font-semibold">ดูรหัสโรคที่มีในระบบ</summary>
+                                        <div class="mt-2 p-2 bg-gray-100 rounded text-left">
+                                            ${uniqueDiseases.join(', ') || 'ไม่มีข้อมูล'}
+                                        </div>
+                                    </details>
+                                    <p class="mt-2 text-orange-600">กรุณาตรวจสอบรหัสโรคในฐานข้อมูลผู้ป่วย</p>
+                                </div>
                             </div>
                         `;
                         rateContainer.innerHTML = noPatientMessage;
