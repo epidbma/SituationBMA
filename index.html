@@ -810,11 +810,19 @@
                     <h3 class="text-2xl font-bold bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent">
                         ตัวอย่างรายงาน
                     </h3>
-                    <button onclick="hideReportPreview()" class="text-gray-500 hover:text-gray-700">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
+                    <div class="flex gap-3">
+                        <button onclick="printReport()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a1 1 0 001-1v-4a1 1 0 00-1-1H9a1 1 0 00-1 1v4a1 1 0 001 1zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                            </svg>
+                            พิมพ์รายงาน
+                        </button>
+                        <button onclick="hideReportPreview()" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- A4 Paper Preview -->
@@ -3225,8 +3233,18 @@
                     pageElement.classList.add('slide-in');
                     const tab = document.getElementById('reportTab');
                     tab.className = tab.className.replace('tab-inactive', 'tab-active');
+                    
+                    // Initialize report functionality
                     loadDiseaseOptions();
-                    initializeReportDates(); // Initialize default dates
+                    initializeReportDates();
+                    
+                    // Check data availability and show warnings if needed
+                    checkReportDataAvailability().then(result => {
+                        if (!result.isReady && result.issues.length > 0) {
+                            console.warn('⚠️ Report readiness issues:', result.issues);
+                            // You could show a warning banner here if needed
+                        }
+                    });
                 } else if (page === 'patients') {
                     const pageElement = document.getElementById('patientsPage');
                     pageElement.classList.remove('hidden');
@@ -3246,16 +3264,40 @@
 
         // Load disease options for report
         async function loadDiseaseOptions() {
-            const diseases = await loadFromFirebase('diseases');
-            const select = document.getElementById('diseaseCode');
-            select.innerHTML = '<option value="">เลือกรหัสโรค</option>';
-            
-            diseases.forEach(disease => {
-                const option = document.createElement('option');
-                option.value = disease.code;
-                option.textContent = `${disease.code} - ${disease.name}`;
-                select.appendChild(option);
-            });
+            try {
+                const diseases = await loadFromFirebase('diseases');
+                const select = document.getElementById('diseaseCode');
+                
+                if (!select) {
+                    console.error('Disease select element not found');
+                    return;
+                }
+                
+                select.innerHTML = '<option value="">เลือกรหัสโรค</option>';
+                
+                if (!diseases || !Array.isArray(diseases) || diseases.length === 0) {
+                    console.warn('No diseases data available for report');
+                    select.innerHTML += '<option value="" disabled>ไม่มีข้อมูลโรค</option>';
+                    return;
+                }
+                
+                diseases.forEach(disease => {
+                    if (disease.code && disease.name) {
+                        const option = document.createElement('option');
+                        option.value = disease.code;
+                        option.textContent = `${disease.code} - ${disease.name}`;
+                        select.appendChild(option);
+                    }
+                });
+                
+                console.log(`✅ Loaded ${diseases.length} diseases for report`);
+            } catch (error) {
+                console.error('Error loading disease options for report:', error);
+                const select = document.getElementById('diseaseCode');
+                if (select) {
+                    select.innerHTML = '<option value="">เกิดข้อผิดพลาดในการโหลดข้อมูล</option>';
+                }
+            }
         }
 
         // Load disease info when code is selected
@@ -3332,6 +3374,8 @@
         // Generate report content based on selected criteria
         async function generateReportContent(diseaseCode, startDate, endDate) {
             try {
+                console.log('🔄 Starting report generation...', { diseaseCode, startDate, endDate });
+                
                 // Load necessary data
                 const [diseases, patients, rawAgePopulation, bangkokDistricts] = await Promise.all([
                     loadFromFirebase('diseases'),
@@ -3340,34 +3384,98 @@
                     loadFromFirebase('bangkokDistricts')
                 ]);
                 
+                console.log('📊 Data loaded:', {
+                    diseases: diseases ? diseases.length : 0,
+                    patients: patients ? Object.keys(patients).length : 0,
+                    agePopulation: rawAgePopulation ? rawAgePopulation.length : 0,
+                    districts: bangkokDistricts ? bangkokDistricts.length : 0
+                });
+                
+                // Validate required data
+                if (!diseases || !Array.isArray(diseases) || diseases.length === 0) {
+                    throw new Error('ไม่พบข้อมูลโรคในระบบ กรุณาเพิ่มข้อมูลโรคในหน้าข้อมูลประกอบ');
+                }
+                
+                if (!patients || Object.keys(patients).length === 0) {
+                    throw new Error('ไม่พบข้อมูลผู้ป่วยในระบบ กรุณานำเข้าข้อมูลผู้ป่วยก่อน');
+                }
+                
+                // Convert patients object to array
+                const patientsArray = Object.values(patients);
+                
                 // Convert legacy age population data to new structure
-                const agePopulation = convertLegacyAgePopulationData(rawAgePopulation);
+                let agePopulation = [];
+                if (rawAgePopulation && Array.isArray(rawAgePopulation)) {
+                    agePopulation = convertLegacyAgePopulationData(rawAgePopulation);
+                } else if (rawAgePopulation) {
+                    agePopulation = convertLegacyAgePopulationData(Object.values(rawAgePopulation));
+                }
                 
                 // Find selected disease
                 const selectedDisease = diseases.find(d => d.code === diseaseCode);
                 if (!selectedDisease) {
-                    throw new Error('ไม่พบข้อมูลโรคที่เลือก');
+                    throw new Error(`ไม่พบข้อมูลโรครหัส "${diseaseCode}" กรุณาตรวจสอบรหัสโรคในระบบ`);
                 }
                 
+                console.log('✅ Selected disease:', selectedDisease);
+                
                 // Filter patients by disease and date range
-                const filteredPatients = patients.filter(patient => {
+                const filteredPatients = patientsArray.filter(patient => {
                     if (patient.diseaseCode !== diseaseCode) return false;
                     
-                    const onsetDate = new Date(patient.onsetDate);
+                    // Handle both ISO format (YYYY-MM-DD) and Thai format (DD/MM/YYYY)
+                    let onsetDate;
+                    if (patient.onsetDate) {
+                        // Try parsing as Thai date first (DD/MM/YYYY)
+                        if (patient.onsetDate.includes('/')) {
+                            onsetDate = parseThaiDate(patient.onsetDate);
+                        } else {
+                            // Try parsing as ISO date
+                            onsetDate = new Date(patient.onsetDate);
+                        }
+                    }
+                    
+                    if (!onsetDate || isNaN(onsetDate.getTime())) return false;
+                    
                     const start = new Date(startDate);
                     const end = new Date(endDate);
                     
                     return onsetDate >= start && onsetDate <= end;
                 });
                 
+                console.log(`📊 Filtered patients: ${filteredPatients.length} out of ${patientsArray.length} total patients`);
+                
+                if (filteredPatients.length === 0) {
+                    console.warn('⚠️ No patients found for the selected criteria');
+                }
+                
                 // Generate report HTML
-                const reportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts);
+                const reportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts || []);
                 
                 // Display in preview
-                document.getElementById('reportContent').innerHTML = reportHTML;
+                const reportContentElement = document.getElementById('reportContent');
+                if (!reportContentElement) {
+                    throw new Error('ไม่พบ element สำหรับแสดงรายงาน');
+                }
+                
+                reportContentElement.innerHTML = reportHTML;
+                console.log('✅ Report generated successfully');
                 
             } catch (error) {
-                console.error('Error in generateReportContent:', error);
+                console.error('❌ Error in generateReportContent:', error);
+                
+                // Display error in report content
+                const reportContentElement = document.getElementById('reportContent');
+                if (reportContentElement) {
+                    reportContentElement.innerHTML = `
+                        <div class="text-center py-8">
+                            <div class="text-red-600 text-lg font-semibold mb-4">เกิดข้อผิดพลาดในการสร้างรายงาน</div>
+                            <div class="text-gray-600 mb-4">${error.message}</div>
+                            <div class="text-sm text-gray-500">กรุณาตรวจสอบข้อมูลและลองใหม่อีกครั้ง</div>
+                        </div>
+                    `;
+                }
+                
                 throw error;
             }
         }
@@ -3393,9 +3501,20 @@
             
             // Calculate statistics
             const totalPatients = patients.length;
-            const deaths = patients.filter(p => p.outcome === 'เสียชีวิต').length;
-            const malePatients = patients.filter(p => p.gender === 'ชาย').length;
-            const femalePatients = patients.filter(p => p.gender === 'หญิง').length;
+            const deaths = patients.filter(p => {
+                const status = p.outcome || p.patientStatus;
+                return status === 'เสียชีวิต' || status === 'ตาย' || status === 'Dead';
+            }).length;
+            
+            const malePatients = patients.filter(p => {
+                const gender = p.gender || p.เพศ;
+                return gender === 'ชาย' || gender === 'Male' || gender === 'M' || gender === 'male';
+            }).length;
+            
+            const femalePatients = patients.filter(p => {
+                const gender = p.gender || p.เพศ;
+                return gender === 'หญิง' || gender === 'Female' || gender === 'F' || gender === 'female';
+            }).length;
             
             // Calculate gender ratio (ชาย : หญิง) แสดงเป็น 1 : x
             let genderRatio;
@@ -3775,31 +3894,192 @@
             document.getElementById('reportPreviewSection').classList.add('hidden');
         }
 
+        // Print report function
+        function printReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent || !reportContent.innerHTML.trim()) {
+                alert('ไม่มีรายงานให้พิมพ์ กรุณาสร้างรายงานก่อน');
+                return;
+            }
+
+            // Create a new window for printing
+            const printWindow = window.open('', '_blank');
+            
+            // Get the current report content
+            const reportHTML = reportContent.innerHTML;
+            
+            // Create full HTML for printing with proper styling
+            const printHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>รายงานสถานการณ์โรค</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                    <style>
+                        @page {
+                            size: A4;
+                            margin: 25mm 20mm 15mm 25mm;
+                        }
+                        
+                        body {
+                            font-family: 'Anuphan', sans-serif;
+                            font-size: 16px;
+                            line-height: 1.6;
+                            margin: 0;
+                            padding: 0;
+                            color: #000;
+                        }
+                        
+                        .report-content {
+                            font-family: 'Anuphan', sans-serif;
+                        }
+                        
+                        h1 {
+                            font-size: 20px;
+                            font-weight: bold;
+                            text-align: center;
+                            margin: 0 0 8px 0;
+                            font-family: 'Anuphan', sans-serif;
+                        }
+                        
+                        h2 {
+                            font-size: 18px;
+                            font-weight: bold;
+                            text-align: center;
+                            margin: 0 0 8px 0;
+                            font-family: 'Anuphan', sans-serif;
+                        }
+                        
+                        h3 {
+                            font-size: 16px;
+                            font-weight: bold;
+                            margin: 16px 0 8px 0;
+                            font-family: 'Anuphan', sans-serif;
+                        }
+                        
+                        p {
+                            margin: 8px 0;
+                        }
+                        
+                        ul {
+                            margin: 8px 0;
+                            padding-left: 20px;
+                        }
+                        
+                        li {
+                            margin: 4px 0;
+                        }
+                        
+                        @media print {
+                            body {
+                                font-size: 14px;
+                            }
+                            
+                            .no-print {
+                                display: none !important;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${reportHTML}
+                    
+                    <div style="position: fixed; bottom: 20px; left: 0; right: 0; text-center; font-size: 12px; color: #666; font-family: 'Anuphan', sans-serif;">
+                        <div style="margin-bottom: 4px;">เอกสารใช้ในราชการ เฉพาะเครือข่ายเฝ้าระวังทางระบาดวิทยา</div>
+                        <div>กลุ่มงานระบาดวิทยา ส่วนระบาดวิทยา สำนักงานโรคติดต่อทางสาธารณสุข สำนักอนามัย กรุงเทพมหานคร</div>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            // Write HTML to print window
+            printWindow.document.write(printHTML);
+            printWindow.document.close();
+            
+            // Wait for fonts to load then print
+            printWindow.onload = function() {
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 500);
+            };
+        }
+
         // Initialize default dates when page loads
         function initializeReportDates() {
-            const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth();
-            
-            // Start date: January 1st of current year (1 มกราคม)
-            const startDate = new Date(currentYear, 0, 1); // 0 = January, 1 = first day
-            
-            // End date: Last day of previous month
-            const endDate = new Date(currentYear, currentMonth, 0); // This gives last day of previous month
-            
-            // Format dates for input fields (YYYY-MM-DD) - avoid timezone issues
-            const formatForInput = (date) => {
-                const year = date.getFullYear();
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const day = String(date.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            };
-            
-            document.getElementById('startDate').value = formatForInput(startDate);
-            document.getElementById('endDate').value = formatForInput(endDate);
-            
-            // Update report month
-            updateReportMonth();
+            try {
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth();
+                
+                // Start date: January 1st of current year (1 มกราคม)
+                const startDate = new Date(currentYear, 0, 1); // 0 = January, 1 = first day
+                
+                // End date: Last day of previous month
+                const endDate = new Date(currentYear, currentMonth, 0); // This gives last day of previous month
+                
+                // Format dates for input fields (YYYY-MM-DD) - avoid timezone issues
+                const formatForInput = (date) => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+                
+                const startInput = document.getElementById('startDate');
+                const endInput = document.getElementById('endDate');
+                
+                if (startInput) startInput.value = formatForInput(startDate);
+                if (endInput) endInput.value = formatForInput(endDate);
+                
+                // Update report month
+                updateReportMonth();
+                
+                console.log('✅ Report dates initialized:', {
+                    startDate: formatForInput(startDate),
+                    endDate: formatForInput(endDate)
+                });
+            } catch (error) {
+                console.error('Error initializing report dates:', error);
+            }
+        }
+
+        // Check if all required data exists for reports
+        async function checkReportDataAvailability() {
+            try {
+                const [diseases, patients, agePopulation] = await Promise.all([
+                    loadFromFirebase('diseases'),
+                    loadFromFirebase('patients'),
+                    loadFromFirebase('agePopulation')
+                ]);
+                
+                const issues = [];
+                
+                if (!diseases || !Array.isArray(diseases) || diseases.length === 0) {
+                    issues.push('ไม่มีข้อมูลโรค - กรุณาเพิ่มข้อมูลในหน้า "ข้อมูลประกอบ"');
+                }
+                
+                if (!patients || Object.keys(patients).length === 0) {
+                    issues.push('ไม่มีข้อมูลผู้ป่วย - กรุณานำเข้าข้อมูลในหน้า "ฐานข้อมูลผู้ป่วย"');
+                }
+                
+                if (!agePopulation || agePopulation.length === 0) {
+                    issues.push('ไม่มีข้อมูลประชากรตามอายุ - การแสดงผลรายงานจะไม่สมบูรณ์');
+                }
+                
+                if (issues.length > 0) {
+                    console.warn('⚠️ Report data availability issues:', issues);
+                    return { isReady: false, issues };
+                }
+                
+                console.log('✅ All report data is available');
+                return { isReady: true, issues: [] };
+                
+            } catch (error) {
+                console.error('Error checking report data availability:', error);
+                return { isReady: false, issues: ['เกิดข้อผิดพลาดในการตรวจสอบข้อมูล'] };
+            }
         }
 
         // High-performance Excel import for large datasets (100K+ records)
