@@ -2489,13 +2489,13 @@
                 }
 
                 // สร้างการ์ดสำหรับอัตราป่วย
-                const rankColors = ['bg-yellow-100 border-yellow-300', 'bg-gray-100 border-gray-300', 'bg-orange-100 border-orange-300'];
+                const rankColors = ['bg-gray-100 border-gray-300', 'bg-gray-100 border-gray-300', 'bg-gray-100 border-gray-300'];
                 const rateCards = ageGroupStats.topThree.map((data, index) => {
                     const colorClass = rankColors[index] || 'bg-gray-100 border-gray-300';
                     return `
                         <div class="border-2 ${colorClass} rounded-lg p-4">
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-gray-800 mb-1">#${index + 1}</div>
+                                <div class="text-lg font-bold text-gray-700 mb-2">อันดับที่ ${index + 1}</div>
                                 <div class="text-lg font-semibold text-blue-600 mb-2">${data.ageGroup}</div>
                                 <div class="text-sm text-gray-600 mb-2">
                                     ผู้ป่วย: <span class="font-semibold">${data.patients.toLocaleString()}</span> ราย
@@ -2533,7 +2533,7 @@
                     return `
                         <div class="border-2 ${colorClass} rounded-lg p-4">
                             <div class="text-center">
-                                <div class="text-2xl font-bold text-gray-800 mb-1">#${index + 1}</div>
+                                <div class="text-lg font-bold text-gray-700 mb-2">อันดับที่ ${index + 1}</div>
                                 <div class="text-lg font-semibold text-purple-600 mb-2">${data.ageGroup}</div>
                                 <div class="text-sm text-gray-600 mb-2">
                                     ผู้ป่วย: <span class="font-semibold">${data.patients.toLocaleString()}</span> ราย
@@ -2646,11 +2646,11 @@
                                         const rankNumber = index + 1;
                                         const populationText = data.population > 0 ? parseInt(data.population).toLocaleString() : 'ไม่มีข้อมูล';
                                         const valueText = type === 'rate' ? (data.population > 0 ? data.rate : 'ไม่สามารถคำนวณได้') : `${data.percentage}%`;
-                                        const rankColor = index < 3 ? 'border-yellow-300 bg-yellow-50' : 'border-gray-300 bg-gray-50';
+                                        const rankColor = 'border-gray-300 bg-gray-100';
                                         
                                         return `
                                             <div class="border-2 ${rankColor} rounded-lg p-4 text-center">
-                                                <div class="text-lg font-bold ${index < 3 ? 'text-yellow-700' : 'text-gray-700'} mb-2">อันดับที่ ${rankNumber}</div>
+                                                <div class="text-lg font-bold text-gray-700 mb-2">อันดับที่ ${rankNumber}</div>
                                                 <h4 class="font-semibold text-gray-800 mb-1">${data.ageGroup}</h4>
                                                 <div class="text-xl font-bold ${valueColor} mb-1">${valueText}</div>
                                                 <div class="text-sm ${valueColor.replace('600', '500')} mb-2">${valueLabel}</div>
