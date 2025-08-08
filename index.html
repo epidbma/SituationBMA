@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -2907,14 +2908,6 @@
             }
         }
 
-        // ฟังก์ชันสำหรับแปลงรูปแบบวันที่จาก dd/mm/yyyy เป็น Date object (ใช้ซ้ำ)
-        function parseThaiDate(dateStr) {
-            if (!dateStr) return null;
-            const [day, month, year] = dateStr.split('/').map(num => parseInt(num, 10));
-            if (!day || !month || !year) return null;
-            return new Date(year, month - 1, day);
-        }
-
         // คำนวณสัปดาห์ระบาดวิทยาปัจจุบัน
         function getCurrentEpiWeek() {
             const today = new Date();
@@ -3531,7 +3524,8 @@
             
             // Calculate total population for Bangkok from age population data
             const totalPopulation = agePopulation.reduce((sum, group) => {
-                const population = parseInt(group.total || group.population || 0);
+                // ใช้ฟิลด์ total จากโครงสร้างข้อมูลใหม่
+                const population = parseInt(group.total || 0);
                 return sum + population;
             }, 0);
             
@@ -3696,7 +3690,7 @@
                 const key = group.ageGroup || `${group.startAge || 0}-${group.endAge >= 999 ? '999+' : group.endAge || 0} ปี`;
                 ageGroups[key] = {
                     patients: 0,
-                    population: parseInt(group.total || group.population || 0),
+                    population: parseInt(group.total || 0), // ใช้เฉพาะฟิลด์ total จากโครงสร้างข้อมูลใหม่
                     startAge: parseInt(group.startAge || 0),
                     endAge: parseInt(group.endAge || 999)
                 };
@@ -13151,6 +13145,99 @@
                 importButton.innerHTML = originalText;
                 importButton.disabled = false;
             }
+        }
+
+        // Process epidemic weeks import
+        async function processEpidemicWeeksImport(startRow, replaceExisting) {
+            if (!selectedFileData) {
+                throw new Error('ไม่พบข้อมูลไฟล์ที่เลือก');
+            }
+            
+            const dataToProcess = selectedFileData.slice(startRow);
+            
+            // Validate data structure - expecting: [ปี, สัปดาห์ที่, วันที่เริ่มต้น, วันที่สิ้นสุด, หมายเหตุ]
+            const validRows = dataToProcess.filter(row => 
+                row[0] && !isNaN(Number(row[0])) && // ปี
+                row[1] && !isNaN(Number(row[1])) && // สัปดาห์ที่
+                row[2] && row[2].toString().trim() && // วันที่เริ่มต้น  
+                row[3] && row[3].toString().trim()    // วันที่สิ้นสุด
+            );
+            
+            if (validRows.length === 0) {
+                throw new Error('ไม่พบข้อมูลที่ถูกต้องในไฟล์ Excel กรุณาตรวจสอบรูปแบบข้อมูล');
+            }
+            
+            let epidemicWeeks = await loadFromFirebase('epidemicWeeks');
+            if (replaceExisting) {
+                epidemicWeeks = []; // Clear existing data
+            }
+            
+            let successCount = 0;
+            let duplicateCount = 0;
+            let errorCount = 0;
+            
+            for (const row of validRows) {
+                try {
+                    const year = parseInt(row[0]);
+                    const weekNumber = parseInt(row[1]);
+                    const startDate = row[2].toString().trim();
+                    const endDate = row[3].toString().trim();
+                    const note = row[4] ? row[4].toString().trim() : '';
+                    
+                    // Validate year and week number
+                    if (year < 1900 || year > 2100 || weekNumber < 1 || weekNumber > 53) {
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    // Check for duplicates
+                    const existingIndex = epidemicWeeks.findIndex(w => 
+                        w.year === year.toString() && 
+                        parseInt(w.weekNumber) === weekNumber
+                    );
+                    
+                    if (existingIndex !== -1 && !replaceExisting) {
+                        duplicateCount++;
+                        continue;
+                    }
+                    
+                    const newEpidemicWeek = {
+                        year: year.toString(),
+                        weekNumber: weekNumber.toString(),
+                        startDate: startDate,
+                        endDate: endDate,
+                        note: note
+                    };
+                    
+                    if (existingIndex !== -1) {
+                        // Replace existing
+                        epidemicWeeks[existingIndex] = newEpidemicWeek;
+                    } else {
+                        // Add new
+                        epidemicWeeks.push(newEpidemicWeek);
+                    }
+                    
+                    successCount++;
+                    
+                } catch (error) {
+                    console.error('Error processing epidemic week row:', row, error);
+                    errorCount++;
+                }
+            }
+            
+            // Save to Firebase
+            await saveToFirebase('epidemicWeeks', epidemicWeeks);
+            
+            // Show summary
+            let message = `นำเข้าข้อมูลสัปดาห์การระบาดสำเร็จ ${successCount} รายการ`;
+            if (duplicateCount > 0) {
+                message += ` (ข้ามข้อมูลซ้ำ ${duplicateCount} รายการ)`;
+            }
+            if (errorCount > 0) {
+                message += ` (ข้อมูลผิดพลาด ${errorCount} รายการ)`;
+            }
+            
+            showNotification(message, successCount > 0 ? 'success' : 'warning');
         }
 
 
