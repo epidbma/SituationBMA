@@ -2515,7 +2515,7 @@
                 // สร้างปุ่มดูข้อมูลเพิ่มเติมสำหรับอัตราป่วย
                 const rateViewMoreButton = `
                     <div class="col-span-full mt-4 text-center">
-                        <button onclick="showAllAgeGroupsRanking('${diseaseCode}', 'rate')" 
+                        <button id="rateViewMoreBtn" onclick="showAllAgeGroupsRanking('${diseaseCode}', 'rate')" 
                                 class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
                             <svg class="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
@@ -2526,6 +2526,18 @@
                 `;
 
                 rateContainer.innerHTML = rateCards + rateViewMoreButton;
+                
+                // เพิ่ม event listener เป็น backup
+                setTimeout(() => {
+                    const rateBtn = document.getElementById('rateViewMoreBtn');
+                    if (rateBtn) {
+                        rateBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            console.log('🔍 Rate button clicked via event listener');
+                            showAllAgeGroupsRanking(diseaseCode, 'rate');
+                        });
+                    }
+                }, 100);
 
                 // สร้างการ์ดสำหรับร้อยละผู้ป่วย
                 const percentageCards = ageGroupStats.percentageTop.map((data, index) => {
@@ -2553,7 +2565,7 @@
                 // สร้างปุ่มดูข้อมูลเพิ่มเติมสำหรับร้อยละ
                 const percentageViewMoreButton = `
                     <div class="col-span-full mt-4 text-center">
-                        <button onclick="showAllAgeGroupsRanking('${diseaseCode}', 'percentage')" 
+                        <button id="percentageViewMoreBtn" onclick="showAllAgeGroupsRanking('${diseaseCode}', 'percentage')" 
                                 class="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
                             <svg class="w-4 h-4 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"/>
@@ -2564,6 +2576,18 @@
                 `;
 
                 percentageContainer.innerHTML = percentageCards + percentageViewMoreButton;
+                
+                // เพิ่ม event listener เป็น backup
+                setTimeout(() => {
+                    const percentageBtn = document.getElementById('percentageViewMoreBtn');
+                    if (percentageBtn) {
+                        percentageBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            console.log('🔍 Percentage button clicked via event listener');
+                            showAllAgeGroupsRanking(diseaseCode, 'percentage');
+                        });
+                    }
+                }, 100);
                 
             } catch (error) {
                 console.error('Error in age group ranking:', error);
@@ -2584,7 +2608,8 @@
         }
 
         // ฟังก์ชันแสดง popup อันดับกลุ่มอายุทั้งหมด
-        async function showAllAgeGroupsRanking(diseaseCode, type = 'rate') {
+        window.showAllAgeGroupsRanking = async function(diseaseCode, type = 'rate') {
+            console.log('🔍 showAllAgeGroupsRanking called:', { diseaseCode, type });
             try {
                 // โหลดข้อมูลผู้ป่วยและประชากรตามอายุจากฐานข้อมูล
                 const { database, ref, get } = window.firebaseDB;
@@ -2603,11 +2628,27 @@
 
                 // แปลงเป็น array และกรองผู้ป่วยตามโรคที่เลือก
                 const allPatientsData = Object.values(patients);
-                const filteredPatientsData = allPatientsData.filter(patient => 
-                    patient.diseaseCode === diseaseCode || 
-                    patient.โรค === diseaseCode ||
-                    patient.รหัสโรค === diseaseCode
-                );
+                console.log('🔍 Total patients for filtering:', allPatientsData.length);
+                
+                // ใช้เงื่อนไขการกรองแบบเดียวกับ createTopAgeGroupsRanking
+                const filteredPatientsData = allPatientsData.filter(patient => {
+                    const patientDiseaseCode = patient.diseaseCode;
+                    const patientDiseaseName = patient.โรค || patient['ชื่อโรค'];
+                    const patientDiseaseId = patient.รหัสโรค;
+                    
+                    // เปรียบเทียบแบบ exact match และ string comparison
+                    return patientDiseaseCode === diseaseCode ||
+                           patientDiseaseCode === diseaseCode.toString() ||
+                           diseaseCode === patientDiseaseCode.toString() ||
+                           patientDiseaseName === diseaseCode ||
+                           patientDiseaseId === diseaseCode ||
+                           // ลองเปรียบเทียบแบบ trim spaces
+                           (patientDiseaseCode && patientDiseaseCode.toString().trim() === diseaseCode.toString().trim()) ||
+                           (patientDiseaseName && patientDiseaseName.toString().trim() === diseaseCode.toString().trim()) ||
+                           (patientDiseaseId && patientDiseaseId.toString().trim() === diseaseCode.toString().trim());
+                });
+                
+                console.log('🔍 Filtered patients for popup:', filteredPatientsData.length);
 
                 // แปลง agePopulationData เป็น array และแปลงข้อมูลเก่า
                 let agePopulationArray = Array.isArray(agePopulationData) 
@@ -2667,22 +2708,28 @@
                 `;
 
                 // แสดง popup
+                console.log('🔍 Creating popup modal...');
                 const modalContainer = document.createElement('div');
                 modalContainer.id = 'allAgeGroupsModal';
                 modalContainer.innerHTML = popupContent;
                 document.body.appendChild(modalContainer);
+                console.log('🔍 Popup modal created and added to DOM');
 
             } catch (error) {
-                console.error('Error showing all age groups ranking:', error);
-                alert('เกิดข้อผิดพลาดในการโหลดข้อมูลกลุ่มอายุ');
+                console.error('❌ Error showing all age groups ranking:', error);
+                alert('เกิดข้อผิดพลาดในการโหลดข้อมูลกลุ่มอายุ: ' + error.message);
             }
         }
 
         // ฟังก์ชันปิด popup กลุ่มอายุ
-        function closeAllAgeGroupsModal() {
+        window.closeAllAgeGroupsModal = function() {
+            console.log('🔍 Closing age groups modal...');
             const modal = document.getElementById('allAgeGroupsModal');
             if (modal) {
                 modal.remove();
+                console.log('🔍 Modal removed successfully');
+            } else {
+                console.log('⚠️ Modal not found');
             }
         }
 
