@@ -3697,16 +3697,6 @@
             // Calculate total population for Bangkok from age population data
             const totalPopulation = agePopulation.reduce((sum, group) => {
                 const population = parseInt(group.total || group.population || 0);
-                return sum + population;
-            }, 0);
-            
-            // Calculate cumulative incidence rate
-            const incidenceRate = totalPopulation > 0 ? ((totalPatients / totalPopulation) * 100000).toFixed(2) : '0.00';
-            
-            // Generate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
-            const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
-            const districtStats = calculateDistrictStats(patients, bangkokDistricts);
-            
         // Generate the actual report HTML content
         async function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts) {
             const startDateObj = new Date(startDate);
@@ -3769,8 +3759,17 @@
             const incidenceRate = totalPopulation > 0 ? ((totalPatients / totalPopulation) * 100000).toFixed(2) : '0.00';
             
             // Generate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
+            console.log('🔄 Generating report statistics...');
             const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
             const districtStats = calculateDistrictStats(patients, bangkokDistricts);
+            
+            console.log('📊 Report Statistics Generated:', {
+                ageGroupStats: ageGroupStats ? 'OK' : 'FAILED',
+                districtStats: districtStats ? `${districtStats.length} districts` : 'FAILED',
+                totalPatients,
+                deaths,
+                genderRatio
+            });
             
             // Generate historical comparison text
             let medianComparisonText = '';
@@ -3814,15 +3813,16 @@
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ผู้ป่วยสะสมจำนวน ${totalPatients.toLocaleString()} ราย คิดเป็นอัตราป่วยสะสม ${incidenceRate} รายต่อแสนประชากร</li>
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ${deaths > 0 ? `จำนวนผู้เสียชีวิต ${deaths} ราย` : 'ไม่พบผู้เสียชีวิต'}</li>
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- อัตราส่วนผู้ป่วยชายต่อหญิง คือ ${genderRatio}</li>
-                        ${districtStats.length > 0 ? `
+                        ${districtStats && districtStats.length > 0 ? `
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- เขตที่มีอัตราป่วยมากที่สุด คือ ${districtStats[0].district} (${districtStats[0].rate} ต่อประชากรแสนคน) ${districtStats.length > 1 ? `รองลงมา ได้แก่ ${districtStats[1].district} (${districtStats[1].rate} ต่อประชากรแสนคน)` : ''} ${districtStats.length > 2 ? `และ ${districtStats[2].district} (${districtStats[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
-                        ` : ''}
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">${medianComparisonText}</li>
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">${previousYearComparisonText}</li>
+                        ` : `
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ไม่สามารถคำนวณข้อมูลเขตได้ เนื่องจากไม่มีข้อมูลประชากรแยกตามเขต</li>
+                        `}
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">${medianComparisonText || '- ไม่สามารถเปรียบเทียบกับข้อมูลย้อนหลังได้'}</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">${previousYearComparisonText || '- ไม่สามารถเปรียบเทียบกับปีก่อนหน้าได้'}</li>
                     </ul>
                 </div>
             `;
-        }
         }
 
         // Helper function to get age group for a patient in the table
@@ -4100,25 +4100,72 @@
 
         // Calculate district statistics
         function calculateDistrictStats(patients, bangkokDistricts) {
+            console.log('🔄 Starting calculateDistrictStats...', {
+                patientsCount: patients ? patients.length : 0,
+                districtsCount: bangkokDistricts ? bangkokDistricts.length : 0
+            });
+            
+            // ตรวจสอบข้อมูลพื้นฐาน
+            if (!patients || !Array.isArray(patients) || patients.length === 0) {
+                console.error('❌ No patients data for district calculation');
+                return [];
+            }
+            
+            if (!bangkokDistricts || !Array.isArray(bangkokDistricts) || bangkokDistricts.length === 0) {
+                console.error('❌ No bangkok districts data for calculation');
+                return [];
+            }
+            
             const districtStats = {};
             
             // Initialize districts
             bangkokDistricts.forEach(district => {
-                districtStats[district.district] = {
-                    patients: 0,
-                    population: district.population || 0
-                };
-            });
-            
-            // Count patients by district
-            patients.forEach(patient => {
-                if (patient.district && districtStats[patient.district]) {
-                    districtStats[patient.district].patients++;
+                const districtName = district.district || district.name || district.districtName;
+                if (districtName) {
+                    districtStats[districtName] = {
+                        patients: 0,
+                        population: parseInt(district.population || district.totalPopulation || 0)
+                    };
                 }
             });
             
+            console.log('🏗️ Initialized districts:', Object.keys(districtStats));
+            
+            // Count patients by district
+            let patientsWithDistrict = 0;
+            let patientsMatched = 0;
+            const unmatchedDistricts = new Set();
+            
+            patients.forEach(patient => {
+                const patientDistrict = patient.district || patient.เขต || patient.districtName;
+                if (patientDistrict) {
+                    patientsWithDistrict++;
+                    
+                    if (districtStats[patientDistrict]) {
+                        districtStats[patientDistrict].patients++;
+                        patientsMatched++;
+                    } else {
+                        unmatchedDistricts.add(patientDistrict);
+                        // สร้างเขตใหม่ถ้าไม่พบในข้อมูลประชากร
+                        districtStats[patientDistrict] = {
+                            patients: 1,
+                            population: 0 // ไม่มีข้อมูลประชากร
+                        };
+                        patientsMatched++;
+                    }
+                }
+            });
+            
+            console.log('📊 District Matching Results:');
+            console.log(`  - Patients with district data: ${patientsWithDistrict}`);
+            console.log(`  - Patients successfully matched: ${patientsMatched}`);
+            if (unmatchedDistricts.size > 0) {
+                console.log('⚠️ Unmatched districts:', Array.from(unmatchedDistricts));
+            }
+            
             // Calculate rates and sort
             const stats = Object.entries(districtStats)
+                .filter(([district, data]) => data.patients > 0) // เฉพาะเขตที่มีผู้ป่วย
                 .map(([district, data]) => ({
                     district,
                     patients: data.patients,
@@ -4127,6 +4174,15 @@
                 }))
                 .sort((a, b) => parseFloat(b.rate) - parseFloat(a.rate))
                 .slice(0, 3);
+            
+            console.log('🏆 Top 3 Districts by Rate:');
+            stats.forEach((stat, index) => {
+                console.log(`  ${index + 1}. ${stat.district}: ${stat.patients} patients, ${stat.rate} per 100k`);
+            });
+            
+            if (stats.length === 0) {
+                console.error('❌ No district statistics could be calculated');
+            }
             
             return stats;
         }
