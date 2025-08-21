@@ -796,8 +796,41 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ปุ่มสร้างรายงาน -->
+                <div class="mt-8 text-center">
+                    <button onclick="generateReport()" class="btn-primary text-lg px-12 py-4">
+                        <svg class="w-6 h-6 mr-3 inline" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                        </svg>
+                        สร้างรายงาน
+                    </button>
+                </div>
             </div>
-            
+
+            <!-- ส่วนแสดงตัวอย่างรายงาน -->
+            <div id="reportPreviewSection" class="hidden mt-8">
+                <div class="glass-card p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent">
+                            ตัวอย่างหน้ารายงาน
+                        </h3>
+                        <button onclick="downloadReport()" class="btn-secondary">
+                            <svg class="w-5 h-5 mr-2 inline" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"/>
+                            </svg>
+                            ดาวน์โหลดรายงาน PDF
+                        </button>
+                    </div>
+                    
+                    <!-- กรอบแสดงตัวอย่างรายงาน -->
+                    <div class="bg-white border-2 border-gray-200 rounded-lg p-8 shadow-inner" style="font-family: 'Anuphan', sans-serif; min-height: 600px; margin: 2.5cm 2cm 1.5cm 2.5cm;">
+                        <div id="reportContent">
+                            <!-- เนื้อหารายงานจะถูกสร้างที่นี่ -->
+                        </div>
+                    </div>
+                </div>
+            </div>
 
         </div>
 
@@ -3124,7 +3157,7 @@
             // Initialize all data collections
             const collections = [
                 'diseases', 'responsible', 'population', 
-                'agePopulation', 'thailandPopulation', 'epidemicWeeks', 'bangkokDistricts'
+                'agePopulation', 'thailandPopulation', 'epidemicWeeks', 'bangkokDistricts', 'patients'
             ];
             
             for (const collection of collections) {
@@ -3133,16 +3166,157 @@
                 // Initialize with sample data if empty
                 if (collection === 'diseases' && data.length === 0) {
                     const sampleDiseases = [
-                        { code: '506', name: 'ไข้เลือดออก' },
-                        { code: '507', name: 'ไข้หวัดใหญ่' },
-                        { code: '508', name: 'โรคมือ เท้า ปาก' },
-                        { code: '509', name: 'โรคอุจจาระร่วง' },
-                        { code: '510', name: 'โรคไข้หวัดนก' }
+                        { code: '506', name: 'ไข้เลือดออก', reportType: 'high' },
+                        { code: '507', name: 'ไข้หวัดใหญ่', reportType: 'low' },
+                        { code: '508', name: 'โรคมือ เท้า ปาก', reportType: 'high' },
+                        { code: '509', name: 'โรคอุจจาระร่วง', reportType: 'low' },
+                        { code: '510', name: 'โรคไข้หวัดนก', reportType: 'high' }
                     ];
                     await saveToFirebase('diseases', sampleDiseases);
                     localStorage.setItem(collection, JSON.stringify(sampleDiseases));
-                } else {
-                    // Keep a local cache for faster access
+                }
+                
+                if (collection === 'responsible' && data.length === 0) {
+                    const sampleResponsible = [
+                        { 
+                            diseaseCode: '506', 
+                            responsibleName: 'นายสมชาย ใจดี', 
+                            responsiblePosition: 'นักระบาดวิทยา', 
+                            reviewerName: 'นายสมหญิง รอบรู้', 
+                            reviewerPosition: 'หัวหน้ากลุ่มงานระบาดวิทยา' 
+                        },
+                        { 
+                            diseaseCode: '507', 
+                            responsibleName: 'นางสาวมาลี สุขใส', 
+                            responsiblePosition: 'นักระบาดวิทยา', 
+                            reviewerName: 'นายสมหญิง รอบรู้', 
+                            reviewerPosition: 'หัวหน้ากลุ่มงานระบาดวิทยา' 
+                        }
+                    ];
+                    await saveToFirebase('responsible', sampleResponsible);
+                    localStorage.setItem(collection, JSON.stringify(sampleResponsible));
+                }
+                
+                if (collection === 'population' && data.length === 0) {
+                    const samplePopulation = [
+                        { district: 'พระนคร', population: 167608 },
+                        { district: 'ดุสิต', population: 126077 },
+                        { district: 'หนองจอก', population: 170783 },
+                        { district: 'บางรัก', population: 48946 },
+                        { district: 'บางเขน', population: 186977 },
+                        { district: 'บางกะปิ', population: 196519 },
+                        { district: 'ปทุมวัน', population: 52998 },
+                        { district: 'ป้อมปราบฯ', population: 47129 },
+                        { district: 'พระโขนง', population: 118906 },
+                        { district: 'มีนบุรี', population: 189157 },
+                        { district: 'ลาดกระบัง', population: 198251 },
+                        { district: 'ยานนาวา', population: 84640 },
+                        { district: 'สัมพันธวงศ์', population: 40032 },
+                        { district: 'พญาไท', population: 109987 },
+                        { district: 'ธนบุรี', population: 112674 },
+                        { district: 'บางกอกใหญ่', population: 185026 },
+                        { district: 'ห้วยขวาง', population: 191701 },
+                        { district: 'คลองสาน', population: 89123 },
+                        { district: 'ตลิ่งชัน', population: 196940 },
+                        { district: 'บางกอกน้อย', population: 106552 },
+                        { district: 'บางขุนเทียน', population: 142661 },
+                        { district: 'บางแค', population: 182621 },
+                        { district: 'หนองแขม', population: 156125 },
+                        { district: 'ราษฎร์บูรณะ', population: 176918 },
+                        { district: 'บางพลัด', population: 104315 },
+                        { district: 'ดินแดง', population: 93908 },
+                        { district: 'บึงกุ่ม', population: 208697 },
+                        { district: 'สาทร', population: 62471 },
+                        { district: 'บางซื่อ', population: 163468 },
+                        { district: 'จตุจักร', population: 176000 },
+                        { district: 'บางคอแหลม', population: 95092 },
+                        { district: 'ประเวศ', population: 185671 },
+                        { district: 'คลองเตย', population: 104316 },
+                        { district: 'สวนหลวง', population: 75446 },
+                        { district: 'จอมทอง', population: 126393 },
+                        { district: 'ดอนเมือง', population: 124591 },
+                        { district: 'ราชเทวี', population: 89057 },
+                        { district: 'ลาดพร้าว', population: 112429 },
+                        { district: 'วัฒนา', population: 102904 },
+                        { district: 'บางนา', population: 140765 },
+                        { district: 'ทวีวัฒนา', population: 72168 },
+                        { district: 'ทุ่งครุ', population: 98558 },
+                        { district: 'บางบอน', population: 98558 },
+                        { district: 'วังทองหลาง', population: 124752 },
+                        { district: 'คันนายาว', population: 88515 },
+                        { district: 'สะพานพุทธ', population: 134389 },
+                        { district: 'บางขุนนนท์', population: 48473 },
+                        { district: 'ภาษีเจริญ', population: 139855 },
+                        { district: 'หนองค้างพลู', population: 110940 },
+                        { district: 'คลองสามวา', population: 178634 }
+                    ];
+                    await saveToFirebase('population', samplePopulation);
+                    localStorage.setItem(collection, JSON.stringify(samplePopulation));
+                }
+                
+                if (collection === 'agePopulation' && data.length === 0) {
+                    const sampleAgePopulation = [
+                        { ageGroup: '0-4', population: 234567 },
+                        { ageGroup: '5-9', population: 267890 },
+                        { ageGroup: '10-14', population: 298123 },
+                        { ageGroup: '15-19', population: 345678 },
+                        { ageGroup: '20-24', population: 432109 },
+                        { ageGroup: '25-29', population: 567234 },
+                        { ageGroup: '30-34', population: 623456 },
+                        { ageGroup: '35-39', population: 598765 },
+                        { ageGroup: '40-44', population: 534567 },
+                        { ageGroup: '45-49', population: 489012 },
+                        { ageGroup: '50-54', population: 423456 },
+                        { ageGroup: '55-59', population: 378901 },
+                        { ageGroup: '60-64', population: 334567 },
+                        { ageGroup: '65-69', population: 267890 },
+                        { ageGroup: '70-74', population: 198765 },
+                        { ageGroup: '75-79', population: 145678 },
+                        { ageGroup: '80+', population: 123456 }
+                    ];
+                    await saveToFirebase('agePopulation', sampleAgePopulation);
+                    localStorage.setItem(collection, JSON.stringify(sampleAgePopulation));
+                }
+                
+                if (collection === 'patients' && data.length === 0) {
+                    const samplePatients = [
+                        {
+                            'รหัสโรค': '506',
+                            'วันที่เริ่มป่วย': '2024-07-15',
+                            'เพศ': 'ชาย',
+                            'อายุ': 25,
+                            'ageGroup': '25-29',
+                            'เขต': 'บางรัก',
+                            'สภาพผู้ป่วย': 'หาย',
+                            'วันที่เสียชีวิต': ''
+                        },
+                        {
+                            'รหัสโรค': '506',
+                            'วันที่เริ่มป่วย': '2024-07-20',
+                            'เพศ': 'หญิง',
+                            'อายุ': 32,
+                            'ageGroup': '30-34',
+                            'เขต': 'ปทุมวัน',
+                            'สภาพผู้ป่วย': 'หาย',
+                            'วันที่เสียชีวิต': ''
+                        },
+                        {
+                            'รหัสโรค': '506',
+                            'วันที่เริ่มป่วย': '2024-07-25',
+                            'เพศ': 'ชาย',
+                            'อายุ': 45,
+                            'ageGroup': '45-49',
+                            'เขต': 'วัฒนา',
+                            'สภาพผู้ป่วย': 'รักษา',
+                            'วันที่เสียชีวิต': ''
+                        }
+                    ];
+                    await saveToFirebase('patients', samplePatients);
+                    localStorage.setItem(collection, JSON.stringify(samplePatients));
+                }
+                
+                // Keep a local cache for faster access if data exists
+                if (data.length > 0) {
                     localStorage.setItem(collection, JSON.stringify(data));
                 }
             }
@@ -13224,6 +13398,338 @@
                 }, 1000);
             }
         });
+
+        // ฟังก์ชันสร้างรายงาน
+        async function generateReport() {
+            const diseaseCode = document.getElementById('diseaseCode').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!diseaseCode) {
+                showNotification('กรุณาเลือกรหัสโรค', 'error');
+                return;
+            }
+
+            if (!startDate || !endDate) {
+                showNotification('กรุณาเลือกช่วงวันที่', 'error');
+                return;
+            }
+
+            try {
+                // โหลดข้อมูลที่จำเป็น
+                const [diseases, patients, responsible, populationData, agePopulation] = await Promise.all([
+                    loadFromFirebase('diseases'),
+                    loadFromFirebase('patients'),
+                    loadFromFirebase('responsible'),
+                    loadFromFirebase('population'),
+                    loadFromFirebase('agePopulation')
+                ]);
+
+                const disease = diseases.find(d => d.code === diseaseCode);
+                const resp = responsible.find(r => r.diseaseCode === diseaseCode);
+
+                if (!disease) {
+                    showNotification('ไม่พบข้อมูลโรคที่เลือก', 'error');
+                    return;
+                }
+
+                // กรองผู้ป่วยตามโรคและช่วงวันที่
+                const filteredPatients = patients.filter(patient => {
+                    if (patient.รหัสโรค !== diseaseCode) return false;
+                    
+                    const onsetDate = new Date(patient.วันที่เริ่มป่วย);
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    
+                    return onsetDate >= start && onsetDate <= end;
+                });
+
+                // สร้างเนื้อหารายงาน
+                const reportContent = await createReportContent(disease, filteredPatients, startDate, endDate, resp, populationData, agePopulation);
+                
+                // แสดงในส่วนตัวอย่าง
+                document.getElementById('reportContent').innerHTML = reportContent;
+                document.getElementById('reportPreviewSection').classList.remove('hidden');
+                
+                // เลื่อนไปยังส่วนตัวอย่าง
+                document.getElementById('reportPreviewSection').scrollIntoView({ behavior: 'smooth' });
+
+                showNotification('สร้างรายงานสำเร็จ', 'success');
+
+            } catch (error) {
+                console.error('Error generating report:', error);
+                showNotification('เกิดข้อผิดพลาดในการสร้างรายงาน', 'error');
+            }
+        }
+
+        // ฟังก์ชันสร้างเนื้อหารายงาน
+        async function createReportContent(disease, patients, startDate, endDate, responsible, populationData, agePopulation) {
+            const startDateObj = new Date(startDate);
+            const endDateObj = new Date(endDate);
+            
+            // แปลงวันที่เป็นรูปแบบไทย
+            const formatThaiDate = (date) => {
+                const day = date.getDate();
+                const month = date.getMonth() + 1;
+                const year = date.getFullYear() + 543;
+                return `${day}/${month.toString().padStart(2, '0')}/${year}`;
+            };
+
+            const getThaiMonth = (date) => {
+                const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                              'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+                return months[date.getMonth()];
+            };
+
+            const currentYear = new Date().getFullYear() + 543;
+            const reportMonth = getThaiMonth(endDateObj);
+            
+            // คำนวณสถิติต่างๆ
+            const totalPatients = patients.length;
+            const deaths = patients.filter(p => p.สภาพผู้ป่วย === 'เสียชีวิต').length;
+            
+            // คำนวณอัตราส่วนชาย:หญิง
+            const maleCount = patients.filter(p => p.เพศ === 'ชาย').length;
+            const femaleCount = patients.filter(p => p.เพศ === 'หญิง').length;
+            const genderRatio = femaleCount > 0 ? (maleCount / femaleCount).toFixed(1) : 'ไม่สามารถคำนวณได้';
+
+            // คำนวณอัตราป่วยรวม
+            const totalPopulation = populationData?.reduce((sum, district) => sum + (district.population || 0), 0) || 1;
+            const totalRate = ((totalPatients / totalPopulation) * 100000).toFixed(2);
+
+            // คำนวณสถิติตามกลุ่มอายุ
+            const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
+            
+            // คำนวณสถิติตามเขต
+            const districtStats = calculateDistrictStats(patients, populationData);
+
+            const reportContent = `
+                <div style="font-family: 'Anuphan', sans-serif; line-height: 1.6; font-size: 14px;">
+                    <!-- หัวข้อรายงาน -->
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">
+                            รายงานสถานการณ์โรค${disease.name} ในกรุงเทพมหานคร
+                        </h1>
+                        <h2 style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">
+                            ประจำเดือน${reportMonth}
+                        </h2>
+                        <h3 style="font-size: 14px; margin-bottom: 20px;">
+                            ตั้งแต่วันที่ ${formatThaiDate(startDateObj)} - ${formatThaiDate(endDateObj)}
+                        </h3>
+                        
+                        <p style="font-size: 12px; color: #666; margin-bottom: 20px; text-align: justify;">
+                            ข้อมูลในรายงานนี้เป็นข้อมูลเบื้องต้นเพื่อเฝ้าระวังและแจ้งเตือนถึงแนวโน้มการระบาดของโรค 
+                            จึงอาจมีการเปลี่ยนแปลงเมื่อได้รับข้อมูลเพิ่มเติมในภายหลัง ขอให้พิจารณาข้อมูลก่อนนำไปอ้างอิง
+                        </p>
+                    </div>
+
+                    <!-- สถานการณ์โดยรวม -->
+                    <div style="margin-bottom: 30px;">
+                        <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 15px;">
+                            สถานการณ์${disease.name} ในกรุงเทพมหานคร
+                        </h3>
+                        <p style="margin-bottom: 15px;">
+                            กลุ่มงานระบาดวิทยา สำนักงานโรคติดต่อทางสาธารณสุข สำนักอนามัย กรุงเทพมหานครได้รับรายงานเฝ้าระวังโรค (รง.506) ดังนี้
+                        </p>
+                        
+                        <ul style="list-style-type: disc; margin-left: 20px; margin-bottom: 20px;">
+                            <li style="margin-bottom: 8px;">
+                                ผู้ป่วยสะสมจำนวน ${totalPatients.toLocaleString()} ราย คิดเป็นอัตราป่วยสะสม ${totalRate} รายต่อแสนประชากร
+                            </li>
+                            <li style="margin-bottom: 8px;">
+                                ${deaths > 0 ? `ผู้เสียชีวิตจำนวน ${deaths} ราย` : 'ไม่พบผู้เสียชีวิต'}
+                            </li>
+                            <li style="margin-bottom: 8px;">
+                                อัตราส่วนผู้ป่วยชายต่อหญิง คือ ${genderRatio === 'ไม่สามารถคำนวณได้' ? genderRatio : `1 ต่อ ${genderRatio}`}
+                            </li>
+                            ${ageGroupStats.rateRanking}
+                            ${ageGroupStats.percentageRanking}
+                            ${districtStats.ranking}
+                            <li style="margin-bottom: 8px;">
+                                ในปี ${currentYear} ตั้งแต่เดือน${getThaiMonth(startDateObj)}ถึงเดือน${getThaiMonth(endDateObj)} จำนวนผู้ป่วยโรค ${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง [ข้อมูลต้องคำนวณเพิ่มเติม]
+                            </li>
+                            <li style="margin-bottom: 8px;">
+                                ในปี ${currentYear} ตั้งแต่เดือน${getThaiMonth(startDateObj)}ถึงเดือน${getThaiMonth(endDateObj)} จำนวนผู้ป่วยโรค ${disease.name} เมื่อเปรียบเทียบกับปี ${currentYear - 1} [ข้อมูลต้องคำนวณเพิ่มเติม]
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- ส่วนท้าย -->
+                    <div style="position: fixed; bottom: 40px; left: 0; right: 0; text-align: center; font-size: 10px; color: #666;">
+                        <div style="margin-bottom: 5px;">เอกสารใช้ในราชการ เฉพาะเครือข่ายเฝ้าระวังทางระบาดวิทยา</div>
+                        <div>กลุ่มงานระบาดวิทยา ส่วนระบาดวิทยา สำนักงานโรคติดต่อทางสาธารณสุข สำนักอนามัย กรุงเทพมหานคร</div>
+                    </div>
+                </div>
+            `;
+
+            return reportContent;
+        }
+
+        // ฟังก์ชันคำนวณสถิติกลุ่มอายุ
+        function calculateAgeGroupStats(patients, agePopulation) {
+            if (!agePopulation || agePopulation.length === 0) {
+                return {
+                    rateRanking: '<li>ไม่สามารถคำนวณอัตราป่วยตามกลุ่มอายุได้ (ไม่มีข้อมูลประชากร)</li>',
+                    percentageRanking: '<li>ไม่สามารถคำนวณร้อยละตามกลุ่มอายุได้ (ไม่มีข้อมูลประชากร)</li>'
+                };
+            }
+
+            // นับผู้ป่วยตามกลุ่มอายุ
+            const ageGroupCounts = {};
+            const totalPatients = patients.length;
+
+            patients.forEach(patient => {
+                const ageGroup = patient.ageGroup || '-';
+                ageGroupCounts[ageGroup] = (ageGroupCounts[ageGroup] || 0) + 1;
+            });
+
+            // คำนวณอัตราป่วยและร้อยละ
+            const ageGroupRates = [];
+            const ageGroupPercentages = [];
+
+            agePopulation.forEach(ageData => {
+                const ageGroup = ageData.ageGroup;
+                const patientCount = ageGroupCounts[ageGroup] || 0;
+                const population = ageData.population || 1;
+                
+                const rate = ((patientCount / population) * 100000).toFixed(2);
+                const percentage = totalPatients > 0 ? ((patientCount / totalPatients) * 100).toFixed(1) : '0.0';
+                
+                if (patientCount > 0) {
+                    ageGroupRates.push({ ageGroup, rate: parseFloat(rate), patientCount });
+                    ageGroupPercentages.push({ ageGroup, percentage: parseFloat(percentage), patientCount });
+                }
+            });
+
+            // จัดเรียงลำดับ
+            ageGroupRates.sort((a, b) => b.rate - a.rate);
+            ageGroupPercentages.sort((a, b) => b.percentage - a.percentage);
+
+            // สร้างข้อความสำหรับอัตราป่วย (3 อันดับแรก)
+            const topRates = ageGroupRates.slice(0, 3);
+            const rateText = topRates.map((item, index) => {
+                const order = index === 0 ? 'สูงสุด' : index === 1 ? 'รองลงมา' : 'และ';
+                return `${item.ageGroup} ปี (${item.rate} ต่อประชากรแสนคน)`;
+            }).join(' รองลงมา ได้แก่ ');
+
+            // สร้างข้อความสำหรับร้อยละ (3 อันดับแรก)
+            const topPercentages = ageGroupPercentages.slice(0, 3);
+            const percentageText = topPercentages.map((item, index) => {
+                return `${item.ageGroup} ปี (ร้อยละ ${item.percentage})`;
+            }).join(' รองลงมา ได้แก่ ');
+
+            return {
+                rateRanking: `<li style="margin-bottom: 8px;">อัตราป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${rateText} ตามลำดับ</li>`,
+                percentageRanking: `<li style="margin-bottom: 8px;">ร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${percentageText} ตามลำดับ</li>`
+            };
+        }
+
+        // ฟังก์ชันคำนวณสถิติเขต
+        function calculateDistrictStats(patients, populationData) {
+            if (!populationData || populationData.length === 0) {
+                return {
+                    ranking: '<li>ไม่สามารถคำนวณอัตราป่วยตามเขตได้ (ไม่มีข้อมูลประชากร)</li>'
+                };
+            }
+
+            // นับผู้ป่วยตามเขต
+            const districtCounts = {};
+            patients.forEach(patient => {
+                const district = patient.เขต || '-';
+                districtCounts[district] = (districtCounts[district] || 0) + 1;
+            });
+
+            // คำนวณอัตราป่วยตามเขต
+            const districtRates = [];
+            populationData.forEach(districtData => {
+                const district = districtData.district;
+                const patientCount = districtCounts[district] || 0;
+                const population = districtData.population || 1;
+                
+                if (patientCount > 0) {
+                    const rate = ((patientCount / population) * 100000).toFixed(2);
+                    districtRates.push({ district, rate: parseFloat(rate), patientCount });
+                }
+            });
+
+            // จัดเรียงลำดับ
+            districtRates.sort((a, b) => b.rate - a.rate);
+
+            // สร้างข้อความ (3 อันดับแรก)
+            const topDistricts = districtRates.slice(0, 3);
+            const districtText = topDistricts.map((item, index) => {
+                return `${item.district} (${item.rate} ต่อประชากรแสนคน)`;
+            }).join(' รองลงมา ได้แก่ ');
+
+            return {
+                ranking: `<li style="margin-bottom: 8px;">เขตที่มีอัตราป่วยมากที่สุด คือ ${districtText} ตามลำดับ</li>`
+            };
+        }
+
+        // ฟังก์ชันดาวน์โหลดรายงาน PDF
+        function downloadReport() {
+            const reportContent = document.getElementById('reportContent');
+            if (!reportContent || !reportContent.innerHTML.trim()) {
+                showNotification('กรุณาสร้างรายงานก่อนดาวน์โหลด', 'error');
+                return;
+            }
+
+            // สร้าง HTML สำหรับ PDF
+            const diseaseCode = document.getElementById('diseaseCode').value;
+            const endDate = document.getElementById('endDate').value;
+            const endDateObj = new Date(endDate);
+            const reportMonth = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                              'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'][endDateObj.getMonth()];
+
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>รายงานสถานการณ์โรค</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&display=swap" rel="stylesheet">
+                    <style>
+                        @page {
+                            size: A4;
+                            margin: 2.5cm 2cm 1.5cm 2.5cm;
+                        }
+                        body {
+                            font-family: 'Anuphan', sans-serif;
+                            line-height: 1.6;
+                            font-size: 14px;
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .footer {
+                            position: fixed;
+                            bottom: 40px;
+                            left: 0;
+                            right: 0;
+                            text-align: center;
+                            font-size: 10px;
+                            color: #666;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${reportContent.innerHTML}
+                </body>
+                </html>
+            `;
+
+            // สร้างและดาวน์โหลดไฟล์
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `รายงานสถานการณ์โรค_${diseaseCode}_${reportMonth}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showNotification('ดาวน์โหลดรายงานสำเร็จ', 'success');
+        }
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9649c11c7372731d',t:'MTc1MzQyNjU1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
