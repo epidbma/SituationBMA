@@ -3420,11 +3420,12 @@
                 
                 console.log('✅ Selected disease:', selectedDisease);
                 
-                // Filter patients by disease and date range
+                // Filter patients by disease code and onset date within the specified date range
                 const filteredPatients = patientsArray.filter(patient => {
+                    // Check disease code match
                     if (patient.diseaseCode !== diseaseCode) return false;
                     
-                    // Handle both ISO format (YYYY-MM-DD) and Thai format (DD/MM/YYYY)
+                    // Check onset date within date range
                     let onsetDate;
                     if (patient.onsetDate) {
                         // Try parsing as Thai date first (DD/MM/YYYY)
@@ -3445,6 +3446,7 @@
                 });
                 
                 console.log(`📊 Filtered patients: ${filteredPatients.length} out of ${patientsArray.length} total patients`);
+                console.log(`🔍 Filter criteria: diseaseCode='${diseaseCode}', startDate='${startDate}', endDate='${endDate}'`);
                 
                 if (filteredPatients.length === 0) {
                     console.warn('⚠️ No patients found for the selected criteria');
@@ -3500,124 +3502,20 @@
             const startDateFormatted = formatDateThai(startDateObj);
             const endDateFormatted = formatDateThai(endDateObj);
             
-            // Debug: แสดงข้อมูลสำคัญก่อนการกรอง
-            console.log(`🔍 Report generation debug:`, {
-                totalPatients: patients.length,
-                disease: disease,
-                startDate: startDateObj,
-                endDate: endDateObj,
-                samplePatientKeys: patients.length > 0 ? Object.keys(patients[0]) : []
-            });
-            
-            // Filter patients by disease code and onset date range
-            let debugCount = 0;
-            const filteredPatients = patients.filter(patient => {
-                // Debug: แสดงข้อมูลผู้ป่วยตัวอย่าง
-                if (debugCount < 3) {
-                    console.log(`🔍 Sample patient ${debugCount + 1}:`, {
-                        allKeys: Object.keys(patient),
-                        diseaseCode: patient.diseaseCode,
-                        รหัสโรค: patient['รหัสโรค'],
-                        icd10: patient.icd10,
-                        code: patient.code,
-                        onsetDate: patient.onsetDate,
-                        'วันที่เริ่มป่วย': patient['วันที่เริ่มป่วย'],
-                        symptomDate: patient.symptomDate,
-                        dateOfOnset: patient.dateOfOnset,
-                        targetDisease: disease
-                    });
-                    debugCount++;
-                }
-                
-                // กรองตามรหัสโรค - เพิ่มตัวเลือกเพิ่มเติม
-                const patientDiseaseCode = patient.diseaseCode || patient['รหัสโรค'] || patient.icd10 || patient.code || 
-                                          patient.disease_code || patient['รหัส โรค'] || patient.ICD10 || patient.CODE ||
-                                          patient.diseaseId || patient.disease || patient.diseaseName;
-                const diseaseMatch = patientDiseaseCode === disease.code || patientDiseaseCode === disease.icd10 ||
-                                   patientDiseaseCode === disease.name || String(patientDiseaseCode).toLowerCase() === String(disease.code).toLowerCase();
-                
-                // ชั่วคราว: ข้ามการกรองรหัสโรคเพื่อ debug
-                // if (!diseaseMatch) {
-                //     // Debug: แสดงเหตุผลที่ไม่ match
-                //     if (debugCount <= 3) {
-                //         console.log(`❌ Disease not match for patient ${debugCount}: "${patientDiseaseCode}" vs target "${disease.code}"`);
-                //     }
-                //     return false;
-                // }
-                
-                // กรองตามวันที่เริ่มป่วย - เพิ่มตัวเลือกเพิ่มเติม
-                const onsetDate = patient.onsetDate || patient['วันที่เริ่มป่วย'] || patient.symptomDate || patient.dateOfOnset ||
-                                patient.onset_date || patient['วันที่ เริ่ม ป่วย'] || patient.date_onset || patient.symptom_date ||
-                                patient.onsetDateFull || patient.illnessDate || patient.sickDate || patient.startDate;
-                                
-                if (!onsetDate) {
-                    // Debug: แสดงเหตุผลที่ไม่มีวันที่
-                    if (debugCount <= 3) {
-                        console.log(`❌ No onset date for patient ${debugCount}`);
-                    }
-                    return false;
-                }
-                
-                // แปลงวันที่เป็น Date object
-                let onsetDateObj;
-                if (onsetDate instanceof Date) {
-                    onsetDateObj = onsetDate;
-                } else if (typeof onsetDate === 'string') {
-                    // รองรับหลายรูปแบบวันที่
-                    onsetDateObj = new Date(onsetDate);
-                    // ถ้าแปลงไม่ได้ ลองรูปแบบ DD/MM/YYYY
-                    if (isNaN(onsetDateObj.getTime()) && onsetDate.includes('/')) {
-                        const [day, month, year] = onsetDate.split('/');
-                        onsetDateObj = new Date(year, month - 1, day);
-                    }
-                    // ลองรูปแบบ DD-MM-YYYY
-                    if (isNaN(onsetDateObj.getTime()) && onsetDate.includes('-')) {
-                        const parts = onsetDate.split('-');
-                        if (parts.length === 3) {
-                            // ลองทั้ง DD-MM-YYYY และ YYYY-MM-DD
-                            if (parts[0].length === 4) {
-                                onsetDateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-                            } else {
-                                onsetDateObj = new Date(parts[2], parts[1] - 1, parts[0]);
-                            }
-                        }
-                    }
-                } else {
-                    return false;
-                }
-                
-                // ตรวจสอบว่าวันที่อยู่ในช่วงที่กำหนด
-                const dateInRange = onsetDateObj >= startDateObj && onsetDateObj <= endDateObj;
-                
-                // Debug: แสดงผลการตรวจสอบวันที่
-                if (debugCount <= 3) {
-                    console.log(`📅 Date check for patient ${debugCount}:`, {
-                        onsetDate: onsetDate,
-                        onsetDateObj: onsetDateObj,
-                        startDateObj: startDateObj,
-                        endDateObj: endDateObj,
-                        dateInRange: dateInRange
-                    });
-                }
-                
-                return dateInRange;
-            });
-            
-            console.log(`🔍 Filtered patients: ${filteredPatients.length} out of ${patients.length} total patients for disease "${disease.name}" (${disease.code})`);
-            
-            // Calculate statistics using filtered patients
-            const totalPatients = filteredPatients.length;
-            const deaths = filteredPatients.filter(p => {
+            // Calculate statistics from filtered patients
+            // Note: patients array already filtered by disease code and date range in generateReportContent()
+            const totalPatients = patients.length;
+            const deaths = patients.filter(p => {
                 const status = p.outcome || p.patientStatus;
                 return status === 'เสียชีวิต' || status === 'ตาย' || status === 'Dead';
             }).length;
             
-            const malePatients = filteredPatients.filter(p => {
+            const malePatients = patients.filter(p => {
                 const gender = p.gender || p.เพศ;
                 return gender === 'ชาย' || gender === 'Male' || gender === 'M' || gender === 'male';
             }).length;
             
-            const femalePatients = filteredPatients.filter(p => {
+            const femalePatients = patients.filter(p => {
                 const gender = p.gender || p.เพศ;
                 return gender === 'หญิง' || gender === 'Female' || gender === 'F' || gender === 'female';
             }).length;
@@ -3645,8 +3543,8 @@
             const incidenceRate = totalPopulation > 0 ? ((totalPatients / totalPopulation) * 100000).toFixed(2) : '0.00';
             
             // Generate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
-            const ageGroupStats = calculateAgeGroupStats(filteredPatients, agePopulation);
-            const districtStats = calculateDistrictStats(filteredPatients, bangkokDistricts);
+            const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
+            const districtStats = calculateDistrictStats(patients, bangkokDistricts);
             
             return `
                 <div class="report-content" style="font-family: 'Anuphan', sans-serif;">
