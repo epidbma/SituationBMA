@@ -3420,10 +3420,45 @@
                 
                 console.log('✅ Selected disease:', selectedDisease);
                 
+                // Debug: Show available disease codes in patients data
+                const availableDiseaseCodes = [...new Set(patientsArray.map(p => p.diseaseCode))].filter(code => code);
+                console.log(`🔍 Available disease codes in patient data:`, availableDiseaseCodes);
+                
+                // Debug: Show date range and sample dates
+                console.log(`🔍 Date range filter:`, { startDate, endDate });
+                const sampleOnsetDates = patientsArray.map(p => p.onsetDate).filter(date => date).slice(0, 5);
+                console.log(`🔍 Sample onset dates in patient data:`, sampleOnsetDates);
+                
                 // Filter patients by disease code and onset date within the specified date range
+                console.log(`🔍 Starting patient filtering with criteria:`, {
+                    diseaseCode,
+                    startDate,
+                    endDate,
+                    totalPatientsBeforeFilter: patientsArray.length
+                });
+                
+                // Debug: Show sample patient data
+                if (patientsArray.length > 0) {
+                    console.log(`🔍 Sample patient data (first 3):`, patientsArray.slice(0, 3).map(p => ({
+                        diseaseCode: p.diseaseCode,
+                        onsetDate: p.onsetDate,
+                        district: p.district,
+                        gender: p.gender
+                    })));
+                }
+                
+                let diseaseMatches = 0;
+                let dateMatches = 0;
+                
                 const filteredPatients = patientsArray.filter(patient => {
-                    // Check disease code match
-                    if (patient.diseaseCode !== diseaseCode) return false;
+                    // Check disease code match (normalize whitespace and case)
+                    const patientDiseaseCode = String(patient.diseaseCode || '').trim();
+                    const searchDiseaseCode = String(diseaseCode || '').trim();
+                    
+                    if (patientDiseaseCode !== searchDiseaseCode) {
+                        return false;
+                    }
+                    diseaseMatches++;
                     
                     // Check onset date within date range
                     let onsetDate;
@@ -3437,13 +3472,41 @@
                         }
                     }
                     
-                    if (!onsetDate || isNaN(onsetDate.getTime())) return false;
+                    if (!onsetDate || isNaN(onsetDate.getTime())) {
+                        return false;
+                    }
                     
                     const start = new Date(startDate);
                     const end = new Date(endDate);
                     
-                    return onsetDate >= start && onsetDate <= end;
+                    const withinDateRange = onsetDate >= start && onsetDate <= end;
+                    if (withinDateRange) {
+                        dateMatches++;
+                    }
+                    
+                    return withinDateRange;
                 });
+                
+                console.log(`🔍 Filter results:`, {
+                    diseaseMatches,
+                    dateMatches,
+                    finalFilteredCount: filteredPatients.length
+                });
+                
+                // Debug: Show patients that match disease but not date
+                if (diseaseMatches > dateMatches) {
+                    const diseaseMatchedPatients = patientsArray.filter(p => 
+                        String(p.diseaseCode || '').trim() === String(diseaseCode || '').trim()
+                    );
+                    console.log(`🔍 Patients with matching disease code but outside date range:`, 
+                        diseaseMatchedPatients.slice(0, 3).map(p => ({
+                            diseaseCode: p.diseaseCode,
+                            onsetDate: p.onsetDate,
+                            parsedDate: p.onsetDate && p.onsetDate.includes('/') ? 
+                                parseThaiDate(p.onsetDate) : new Date(p.onsetDate)
+                        }))
+                    );
+                }
                 
                 console.log(`📊 Filtered patients: ${filteredPatients.length} out of ${patientsArray.length} total patients`);
                 console.log(`🔍 Filter criteria: diseaseCode='${diseaseCode}', startDate='${startDate}', endDate='${endDate}'`);
