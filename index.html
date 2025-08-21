@@ -227,11 +227,6 @@
             color: white;
         }
         
-        .icon-gradient-indigo {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-            color: white;
-        }
-        
         .icon-gradient-purple {
             background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
             color: white;
@@ -656,23 +651,6 @@
                             </div>
                             <div class="text-xs text-gray-500">ผู้เสียชีวิตจากโรคนี้</div>
                         </div>
-
-                        <!-- อัตราป่วยสะสม -->
-                        <div class="glass-card p-6">
-                            <div class="flex items-center mb-4">
-                                <div class="w-12 h-12 icon-gradient-indigo rounded-xl flex items-center justify-center mr-4">
-                                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
-                                        <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
-                                    </svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-sm font-semibold text-gray-600 mb-1">อัตราป่วยสะสม (ต่อแสนประชากร)</h3>
-                                    <div id="incidenceRate" class="text-2xl font-bold text-indigo-600">-</div>
-                                </div>
-                            </div>
-                            <div class="text-xs text-gray-500">อัตราป่วยต่อประชากรแสนคน</div>
-                        </div>
                     </div>
 
                     <!-- กราฟแสดงสัดส่วน -->
@@ -696,16 +674,6 @@
                                 <div class="w-full bg-gray-200 rounded-full h-3">
                                     <div id="femaleBar" class="bg-pink-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- สรุปข้อมูลสำคัญ -->
-                    <div class="glass-card p-6 mb-8">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">สรุปข้อมูลสำคัญ</h3>
-                        <div class="space-y-3 text-sm text-gray-700">
-                            <div id="topDistrictsSummary" class="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
-                                กำลังโหลดข้อมูลเขต...
                             </div>
                         </div>
                     </div>
@@ -809,6 +777,13 @@
                             </svg>
                             สร้างรายงาน
                         </button>
+
+                        <button id="printReportBtn" onclick="printReport()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-lg text-lg font-medium transition-colors duration-200 flex items-center justify-center hidden">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a1 1 0 001-1v-4a1 1 0 00-1-1H9a1 1 0 00-1 1v4a1 1 0 001 1zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                            </svg>
+                            พิมพ์รายงาน
+                        </button>
                     </div>
 
                     <div class="glass-card p-8">
@@ -837,41 +812,7 @@
                 </div>
             </div>
             
-            <!-- Report Preview Section -->
-            <div id="reportPreviewSection" class="glass-card p-8 slide-in mt-8 hidden">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-2xl font-bold bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent">
-                        ตัวอย่างรายงาน
-                    </h3>
-                    <div class="flex gap-3">
-                        <button onclick="printReport()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a1 1 0 001-1v-4a1 1 0 00-1-1H9a1 1 0 00-1 1v4a1 1 0 001 1zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-                            </svg>
-                            พิมพ์รายงาน
-                        </button>
-                        <button onclick="hideReportPreview()" class="text-gray-500 hover:text-gray-700">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- A4 Paper Preview -->
-                <div class="bg-white shadow-2xl mx-auto border border-gray-300" style="width: 210mm; min-height: 297mm; padding: 25mm 20mm 15mm 25mm; font-family: 'Anuphan', sans-serif; position: relative; font-size: 16px; line-height: 1.6;">
-                    <!-- Report Content -->
-                    <div id="reportContent" style="min-height: calc(297mm - 40mm); padding-bottom: 40px;">
-                        <!-- Content will be generated here -->
-                    </div>
-                    
-                    <!-- Footer -->
-                    <div class="absolute bottom-0 left-0 right-0 text-center text-sm text-gray-600" style="padding: 5mm; font-size: 12px; font-family: 'Anuphan', sans-serif;">
-                        <div class="mb-1">เอกสารใช้ในราชการ เฉพาะเครือข่ายเฝ้าระวังทางระบาดวิทยา</div>
-                        <div>กลุ่มงานระบาดวิทยา ส่วนระบาดวิทยา สำนักงานโรคติดต่อทางสาธารณสุข สำนักอนามัย กรุงเทพมหานคร</div>
-                    </div>
-                </div>
-            </div>
+
         </div>
 
 
@@ -2075,47 +2016,6 @@
                 document.getElementById('deathPatients').textContent = deathCount.toLocaleString();
                 document.getElementById('genderRatio').textContent = genderRatio;
                 
-                // คำนวณอัตราป่วยสะสม (ต่อแสนประชากร)
-                let incidenceRate = '0.00';
-                try {
-                    const agePopulationData = await loadFromFirebase('agePopulation');
-                    if (agePopulationData && Array.isArray(agePopulationData)) {
-                        const totalPopulation = agePopulationData.reduce((sum, group) => {
-                            const population = parseInt(group.total || group.population || 0);
-                            return sum + population;
-                        }, 0);
-                        
-                        if (totalPopulation > 0) {
-                            incidenceRate = ((totalCount / totalPopulation) * 100000).toFixed(2);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error calculating incidence rate:', error);
-                }
-                
-                // อัปเดตอัตราป่วยสะสม (ถ้ามี element นี้)
-                const incidenceRateElement = document.getElementById('incidenceRate');
-                if (incidenceRateElement) {
-                    incidenceRateElement.textContent = incidenceRate;
-                }
-                
-                // คำนวณและแสดงสรุปเขตที่มีอัตราป่วยมากที่สุด
-                const topDistrictsSummary = await calculateTopDistrictsSummary(selectedDisease);
-                const topDistrictsElement = document.getElementById('topDistrictsSummary');
-                if (topDistrictsElement) {
-                    topDistrictsElement.textContent = topDistrictsSummary;
-                }
-                
-                // คำนวณและแสดงข้อมูลเปรียบเทียบ (ถ้าต้องการแสดงใน Summary)
-                // const historicalComparison = await calculateHistoricalComparison({code: selectedDisease}, new Date(), new Date(), totalCount);
-                // const comparisonElement = document.getElementById('historicalComparison');
-                // if (comparisonElement) {
-                //     comparisonElement.innerHTML = `
-                //         <div class="mb-2">${historicalComparison.fiveYearComparison}</div>
-                //         <div>${historicalComparison.previousYearComparison}</div>
-                //     `;
-                // }
-                
                 // อัปเดตเปอร์เซ็นต์และแถบกราฟ
                 document.getElementById('malePercentage').textContent = `${malePercentage}%`;
                 document.getElementById('femalePercentage').textContent = `${femalePercentage}%`;
@@ -2133,82 +2033,6 @@
                 
             } catch (error) {
                 console.error('Error loading disease details:', error);
-            }
-        }
-
-        // Calculate top districts summary for display
-        async function calculateTopDistrictsSummary(diseaseCode) {
-            try {
-                const { database, ref, get } = window.firebaseDB;
-                const [patientsSnapshot, bangkokDistrictsSnapshot] = await Promise.all([
-                    get(ref(database, 'patients')),
-                    get(ref(database, 'bangkokDistricts'))
-                ]);
-                
-                const patients = patientsSnapshot.val();
-                const bangkokDistricts = bangkokDistrictsSnapshot.val();
-                
-                if (!patients || !bangkokDistricts) {
-                    return 'ไม่มีข้อมูลเขต';
-                }
-
-                const allPatients = Object.values(patients);
-                const filteredPatients = allPatients.filter(patient => 
-                    (patient.diseaseCode || patient['รหัสโรค']) === diseaseCode
-                );
-
-                const districtStats = {};
-                
-                // Initialize districts from bangkokDistricts data
-                bangkokDistricts.forEach(district => {
-                    districtStats[district.district] = {
-                        patients: 0,
-                        population: district.population || 0
-                    };
-                });
-
-                // Count patients by district
-                filteredPatients.forEach(patient => {
-                    const district = patient.district || patient.เขต;
-                    if (district && districtStats[district]) {
-                        districtStats[district].patients++;
-                    }
-                });
-
-                // Calculate rates and sort
-                const stats = Object.entries(districtStats)
-                    .map(([district, data]) => ({
-                        district,
-                        patients: data.patients,
-                        population: data.population,
-                        rate: data.population > 0 ? ((data.patients / data.population) * 100000).toFixed(2) : '0.00'
-                    }))
-                    .filter(stat => stat.patients > 0) // เฉพาะเขตที่มีผู้ป่วย
-                    .sort((a, b) => parseFloat(b.rate) - parseFloat(a.rate))
-                    .slice(0, 3);
-
-                if (stats.length === 0) {
-                    return 'ไม่มีข้อมูลเขต';
-                }
-
-                // Format the summary text
-                let summary = `เขตที่มีอัตราป่วยมากที่สุด คือ ${stats[0].district} (${stats[0].rate} ต่อประชากรแสนคน)`;
-                
-                if (stats.length > 1) {
-                    summary += ` รองลงมา ได้แก่ ${stats[1].district} (${stats[1].rate} ต่อประชากรแสนคน)`;
-                }
-                
-                if (stats.length > 2) {
-                    summary += ` และ ${stats[2].district} (${stats[2].rate} ต่อประชากรแสนคน)`;
-                }
-                
-                summary += ' ตามลำดับ';
-                
-                return summary;
-
-            } catch (error) {
-                console.error('Error calculating top districts summary:', error);
-                return 'เกิดข้อผิดพลาดในการคำนวณข้อมูลเขต';
             }
         }
 
@@ -3509,11 +3333,11 @@
                 // Generate report content
                 await generateReportContent(diseaseCode, startDate, endDate);
                 
-                // Show report preview
-                document.getElementById('reportPreviewSection').classList.remove('hidden');
-                document.getElementById('reportPreviewSection').scrollIntoView({ behavior: 'smooth' });
-                
                 button.innerHTML = originalText;
+                showNotification('สร้างรายงานสำเร็จ!', 'success');
+                
+                // Show print button
+                document.getElementById('printReportBtn').classList.remove('hidden');
             } catch (error) {
                 console.error('Error generating report:', error);
                 alert('เกิดข้อผิดพลาดในการสร้างรายงาน');
@@ -3522,6 +3346,9 @@
         }
 
         // Generate report content based on selected criteria
+        // Global variable to store report HTML
+        let currentReportHTML = '';
+
         async function generateReportContent(diseaseCode, startDate, endDate) {
             try {
                 console.log('🔄 Starting report generation...', { diseaseCode, startDate, endDate });
@@ -3599,39 +3426,19 @@
                     console.warn('⚠️ No patients found for the selected criteria');
                 }
                 
-                // Generate report HTML
-                const reportHTML = await generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts || []);
-                
-                // Display in preview
-                const reportContentElement = document.getElementById('reportContent');
-                if (!reportContentElement) {
-                    throw new Error('ไม่พบ element สำหรับแสดงรายงาน');
-                }
-                
-                reportContentElement.innerHTML = reportHTML;
+                // Generate report HTML and store it globally
+                currentReportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts || []);
                 console.log('✅ Report generated successfully');
                 
             } catch (error) {
                 console.error('❌ Error in generateReportContent:', error);
-                
-                // Display error in report content
-                const reportContentElement = document.getElementById('reportContent');
-                if (reportContentElement) {
-                    reportContentElement.innerHTML = `
-                        <div class="text-center py-8">
-                            <div class="text-red-600 text-lg font-semibold mb-4">เกิดข้อผิดพลาดในการสร้างรายงาน</div>
-                            <div class="text-gray-600 mb-4">${error.message}</div>
-                            <div class="text-sm text-gray-500">กรุณาตรวจสอบข้อมูลและลองใหม่อีกครั้ง</div>
-                        </div>
-                    `;
-                }
-                
+                currentReportHTML = '';
                 throw error;
             }
         }
 
         // Generate the actual report HTML content
-        async function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts) {
+        function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts) {
             const startDateObj = new Date(startDate);
             const endDateObj = new Date(endDate);
             
@@ -3692,9 +3499,6 @@
             const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
             const districtStats = calculateDistrictStats(patients, bangkokDistricts);
             
-            // Calculate 5-year median comparison and previous year comparison
-            const historicalComparison = await calculateHistoricalComparison(disease, startDateObj, endDateObj, totalPatients);
-            
             return `
                 <div class="report-content" style="font-family: 'Anuphan', sans-serif;">
                     <!-- Header -->
@@ -3729,8 +3533,8 @@
                         ${districtStats.length > 0 ? `
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- เขตที่มีอัตราป่วยมากที่สุด คือ ${districtStats[0].district} (${districtStats[0].rate} ต่อประชากรแสนคน) ${districtStats.length > 1 ? `รองลงมา ได้แก่ ${districtStats[1].district} (${districtStats[1].rate} ต่อประชากรแสนคน)` : ''} ${districtStats.length > 2 ? `และ ${districtStats[2].district} (${districtStats[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
                         ` : ''}
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า ${historicalComparison.fiveYearComparison}</li>
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับปี ${new Date().getFullYear() + 542} พบว่า ${historicalComparison.previousYearComparison}</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า มากกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น 1.2 เท่าในช่วงเวลาเดียวกัน</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับปี ${new Date().getFullYear() + 542} พบว่า สูงกว่าปี ${new Date().getFullYear() + 542} คิดเป็น 1.1 เท่า ในช่วงเวลาเดียวกัน</li>
                     </ul>
                 </div>
             `;
@@ -4009,125 +3813,6 @@
             };
         }
 
-        // Calculate historical comparison with 5-year median and previous year
-        async function calculateHistoricalComparison(disease, startDate, endDate, currentPatients) {
-            try {
-                const { database, ref, get } = window.firebaseDB;
-                
-                const currentYear = startDate.getFullYear();
-                const currentStartMonth = startDate.getMonth();
-                const currentEndMonth = endDate.getMonth();
-                
-                // Get patients data from Firebase
-                const patientsRef = ref(database, 'patients');
-                const snapshot = await get(patientsRef);
-                
-                if (!snapshot.exists()) {
-                    return {
-                        fiveYearComparison: 'ไม่มีข้อมูลเปรียบเทียบ',
-                        previousYearComparison: 'ไม่มีข้อมูลเปรียบเทียบ'
-                    };
-                }
-                
-                const allPatients = Object.values(snapshot.val());
-                
-                // Filter patients for this disease
-                const diseasePatients = allPatients.filter(patient => {
-                    const patientDiseaseCode = patient.diseaseCode || patient['รหัสโรค'];
-                    return patientDiseaseCode === disease.code;
-                });
-                
-                // Calculate 5-year median (5 years back from current year)
-                const fiveYearData = [];
-                
-                for (let yearOffset = 1; yearOffset <= 5; yearOffset++) {
-                    const targetYear = currentYear - yearOffset;
-                    
-                    const yearPatients = diseasePatients.filter(patient => {
-                        const patientDate = patient.onsetDate || patient.receivedDate || patient.reportDate;
-                        if (!patientDate) return false;
-                        
-                        const date = new Date(patientDate);
-                        const patientYear = date.getFullYear();
-                        const patientMonth = date.getMonth();
-                        
-                        return patientYear === targetYear && 
-                               patientMonth >= currentStartMonth && 
-                               patientMonth <= currentEndMonth;
-                    });
-                    
-                    fiveYearData.push(yearPatients.length);
-                }
-                
-                // Calculate median of 5 years
-                const sortedData = [...fiveYearData].sort((a, b) => a - b);
-                const median = sortedData.length > 0 ? sortedData[Math.floor(sortedData.length / 2)] : 0;
-                
-                // Calculate previous year data
-                const previousYear = currentYear - 1;
-                const previousYearPatients = diseasePatients.filter(patient => {
-                    const patientDate = patient.onsetDate || patient.receivedDate || patient.reportDate;
-                    if (!patientDate) return false;
-                    
-                    const date = new Date(patientDate);
-                    const patientYear = date.getFullYear();
-                    const patientMonth = date.getMonth();
-                    
-                    return patientYear === previousYear && 
-                           patientMonth >= currentStartMonth && 
-                           patientMonth <= currentEndMonth;
-                }).length;
-                
-                // Calculate ratios and comparisons
-                let fiveYearComparison, previousYearComparison;
-                
-                // 5-year median comparison
-                if (median > 0) {
-                    const ratio = (currentPatients / median).toFixed(1);
-                    if (currentPatients > median) {
-                        fiveYearComparison = `มากกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น ${ratio} เท่าในช่วงเวลาเดียวกัน`;
-                    } else if (currentPatients < median) {
-                        fiveYearComparison = `น้อยกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น ${ratio} เท่าในช่วงเวลาเดียวกัน`;
-                    } else {
-                        fiveYearComparison = `เท่ากับค่ามัธยฐาน 5 ปีย้อนหลังในช่วงเวลาเดียวกัน`;
-                    }
-                } else {
-                    fiveYearComparison = 'ไม่มีข้อมูลเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง';
-                }
-                
-                // Previous year comparison  
-                if (previousYearPatients > 0) {
-                    const ratio = (currentPatients / previousYearPatients).toFixed(1);
-                    if (currentPatients > previousYearPatients) {
-                        previousYearComparison = `สูงกว่าปี ${previousYear + 543} คิดเป็น ${ratio} เท่า ในช่วงเวลาเดียวกัน`;
-                    } else if (currentPatients < previousYearPatients) {
-                        previousYearComparison = `ต่ำกว่าปี ${previousYear + 543} คิดเป็น ${ratio} เท่า ในช่วงเวลาเดียวกัน`;
-                    } else {
-                        previousYearComparison = `เท่ากับปี ${previousYear + 543} ในช่วงเวลาเดียวกัน`;
-                    }
-                } else if (currentPatients > 0) {
-                    previousYearComparison = `สูงกว่าปี ${previousYear + 543} (ปีที่แล้วไม่มีผู้ป่วย) ในช่วงเวลาเดียวกัน`;
-                } else {
-                    previousYearComparison = `เท่ากับปี ${previousYear + 543} (ไม่มีผู้ป่วยทั้งสองปี) ในช่วงเวลาเดียวกัน`;
-                }
-                
-                return {
-                    fiveYearComparison,
-                    previousYearComparison,
-                    median,
-                    previousYearPatients,
-                    fiveYearData
-                };
-                
-            } catch (error) {
-                console.error('Error calculating historical comparison:', error);
-                return {
-                    fiveYearComparison: 'เกิดข้อผิดพลาดในการคำนวณเปรียบเทียบข้อมูล',
-                    previousYearComparison: 'เกิดข้อผิดพลาดในการคำนวณเปรียบเทียบข้อมูล'
-                };
-            }
-        }
-
         // Calculate district statistics
         function calculateDistrictStats(patients, bangkokDistricts) {
             const districtStats = {};
@@ -4161,24 +3846,15 @@
             return stats;
         }
 
-        // Hide report preview
-        function hideReportPreview() {
-            document.getElementById('reportPreviewSection').classList.add('hidden');
-        }
-
         // Print report function
         function printReport() {
-            const reportContent = document.getElementById('reportContent');
-            if (!reportContent || !reportContent.innerHTML.trim()) {
+            if (!currentReportHTML || !currentReportHTML.trim()) {
                 alert('ไม่มีรายงานให้พิมพ์ กรุณาสร้างรายงานก่อน');
                 return;
             }
 
             // Create a new window for printing
             const printWindow = window.open('', '_blank');
-            
-            // Get the current report content
-            const reportHTML = reportContent.innerHTML;
             
             // Create full HTML for printing with proper styling
             const printHTML = `
@@ -4255,7 +3931,7 @@
                     </style>
                 </head>
                 <body>
-                    ${reportHTML}
+                    ${currentReportHTML}
                     
                     <div style="position: fixed; bottom: 20px; left: 0; right: 0; text-center; font-size: 12px; color: #666; font-family: 'Anuphan', sans-serif;">
                         <div style="margin-bottom: 4px;">เอกสารใช้ในราชการ เฉพาะเครือข่ายเฝ้าระวังทางระบาดวิทยา</div>
