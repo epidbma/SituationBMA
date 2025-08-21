@@ -3444,47 +3444,7 @@
                     return onsetDate >= start && onsetDate <= end;
                 });
                 
-                // Debug: Show sample of filtered vs non-filtered patients
                 console.log(`📊 Filtered patients: ${filteredPatients.length} out of ${patientsArray.length} total patients`);
-                console.log(`🔍 Filter criteria: Disease code "${diseaseCode}", Date range: ${startDate} to ${endDate}`);
-                
-                // Show sample of filtered patients
-                if (filteredPatients.length > 0) {
-                    console.log('✅ Sample filtered patients (first 3):');
-                    filteredPatients.slice(0, 3).forEach((patient, index) => {
-                        console.log(`  ${index + 1}. Disease: ${patient.diseaseCode}, Onset: ${patient.onsetDate}, District: ${patient.district || 'N/A'}`);
-                    });
-                }
-                
-                // Show sample of patients that didn't match criteria
-                const nonMatchingPatients = patientsArray.filter(patient => {
-                    const diseaseMatch = patient.diseaseCode === diseaseCode;
-                    let dateMatch = false;
-                    
-                    if (patient.onsetDate) {
-                        let onsetDate;
-                        if (patient.onsetDate.includes('/')) {
-                            onsetDate = parseThaiDate(patient.onsetDate);
-                        } else {
-                            onsetDate = new Date(patient.onsetDate);
-                        }
-                        
-                        if (onsetDate && !isNaN(onsetDate.getTime())) {
-                            const start = new Date(startDate);
-                            const end = new Date(endDate);
-                            dateMatch = onsetDate >= start && onsetDate <= end;
-                        }
-                    }
-                    
-                    return !diseaseMatch || !dateMatch;
-                });
-                
-                if (nonMatchingPatients.length > 0 && nonMatchingPatients.length <= 50) {
-                    console.log('❌ Sample non-matching patients (first 3):');
-                    nonMatchingPatients.slice(0, 3).forEach((patient, index) => {
-                        console.log(`  ${index + 1}. Disease: ${patient.diseaseCode}, Onset: ${patient.onsetDate}, District: ${patient.district || 'N/A'}`);
-                    });
-                }
                 
                 if (filteredPatients.length === 0) {
                     console.warn('⚠️ No patients found for the selected criteria');
@@ -3540,22 +3500,53 @@
             const startDateFormatted = formatDateThai(startDateObj);
             const endDateFormatted = formatDateThai(endDateObj);
             
-            // Calculate statistics from filtered patients data
-            const totalPatients = patients.length;
-            console.log(`📊 Report Statistics - Total filtered patients: ${totalPatients}`);
-            console.log(`🎯 Filters applied: Disease "${disease.name}" (${disease.code}), Date range: ${startDateFormatted} - ${endDateFormatted}`);
+            // Filter patients by disease code and onset date range
+            const filteredPatients = patients.filter(patient => {
+                // กรองตามรหัสโรค
+                const patientDiseaseCode = patient.diseaseCode || patient['รหัสโรค'] || patient.icd10 || patient.code;
+                const diseaseMatch = patientDiseaseCode === disease.code || patientDiseaseCode === disease.icd10;
+                
+                if (!diseaseMatch) return false;
+                
+                // กรองตามวันที่เริ่มป่วย
+                const onsetDate = patient.onsetDate || patient['วันที่เริ่มป่วย'] || patient.symptomDate || patient.dateOfOnset;
+                if (!onsetDate) return false;
+                
+                // แปลงวันที่เป็น Date object
+                let onsetDateObj;
+                if (onsetDate instanceof Date) {
+                    onsetDateObj = onsetDate;
+                } else if (typeof onsetDate === 'string') {
+                    // รองรับหลายรูปแบบวันที่
+                    onsetDateObj = new Date(onsetDate);
+                    // ถ้าแปลงไม่ได้ ลองรูปแบบ DD/MM/YYYY
+                    if (isNaN(onsetDateObj.getTime()) && onsetDate.includes('/')) {
+                        const [day, month, year] = onsetDate.split('/');
+                        onsetDateObj = new Date(year, month - 1, day);
+                    }
+                } else {
+                    return false;
+                }
+                
+                // ตรวจสอบว่าวันที่อยู่ในช่วงที่กำหนด
+                return onsetDateObj >= startDateObj && onsetDateObj <= endDateObj;
+            });
             
-            const deaths = patients.filter(p => {
+            console.log(`🔍 Filtered patients: ${filteredPatients.length} out of ${patients.length} total patients for disease "${disease.name}" (${disease.code})`);
+            
+            // Calculate statistics using filtered patients
+            const totalPatients = filteredPatients.length;
+            const deaths = filteredPatients.filter(p => {
                 const status = p.outcome || p.patientStatus;
                 return status === 'เสียชีวิต' || status === 'ตาย' || status === 'Dead';
             }).length;
             
-            const malePatients = patients.filter(p => {
+            const malePatients = filteredPatients.filter(p => {
                 const gender = p.gender || p.เพศ;
                 return gender === 'ชาย' || gender === 'Male' || gender === 'M' || gender === 'male';
             }).length;
             
-            const femalePatients = patients.filter(p => {
+            const femalePatients = filteredPatients.filter(p => {
                 const gender = p.gender || p.เพศ;
                 return gender === 'หญิง' || gender === 'Female' || gender === 'F' || gender === 'female';
             }).length;
@@ -3583,8 +3574,8 @@
             const incidenceRate = totalPopulation > 0 ? ((totalPatients / totalPopulation) * 100000).toFixed(2) : '0.00';
             
             // Generate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
-            const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
-            const districtStats = calculateDistrictStats(patients, bangkokDistricts);
+            const ageGroupStats = calculateAgeGroupStats(filteredPatients, agePopulation);
+            const districtStats = calculateDistrictStats(filteredPatients, bangkokDistricts);
             
             return `
                 <div class="report-content" style="font-family: 'Anuphan', sans-serif;">
@@ -3604,11 +3595,11 @@
                     <!-- Situation Overview -->
                     <h3 style="text-align: left; font-weight: bold; font-family: 'Anuphan', sans-serif;">สถานการณ์${disease.name} ในกรุงเทพมหานคร</h3>
                     <p style="font-size: 14px; margin: 0.5rem 0; font-family: 'Anuphan', sans-serif; text-indent: 1cm;">
-                        กลุ่มงานระบาดวิทยา สำนักงานโรคติดต่อทางสาธารณสุข สำนักอนามัย กรุงเทพมหานครได้รับรายงานเฝ้าระวังโรค (รง.506) จากข้อมูลผู้ป่วย${disease.name} (รหัส: ${disease.code}) ในช่วงเวลา ${startDateFormatted} ถึง ${endDateFormatted} ดังนี้
+                        กลุ่มงานระบาดวิทยา สำนักงานโรคติดต่อทางสาธารณสุข สำนักอนามัย กรุงเทพมหานครได้รับรายงานเฝ้าระวังโรค (รง.506) ดังนี้
                     </p>
                     
                     <ul style="font-size: 14px; line-height: 1.8; list-style: none; padding-left: 1cm; font-family: 'Anuphan', sans-serif;">
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ผู้ป่วยสะสมในช่วงเวลาดังกล่าวจำนวน ${totalPatients.toLocaleString()} ราย คิดเป็นอัตราป่วยสะสม ${incidenceRate} รายต่อแสนประชากร</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ผู้ป่วยสะสมจำนวน ${totalPatients.toLocaleString()} ราย คิดเป็นอัตราป่วยสะสม ${incidenceRate} รายต่อแสนประชากร</li>
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ${deaths > 0 ? `ผู้เสียชีวิต ${deaths} ราย` : 'ไม่พบผู้เสียชีวิต'}</li>
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- อัตราส่วนผู้ป่วยชายต่อหญิง คือ ${genderRatio}</li>
                         ${ageGroupStats.topThree.length > 0 ? `
@@ -3623,11 +3614,6 @@
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า มากกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น 1.2 เท่าในช่วงเวลาเดียวกัน</li>
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับปี ${new Date().getFullYear() + 542} พบว่า สูงกว่าปี ${new Date().getFullYear() + 542} คิดเป็น 1.1 เท่า ในช่วงเวลาเดียวกัน</li>
                     </ul>
-                    
-                    <div style="margin: 1rem 0;"></div>
-                    <p style="font-size: 12px; color: #666; font-style: italic; font-family: 'Anuphan', sans-serif; text-indent: 1cm;">
-                        หมายเหตุ: ข้อมูลดังกล่าวข้างต้นเป็นผลการวิเคราะห์จากข้อมูลผู้ป่วย${disease.name} (รหัสโรค: ${disease.code}) ที่มีวันเริ่มป่วย (onset date) ตั้งแต่วันที่ ${startDateFormatted} ถึงวันที่ ${endDateFormatted} จำนวนทั้งสิ้น ${totalPatients.toLocaleString()} ราย
-                    </p>
                 </div>
             `;
         }
