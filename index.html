@@ -3451,7 +3451,7 @@
                 }
                 
                 // Generate report HTML
-                const reportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts || []);
+                const reportHTML = await generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts || []);
                 
                 // Display in preview
                 const reportContentElement = document.getElementById('reportContent');
@@ -3481,8 +3481,172 @@
             }
         }
 
+        // Calculate comparison with historical data (5-year median and previous year)
+        async function calculateHistoricalComparison(diseaseCode, startDate, endDate, currentPatientCount) {
+            try {
+                const { database, ref, get } = window.firebaseDB;
+                const diseaseHistorySnapshot = await get(ref(database, 'diseaseHistory'));
+                const diseaseHistory = diseaseHistorySnapshot.val() || [];
+                
+                const startDateObj = new Date(startDate);
+                const endDateObj = new Date(endDate);
+                const currentYear = new Date().getFullYear();
+                const currentYearBuddhist = currentYear + 543;
+                const previousYearBuddhist = currentYearBuddhist - 1;
+                
+                // Convert array if needed
+                const historyArray = Array.isArray(diseaseHistory) ? diseaseHistory : Object.values(diseaseHistory);
+                
+                // Filter historical data for the same disease
+                const diseaseHistoryData = historyArray.filter(record => 
+                    record.diseaseCode && record.diseaseCode.toString().trim() === diseaseCode.toString().trim()
+                );
+                
+                console.log('📈 Disease history data for comparison:', diseaseHistoryData);
+                
+                // Calculate median of last 5 years (excluding current year)
+                const last5Years = [];
+                for (let i = 1; i <= 5; i++) {
+                    const year = currentYear - i;
+                    const yearBuddhist = year + 543;
+                    const yearData = diseaseHistoryData.find(record => 
+                        (record.year === year || record.year === yearBuddhist) &&
+                        isInSamePeriod(record, startDateObj, endDateObj)
+                    );
+                    if (yearData && yearData.caseCount) {
+                        last5Years.push(parseInt(yearData.caseCount));
+                    }
+                }
+                
+                // Calculate median
+                let medianComparison = null;
+                if (last5Years.length > 0) {
+                    last5Years.sort((a, b) => a - b);
+                    const median = last5Years.length % 2 === 0 
+                        ? (last5Years[last5Years.length / 2 - 1] + last5Years[last5Years.length / 2]) / 2
+                        : last5Years[Math.floor(last5Years.length / 2)];
+                    
+                    const ratio = median > 0 ? (currentPatientCount / median) : null;
+                    let comparisonText = '';
+                    
+                    if (ratio !== null) {
+                        if (ratio > 1.1) {
+                            comparisonText = 'มากกว่า';
+                        } else if (ratio < 0.9) {
+                            comparisonText = 'น้อยกว่า';
+                        } else {
+                            comparisonText = 'เท่ากับ';
+                        }
+                        
+                        medianComparison = {
+                            comparison: comparisonText,
+                            ratio: ratio.toFixed(1),
+                            median: median,
+                            years: last5Years.length
+                        };
+                    }
+                }
+                
+                // Find previous year data
+                let previousYearComparison = null;
+                const previousYearData = diseaseHistoryData.find(record => 
+                    (record.year === (currentYear - 1) || record.year === previousYearBuddhist) &&
+                    isInSamePeriod(record, startDateObj, endDateObj)
+                );
+                
+                if (previousYearData && previousYearData.caseCount) {
+                    const previousCount = parseInt(previousYearData.caseCount);
+                    const ratio = previousCount > 0 ? (currentPatientCount / previousCount) : null;
+                    let comparisonText = '';
+                    
+                    if (ratio !== null) {
+                        if (ratio > 1.1) {
+                            comparisonText = 'สูงกว่า';
+                        } else if (ratio < 0.9) {
+                            comparisonText = 'ต่ำกว่า';
+                        } else {
+                            comparisonText = 'เท่ากับ';
+                        }
+                        
+                        previousYearComparison = {
+                            comparison: comparisonText,
+                            ratio: ratio.toFixed(1),
+                            previousCount: previousCount
+                        };
+                    }
+                }
+                
+                return {
+                    medianComparison,
+                    previousYearComparison,
+                    currentYearBuddhist,
+                    previousYearBuddhist
+                };
+                
+            } catch (error) {
+                console.error('Error calculating historical comparison:', error);
+                return {
+                    medianComparison: null,
+                    previousYearComparison: null,
+                    currentYearBuddhist: new Date().getFullYear() + 543,
+                    previousYearBuddhist: new Date().getFullYear() + 542
+                };
+            }
+        }
+        
+        // Helper function to check if historical record is in the same period as current report
+        function isInSamePeriod(record, startDateObj, endDateObj) {
+            const currentStartMonth = startDateObj.getMonth() + 1; // 1-12
+            const currentEndMonth = endDateObj.getMonth() + 1; // 1-12
+            
+            // If record has monthly data, calculate total for the period
+            if (record.months) {
+                let periodCount = 0;
+                
+                // Generate month range
+                const monthsInPeriod = [];
+                if (currentStartMonth <= currentEndMonth) {
+                    // Same year range
+                    for (let m = currentStartMonth; m <= currentEndMonth; m++) {
+                        monthsInPeriod.push(m.toString().padStart(2, '0'));
+                    }
+                } else {
+                    // Cross year range (e.g., Nov-Jan)
+                    for (let m = currentStartMonth; m <= 12; m++) {
+                        monthsInPeriod.push(m.toString().padStart(2, '0'));
+                    }
+                    for (let m = 1; m <= currentEndMonth; m++) {
+                        monthsInPeriod.push(m.toString().padStart(2, '0'));
+                    }
+                }
+                
+                // Sum up patient counts for the period
+                monthsInPeriod.forEach(month => {
+                    if (record.months[month] && record.months[month].patients) {
+                        periodCount += parseInt(record.months[month].patients) || 0;
+                    }
+                });
+                
+                // Store the calculated period count for comparison
+                record.caseCount = periodCount;
+                return periodCount > 0;
+            }
+            
+            // Fallback: if record has startMonth and endMonth fields
+            if (record.startMonth && record.endMonth) {
+                const recordStartMonth = parseInt(record.startMonth);
+                const recordEndMonth = parseInt(record.endMonth);
+                
+                // Simple comparison - same start and end months
+                return recordStartMonth === currentStartMonth && recordEndMonth === currentEndMonth;
+            }
+            
+            // If no month data, assume it's annual data
+            return false;
+        }
+
         // Generate the actual report HTML content
-        function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts) {
+        async function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts) {
             const startDateObj = new Date(startDate);
             const endDateObj = new Date(endDate);
             
@@ -3543,6 +3707,88 @@
             const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
             const districtStats = calculateDistrictStats(patients, bangkokDistricts);
             
+        // Generate the actual report HTML content
+        async function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts) {
+            const startDateObj = new Date(startDate);
+            const endDateObj = new Date(endDate);
+            
+            // Calculate historical comparisons
+            const totalPatients = patients.length;
+            const historicalComparison = await calculateHistoricalComparison(disease.code, startDate, endDate, totalPatients);
+            
+            // Format dates in Thai
+            const formatDateThai = (date) => {
+                const day = date.getDate();
+                const month = date.getMonth();
+                const year = date.getFullYear() + 543;
+                const monthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+                                   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+                return `${day} ${monthNames[month]} ${year}`;
+            };
+            
+            const reportMonth = startDateObj.toLocaleString('th-TH', { month: 'long' });
+            const startDateFormatted = formatDateThai(startDateObj);
+            const endDateFormatted = formatDateThai(endDateObj);
+            
+            // Calculate statistics
+            const deaths = patients.filter(p => {
+                const status = p.outcome || p.patientStatus;
+                return status === 'เสียชีวิต' || status === 'ตาย' || status === 'Dead';
+            }).length;
+            
+            const malePatients = patients.filter(p => {
+                const gender = p.gender || p.เพศ;
+                return gender === 'ชาย' || gender === 'Male' || gender === 'M' || gender === 'male';
+            }).length;
+            
+            const femalePatients = patients.filter(p => {
+                const gender = p.gender || p.เพศ;
+                return gender === 'หญิง' || gender === 'Female' || gender === 'F' || gender === 'female';
+            }).length;
+            
+            // Calculate gender ratio (ชาย : หญิง) แสดงเป็น 1 : x
+            let genderRatio;
+            if (malePatients > 0 && femalePatients > 0) {
+                const ratio = (femalePatients / malePatients).toFixed(1);
+                genderRatio = `1 : ${ratio}`;
+            } else if (malePatients > 0 && femalePatients === 0) {
+                genderRatio = 'ชายเท่านั้น';
+            } else if (malePatients === 0 && femalePatients > 0) {
+                genderRatio = 'หญิงเท่านั้น';
+            } else {
+                genderRatio = 'ไม่มีข้อมูล';
+            }
+            
+            // Calculate total population for Bangkok from age population data
+            const totalPopulation = agePopulation.reduce((sum, group) => {
+                const population = parseInt(group.total || group.population || 0);
+                return sum + population;
+            }, 0);
+            
+            // Calculate cumulative incidence rate
+            const incidenceRate = totalPopulation > 0 ? ((totalPatients / totalPopulation) * 100000).toFixed(2) : '0.00';
+            
+            // Generate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
+            const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
+            const districtStats = calculateDistrictStats(patients, bangkokDistricts);
+            
+            // Generate historical comparison text
+            let medianComparisonText = '';
+            if (historicalComparison.medianComparison) {
+                const { comparison, ratio } = historicalComparison.medianComparison;
+                medianComparisonText = `- ในปี ${historicalComparison.currentYearBuddhist} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า ${comparison}ค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น ${ratio} เท่าในช่วงเวลาเดียวกัน`;
+            } else {
+                medianComparisonText = `- ในปี ${historicalComparison.currentYearBuddhist} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} ไม่สามารถเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลังได้ เนื่องจากไม่มีข้อมูลย้อนหลังเพียงพอ`;
+            }
+            
+            let previousYearComparisonText = '';
+            if (historicalComparison.previousYearComparison) {
+                const { comparison, ratio } = historicalComparison.previousYearComparison;
+                previousYearComparisonText = `- ในปี ${historicalComparison.currentYearBuddhist} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับปี ${historicalComparison.previousYearBuddhist} พบว่า ${comparison}ปี ${historicalComparison.previousYearBuddhist} คิดเป็น ${ratio} เท่า ในช่วงเวลาเดียวกัน`;
+            } else {
+                previousYearComparisonText = `- ในปี ${historicalComparison.currentYearBuddhist} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} ไม่สามารถเปรียบเทียบกับปี ${historicalComparison.previousYearBuddhist} ได้ เนื่องจากไม่มีข้อมูลของปีดังกล่าว`;
+            }
+            
             return `
                 <div class="report-content" style="font-family: 'Anuphan', sans-serif;">
                     <!-- Header -->
@@ -3566,22 +3812,17 @@
                     
                     <ul style="font-size: 14px; line-height: 1.8; list-style: none; padding-left: 1cm; font-family: 'Anuphan', sans-serif;">
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ผู้ป่วยสะสมจำนวน ${totalPatients.toLocaleString()} ราย คิดเป็นอัตราป่วยสะสม ${incidenceRate} รายต่อแสนประชากร</li>
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ${deaths > 0 ? `ผู้เสียชีวิต ${deaths} ราย` : 'ไม่พบผู้เสียชีวิต'}</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ${deaths > 0 ? `จำนวนผู้เสียชีวิต ${deaths} ราย` : 'ไม่พบผู้เสียชีวิต'}</li>
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- อัตราส่วนผู้ป่วยชายต่อหญิง คือ ${genderRatio}</li>
-                        ${ageGroupStats.topThree.length > 0 ? `
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- อัตราป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${ageGroupStats.topThree[0].ageGroup} (${ageGroupStats.topThree[0].rate} ต่อประชากรแสนคน) ${ageGroupStats.topThree.length > 1 ? `รองลงมา ได้แก่ ${ageGroupStats.topThree[1].ageGroup} (${ageGroupStats.topThree[1].rate} ต่อประชากรแสนคน)` : ''} ${ageGroupStats.topThree.length > 2 ? `และ ${ageGroupStats.topThree[2].ageGroup} (${ageGroupStats.topThree[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
-                        ` : ''}
-                        ${ageGroupStats.percentageTop.length > 0 ? `
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ร้อยละของผู้ป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${ageGroupStats.percentageTop[0].ageGroup} (ร้อยละ ${ageGroupStats.percentageTop[0].percentage}) ${ageGroupStats.percentageTop.length > 1 ? `รองลงมา ได้แก่ ${ageGroupStats.percentageTop[1].ageGroup} (ร้อยละ ${ageGroupStats.percentageTop[1].percentage})` : ''} ${ageGroupStats.percentageTop.length > 2 ? `และ ${ageGroupStats.percentageTop[2].ageGroup} (ร้อยละ ${ageGroupStats.percentageTop[2].percentage})` : ''} ตามลำดับ</li>
-                        ` : ''}
                         ${districtStats.length > 0 ? `
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- เขตที่มีอัตราป่วยมากที่สุด คือ ${districtStats[0].district} (${districtStats[0].rate} ต่อประชากรแสนคน) ${districtStats.length > 1 ? `รองลงมา ได้แก่ ${districtStats[1].district} (${districtStats[1].rate} ต่อประชากรแสนคน)` : ''} ${districtStats.length > 2 ? `และ ${districtStats[2].district} (${districtStats[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
                         ` : ''}
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า มากกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น 1.2 เท่าในช่วงเวลาเดียวกัน</li>
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับปี ${new Date().getFullYear() + 542} พบว่า สูงกว่าปี ${new Date().getFullYear() + 542} คิดเป็น 1.1 เท่า ในช่วงเวลาเดียวกัน</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">${medianComparisonText}</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">${previousYearComparisonText}</li>
                     </ul>
                 </div>
             `;
+        }
         }
 
         // Helper function to get age group for a patient in the table
