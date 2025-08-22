@@ -3378,18 +3378,20 @@
                 console.log('🔄 Starting report generation...', { diseaseCode, startDate, endDate });
                 
                 // Load necessary data
-                const [diseases, patients, rawAgePopulation, bangkokDistricts] = await Promise.all([
+                const [diseases, patients, rawAgePopulation, bangkokDistricts, bangkokPopulation] = await Promise.all([
                     loadFromFirebase('diseases'),
                     loadFromFirebase('patients'),
                     loadFromFirebase('agePopulation'),
-                    loadFromFirebase('bangkokDistricts')
+                    loadFromFirebase('bangkokDistricts'),
+                    loadFromFirebase('population')
                 ]);
                 
                 console.log('📊 Data loaded:', {
                     diseases: diseases ? diseases.length : 0,
                     patients: patients ? Object.keys(patients).length : 0,
                     agePopulation: rawAgePopulation ? rawAgePopulation.length : 0,
-                    districts: bangkokDistricts ? bangkokDistricts.length : 0
+                    districts: bangkokDistricts ? bangkokDistricts.length : 0,
+                    bangkokPopulation: bangkokPopulation ? bangkokPopulation.length : 0
                 });
                 
                 // Validate required data
@@ -3650,7 +3652,7 @@
                 }
                 
                 // Generate report HTML
-                const reportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts || []);
+                const reportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts || [], bangkokPopulation || []);
                 
                 // Display in preview
                 const reportContentElement = document.getElementById('reportContent');
@@ -3681,7 +3683,7 @@
         }
 
         // Generate the actual report HTML content
-        function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts) {
+        function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts, bangkokPopulation) {
             const startDateObj = new Date(startDate);
             const endDateObj = new Date(endDate);
             
@@ -3702,9 +3704,12 @@
             // Calculate statistics from filtered patients
             // Note: patients array already filtered by disease code and date range in generateReportContent()
             const totalPatients = patients.length;
+            
+            // Count deaths - check if deathDate field has any data (not empty, not null, not "-")
             const deaths = patients.filter(p => {
-                const status = p.outcome || p.patientStatus;
-                return status === 'เสียชีวิต' || status === 'ตาย' || status === 'Dead';
+                const deathDate = p.deathDate || p['วันที่เสียชีวิต'] || '';
+                // Count as death if deathDate field has any data
+                return deathDate && deathDate.toString().trim() !== '' && deathDate.toString().trim() !== '-';
             }).length;
             
             const malePatients = patients.filter(p => {
@@ -3730,17 +3735,52 @@
                 genderRatio = 'ไม่มีข้อมูล';
             }
             
-            // Calculate total population for Bangkok from age population data
-            const totalPopulation = agePopulation.reduce((sum, group) => {
-                const population = parseInt(group.total || group.population || 0);
-                return sum + population;
-            }, 0);
+            // Get total population for Bangkok from Bangkok population data (not from age population)
+            const reportYear = new Date(startDate).getFullYear();
+            let totalPopulation = 0;
+            
+            if (bangkokPopulation && Array.isArray(bangkokPopulation)) {
+                // Find population data for the report year
+                const yearPopulation = bangkokPopulation.find(pop => {
+                    const popYear = parseInt(pop.year || 0);
+                    return popYear === reportYear;
+                });
+                
+                if (yearPopulation) {
+                    totalPopulation = parseInt(yearPopulation.totalPopulation || yearPopulation.total || 0);
+                    console.log(`📊 Using Bangkok population for year ${reportYear}: ${totalPopulation.toLocaleString()}`);
+                } else {
+                    // Use latest available year if specific year not found
+                    const availableYears = bangkokPopulation
+                        .map(pop => parseInt(pop.year || 0))
+                        .filter(year => year > 0)
+                        .sort((a, b) => b - a);
+                    
+                    if (availableYears.length > 0) {
+                        const latestYear = availableYears[0];
+                        const latestYearData = bangkokPopulation.find(pop => parseInt(pop.year || 0) === latestYear);
+                        totalPopulation = parseInt(latestYearData.totalPopulation || latestYearData.total || 0);
+                        console.log(`⚠️ No population data for year ${reportYear}, using latest year ${latestYear}: ${totalPopulation.toLocaleString()}`);
+                    }
+                }
+            }
+            
+            // Fallback to age population sum if no Bangkok population data
+            if (totalPopulation === 0) {
+                totalPopulation = agePopulation.reduce((sum, group) => {
+                    const population = parseInt(group.total || group.population || 0);
+                    return sum + population;
+                }, 0);
+                console.log(`⚠️ No Bangkok population data found, using sum from age population: ${totalPopulation.toLocaleString()}`);
+            }
             
             console.log(`📊 Population calculation for incidence rate:`, {
                 agePopulationRecords: agePopulation.length,
+                bangkokPopulationRecords: bangkokPopulation ? bangkokPopulation.length : 0,
                 totalPopulation: totalPopulation.toLocaleString(),
                 totalPatients: totalPatients,
-                year: agePopulation.length > 0 ? agePopulation[0].year : 'unknown'
+                deaths: deaths,
+                year: reportYear
             });
             
             // Calculate cumulative incidence rate
