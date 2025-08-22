@@ -3480,6 +3480,11 @@
                             // Try parsing as ISO date
                             onsetDate = new Date(patient.onsetDate);
                         }
+                        
+                        // Set onset date time to noon to avoid timezone issues
+                        if (onsetDate && !isNaN(onsetDate.getTime())) {
+                            onsetDate.setHours(12, 0, 0, 0);
+                        }
                     }
                     
                     if (!onsetDate || isNaN(onsetDate.getTime())) {
@@ -3495,6 +3500,14 @@
                     const start = new Date(startDate);
                     const end = new Date(endDate);
                     
+                    // Set time to ensure proper date range comparison
+                    // Start date: 00:00:00 (beginning of day)
+                    start.setHours(0, 0, 0, 0);
+                    // End date: 23:59:59 (end of day)
+                    end.setHours(23, 59, 59, 999);
+                    
+                    // Check if onset date is >= start date AND <= end date
+                    // เงื่อนไข: วันที่เริ่มป่วย >= วันที่เริ่มต้น AND วันที่เริ่มป่วย <= วันที่สิ้นสุด
                     const withinDateRange = onsetDate >= start && onsetDate <= end;
                     if (withinDateRange) {
                         dateMatches++;
@@ -3506,7 +3519,14 @@
                             parsedDate: onsetDate.toISOString().split('T')[0],
                             startDate: start.toISOString().split('T')[0],
                             endDate: end.toISOString().split('T')[0],
-                            district: patient.district
+                            district: patient.district,
+                            comparison: {
+                                onsetDateTimestamp: onsetDate.getTime(),
+                                startTimestamp: start.getTime(),
+                                endTimestamp: end.getTime(),
+                                isAfterStart: onsetDate >= start,
+                                isBeforeEnd: onsetDate <= end
+                            }
                         });
                     }
                     
@@ -3548,8 +3568,12 @@
                 // Log rejected patients for date out of range
                 if (rejectedForDateOutOfRange.length > 0) {
                     console.log(`❌ REJECTED FOR DATE OUT OF RANGE (${rejectedForDateOutOfRange.length} patients):`);
+                    console.log(`📅 Date range criteria: ${new Date(startDate).toISOString().split('T')[0]} <= onsetDate <= ${new Date(endDate).toISOString().split('T')[0]}`);
                     rejectedForDateOutOfRange.slice(0, 10).forEach(patient => {
-                        console.log(`  Patient ${patient.index}: code="${patient.diseaseCode}", date=${patient.onsetDate} (${patient.parsedDate}), range=${patient.startDate} to ${patient.endDate}, district=${patient.district}`);
+                        const comp = patient.comparison;
+                        console.log(`  Patient ${patient.index}: code="${patient.diseaseCode}", onsetDate=${patient.onsetDate} (${patient.parsedDate}), district=${patient.district}`);
+                        console.log(`    - Range: ${patient.startDate} to ${patient.endDate}`);
+                        console.log(`    - Check: onsetDate >= startDate? ${comp.isAfterStart}, onsetDate <= endDate? ${comp.isBeforeEnd}`);
                     });
                     if (rejectedForDateOutOfRange.length > 10) {
                         console.log(`  ... and ${rejectedForDateOutOfRange.length - 10} more patients`);
