@@ -3412,6 +3412,42 @@
                     agePopulation = convertLegacyAgePopulationData(Object.values(rawAgePopulation));
                 }
                 
+                // Filter age population data by year from start date
+                const reportYear = new Date(startDate).getFullYear();
+                console.log(`🔍 Filtering age population data for year: ${reportYear}`);
+                
+                // Find age population data for the report year
+                let yearSpecificAgePopulation = agePopulation.filter(item => {
+                    const itemYear = parseInt(item.year || 0);
+                    return itemYear === reportYear;
+                });
+                
+                // If no data for specific year, use the latest available year
+                if (yearSpecificAgePopulation.length === 0) {
+                    console.warn(`⚠️ No age population data found for year ${reportYear}, using latest available data`);
+                    
+                    // Get all unique years and use the latest one
+                    const availableYears = [...new Set(agePopulation.map(item => parseInt(item.year || 0)))].filter(year => year > 0);
+                    const latestYear = Math.max(...availableYears);
+                    
+                    if (latestYear > 0) {
+                        yearSpecificAgePopulation = agePopulation.filter(item => {
+                            const itemYear = parseInt(item.year || 0);
+                            return itemYear === latestYear;
+                        });
+                        console.log(`📊 Using age population data from year ${latestYear} (${yearSpecificAgePopulation.length} records)`);
+                    } else {
+                        // Fallback to all data if no year information
+                        yearSpecificAgePopulation = agePopulation;
+                        console.log(`📊 Using all available age population data (${yearSpecificAgePopulation.length} records)`);
+                    }
+                } else {
+                    console.log(`📊 Using age population data for year ${reportYear} (${yearSpecificAgePopulation.length} records)`);
+                }
+                
+                // Use the year-specific population data
+                agePopulation = yearSpecificAgePopulation;
+                
                 // Find selected disease
                 const selectedDisease = diseases.find(d => d.code === diseaseCode);
                 if (!selectedDisease) {
@@ -3700,8 +3736,20 @@
                 return sum + population;
             }, 0);
             
+            console.log(`📊 Population calculation for incidence rate:`, {
+                agePopulationRecords: agePopulation.length,
+                totalPopulation: totalPopulation.toLocaleString(),
+                totalPatients: totalPatients,
+                year: agePopulation.length > 0 ? agePopulation[0].year : 'unknown'
+            });
+            
             // Calculate cumulative incidence rate
             const incidenceRate = totalPopulation > 0 ? ((totalPatients / totalPopulation) * 100000).toFixed(2) : '0.00';
+            
+            console.log(`📊 Cumulative incidence rate calculation:`, {
+                formula: `(${totalPatients} / ${totalPopulation.toLocaleString()}) * 100,000`,
+                result: `${incidenceRate} per 100,000 population`
+            });
             
             // Generate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
             const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
