@@ -3735,32 +3735,38 @@
                 genderRatio = 'ไม่มีข้อมูล';
             }
             
-            // Get total population for Bangkok from Bangkok population data (not from age population)
+            // Get total population for Bangkok by summing all districts for the report year
             const reportYear = new Date(startDate).getFullYear();
             let totalPopulation = 0;
             
             if (bangkokPopulation && Array.isArray(bangkokPopulation)) {
-                // Find population data for the report year
-                const yearPopulation = bangkokPopulation.find(pop => {
+                // Filter population data by report year and sum all districts
+                const yearPopulationData = bangkokPopulation.filter(pop => {
                     const popYear = parseInt(pop.year || 0);
                     return popYear === reportYear;
                 });
                 
-                if (yearPopulation) {
-                    totalPopulation = parseInt(yearPopulation.totalPopulation || yearPopulation.total || 0);
-                    console.log(`📊 Using Bangkok population for year ${reportYear}: ${totalPopulation.toLocaleString()}`);
+                if (yearPopulationData.length > 0) {
+                    totalPopulation = yearPopulationData.reduce((sum, pop) => {
+                        const districtPop = parseInt(pop.totalPopulation || pop.total || (pop.malePopulation || 0) + (pop.femalePopulation || 0) || 0);
+                        return sum + districtPop;
+                    }, 0);
+                    console.log(`📊 Bangkok total population for year ${reportYear} (${yearPopulationData.length} districts): ${totalPopulation.toLocaleString()}`);
                 } else {
                     // Use latest available year if specific year not found
-                    const availableYears = bangkokPopulation
+                    const availableYears = [...new Set(bangkokPopulation
                         .map(pop => parseInt(pop.year || 0))
-                        .filter(year => year > 0)
+                        .filter(year => year > 0))]
                         .sort((a, b) => b - a);
                     
                     if (availableYears.length > 0) {
                         const latestYear = availableYears[0];
-                        const latestYearData = bangkokPopulation.find(pop => parseInt(pop.year || 0) === latestYear);
-                        totalPopulation = parseInt(latestYearData.totalPopulation || latestYearData.total || 0);
-                        console.log(`⚠️ No population data for year ${reportYear}, using latest year ${latestYear}: ${totalPopulation.toLocaleString()}`);
+                        const latestYearData = bangkokPopulation.filter(pop => parseInt(pop.year || 0) === latestYear);
+                        totalPopulation = latestYearData.reduce((sum, pop) => {
+                            const districtPop = parseInt(pop.totalPopulation || pop.total || (pop.malePopulation || 0) + (pop.femalePopulation || 0) || 0);
+                            return sum + districtPop;
+                        }, 0);
+                        console.log(`⚠️ No population data for year ${reportYear}, using latest year ${latestYear} (${latestYearData.length} districts): ${totalPopulation.toLocaleString()}`);
                     }
                 }
             }
@@ -3786,10 +3792,35 @@
             // Calculate cumulative incidence rate
             const incidenceRate = totalPopulation > 0 ? ((totalPatients / totalPopulation) * 100000).toFixed(2) : '0.00';
             
+            // Calculate death rates if there are deaths
+            let mortalityRate = '0.0000'; // อัตราตายสะสมต่อแสนประชากร
+            let caseFatalityRate = '0.0000'; // อัตราป่วยตายร้อยละ
+            
+            if (deaths > 0) {
+                // อัตราตายสะสมต่อแสนประชากร = (จำนวนผู้เสียชีวิต / ประชากรรวม) × 100,000
+                mortalityRate = totalPopulation > 0 ? ((deaths / totalPopulation) * 100000).toFixed(4) : '0.0000';
+                
+                // อัตราป่วยตายร้อยละ = (จำนวนผู้เสียชีวิต / จำนวนผู้ป่วย) × 100
+                caseFatalityRate = totalPatients > 0 ? ((deaths / totalPatients) * 100).toFixed(4) : '0.0000';
+            }
+            
             console.log(`📊 Cumulative incidence rate calculation:`, {
                 formula: `(${totalPatients} / ${totalPopulation.toLocaleString()}) * 100,000`,
                 result: `${incidenceRate} per 100,000 population`
             });
+            
+            if (deaths > 0) {
+                console.log(`📊 Death rate calculations:`, {
+                    mortalityRate: {
+                        formula: `(${deaths} / ${totalPopulation.toLocaleString()}) * 100,000`,
+                        result: `${mortalityRate} per 100,000 population`
+                    },
+                    caseFatalityRate: {
+                        formula: `(${deaths} / ${totalPatients}) * 100`,
+                        result: `${caseFatalityRate}%`
+                    }
+                });
+            }
             
             // Generate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
             const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
@@ -3818,7 +3849,7 @@
                     
                     <ul style="font-size: 14px; line-height: 1.8; list-style: none; padding-left: 1cm; font-family: 'Anuphan', sans-serif;">
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ผู้ป่วยสะสมจำนวน ${totalPatients.toLocaleString()} ราย คิดเป็นอัตราป่วยสะสม ${incidenceRate} รายต่อแสนประชากร</li>
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ${deaths > 0 ? `ผู้เสียชีวิต ${deaths} ราย` : 'ไม่พบผู้เสียชีวิต'}</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ${deaths > 0 ? `ผู้เสียชีวิตสะสม ${deaths.toLocaleString()} ราย คิดเป็นอัตราตายสะสม ${mortalityRate} รายต่อแสนประชากร อัตราป่วยตายร้อยละ ${caseFatalityRate}` : 'ไม่พบผู้เสียชีวิต'}</li>
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- อัตราส่วนผู้ป่วยชายต่อหญิง คือ ${genderRatio}</li>
                         ${ageGroupStats.topThree.length > 0 ? `
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- อัตราป่วยจำแนกตามกลุ่มอายุสูงสุด คือ ${ageGroupStats.topThree[0].ageGroup} (${ageGroupStats.topThree[0].rate} ต่อประชากรแสนคน) ${ageGroupStats.topThree.length > 1 ? `รองลงมา ได้แก่ ${ageGroupStats.topThree[1].ageGroup} (${ageGroupStats.topThree[1].rate} ต่อประชากรแสนคน)` : ''} ${ageGroupStats.topThree.length > 2 ? `และ ${ageGroupStats.topThree[2].ageGroup} (${ageGroupStats.topThree[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
