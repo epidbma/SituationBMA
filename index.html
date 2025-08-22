@@ -3449,13 +3449,23 @@
                 
                 let diseaseMatches = 0;
                 let dateMatches = 0;
+                let rejectedForDiseaseCode = [];
+                let rejectedForInvalidDate = [];
+                let rejectedForDateOutOfRange = [];
                 
-                const filteredPatients = patientsArray.filter(patient => {
+                const filteredPatients = patientsArray.filter((patient, index) => {
                     // Check disease code match (normalize whitespace and case)
                     const patientDiseaseCode = String(patient.diseaseCode || '').trim();
                     const searchDiseaseCode = String(diseaseCode || '').trim();
                     
                     if (patientDiseaseCode !== searchDiseaseCode) {
+                        rejectedForDiseaseCode.push({
+                            index: index + 1,
+                            patientCode: patientDiseaseCode,
+                            expectedCode: searchDiseaseCode,
+                            district: patient.district,
+                            onsetDate: patient.onsetDate
+                        });
                         return false;
                     }
                     diseaseMatches++;
@@ -3473,6 +3483,12 @@
                     }
                     
                     if (!onsetDate || isNaN(onsetDate.getTime())) {
+                        rejectedForInvalidDate.push({
+                            index: index + 1,
+                            diseaseCode: patientDiseaseCode,
+                            onsetDateRaw: patient.onsetDate,
+                            district: patient.district
+                        });
                         return false;
                     }
                     
@@ -3482,16 +3498,74 @@
                     const withinDateRange = onsetDate >= start && onsetDate <= end;
                     if (withinDateRange) {
                         dateMatches++;
+                    } else {
+                        rejectedForDateOutOfRange.push({
+                            index: index + 1,
+                            diseaseCode: patientDiseaseCode,
+                            onsetDate: patient.onsetDate,
+                            parsedDate: onsetDate.toISOString().split('T')[0],
+                            startDate: start.toISOString().split('T')[0],
+                            endDate: end.toISOString().split('T')[0],
+                            district: patient.district
+                        });
                     }
                     
                     return withinDateRange;
                 });
                 
                 console.log(`🔍 Filter results:`, {
+                    totalPatients: patientsArray.length,
                     diseaseMatches,
                     dateMatches,
-                    finalFilteredCount: filteredPatients.length
+                    finalFilteredCount: filteredPatients.length,
+                    rejectedForDiseaseCode: rejectedForDiseaseCode.length,
+                    rejectedForInvalidDate: rejectedForInvalidDate.length,
+                    rejectedForDateOutOfRange: rejectedForDateOutOfRange.length
                 });
+                
+                // Log rejected patients for disease code mismatch
+                if (rejectedForDiseaseCode.length > 0) {
+                    console.log(`❌ REJECTED FOR DISEASE CODE MISMATCH (${rejectedForDiseaseCode.length} patients):`);
+                    rejectedForDiseaseCode.slice(0, 10).forEach(patient => {
+                        console.log(`  Patient ${patient.index}: code="${patient.patientCode}" (expected "${patient.expectedCode}"), date=${patient.onsetDate}, district=${patient.district}`);
+                    });
+                    if (rejectedForDiseaseCode.length > 10) {
+                        console.log(`  ... and ${rejectedForDiseaseCode.length - 10} more patients`);
+                    }
+                }
+                
+                // Log rejected patients for invalid date
+                if (rejectedForInvalidDate.length > 0) {
+                    console.log(`❌ REJECTED FOR INVALID DATE (${rejectedForInvalidDate.length} patients):`);
+                    rejectedForInvalidDate.slice(0, 10).forEach(patient => {
+                        console.log(`  Patient ${patient.index}: code="${patient.diseaseCode}", invalidDate="${patient.onsetDateRaw}", district=${patient.district}`);
+                    });
+                    if (rejectedForInvalidDate.length > 10) {
+                        console.log(`  ... and ${rejectedForInvalidDate.length - 10} more patients`);
+                    }
+                }
+                
+                // Log rejected patients for date out of range
+                if (rejectedForDateOutOfRange.length > 0) {
+                    console.log(`❌ REJECTED FOR DATE OUT OF RANGE (${rejectedForDateOutOfRange.length} patients):`);
+                    rejectedForDateOutOfRange.slice(0, 10).forEach(patient => {
+                        console.log(`  Patient ${patient.index}: code="${patient.diseaseCode}", date=${patient.onsetDate} (${patient.parsedDate}), range=${patient.startDate} to ${patient.endDate}, district=${patient.district}`);
+                    });
+                    if (rejectedForDateOutOfRange.length > 10) {
+                        console.log(`  ... and ${rejectedForDateOutOfRange.length - 10} more patients`);
+                    }
+                }
+                
+                // Log accepted patients
+                if (filteredPatients.length > 0) {
+                    console.log(`✅ ACCEPTED PATIENTS (${filteredPatients.length} patients):`);
+                    filteredPatients.slice(0, 5).forEach((patient, index) => {
+                        console.log(`  Patient: code="${patient.diseaseCode}", date=${patient.onsetDate}, district=${patient.district}, gender=${patient.gender}`);
+                    });
+                    if (filteredPatients.length > 5) {
+                        console.log(`  ... and ${filteredPatients.length - 5} more patients`);
+                    }
+                }
                 
                 // Debug: Show patients that match disease but not date
                 if (diseaseMatches > dateMatches) {
