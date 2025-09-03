@@ -3824,7 +3824,7 @@
             
             // Generate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
             const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
-            const districtStats = calculateDistrictStats(patients, bangkokDistricts);
+            const districtStats = calculateDistrictStats(patients, bangkokDistricts, bangkokPopulation, reportYear);
             
             return `
                 <div class="report-content" style="font-family: 'Anuphan', sans-serif;">
@@ -4141,14 +4141,45 @@
         }
 
         // Calculate district statistics
-        function calculateDistrictStats(patients, bangkokDistricts) {
+        function calculateDistrictStats(patients, bangkokDistricts, bangkokPopulation, reportYear) {
             const districtStats = {};
+            
+            // Get population data for the report year or latest available year
+            let populationData = [];
+            if (bangkokPopulation && Array.isArray(bangkokPopulation)) {
+                // Try to get data for the report year first
+                populationData = bangkokPopulation.filter(pop => parseInt(pop.year || 0) === reportYear);
+                
+                // If no data for report year, use latest available year
+                if (populationData.length === 0) {
+                    const availableYears = [...new Set(bangkokPopulation
+                        .map(pop => parseInt(pop.year || 0))
+                        .filter(year => year > 0))]
+                        .sort((a, b) => b - a);
+                        
+                    if (availableYears.length > 0) {
+                        const latestYear = availableYears[0];
+                        populationData = bangkokPopulation.filter(pop => parseInt(pop.year || 0) === latestYear);
+                        console.log(`⚠️ Using population data from year ${latestYear} instead of ${reportYear}`);
+                    }
+                }
+            }
+            
+            // Create population lookup by district
+            const districtPopulations = {};
+            populationData.forEach(pop => {
+                if (pop.district) {
+                    districtPopulations[pop.district] = parseInt(pop.totalPopulation || pop.total || 
+                        (parseInt(pop.malePopulation || 0) + parseInt(pop.femalePopulation || 0)) || 0);
+                }
+            });
             
             // Initialize districts
             bangkokDistricts.forEach(district => {
-                districtStats[district.district] = {
+                const districtName = district.district;
+                districtStats[districtName] = {
                     patients: 0,
-                    population: district.population || 0
+                    population: districtPopulations[districtName] || 0
                 };
             });
             
@@ -4167,7 +4198,11 @@
                     population: data.population,
                     rate: data.population > 0 ? ((data.patients / data.population) * 100000).toFixed(2) : '0.00'
                 }))
+                // Filter out districts with no population data
+                .filter(stat => stat.population > 0)
+                // Sort by rate in descending order
                 .sort((a, b) => parseFloat(b.rate) - parseFloat(a.rate))
+                // Get top 3
                 .slice(0, 3);
             
             return stats;
@@ -8667,19 +8702,17 @@
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">แขวง</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">เขต</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">จังหวัด</th>
-                                <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">ประชากร</th>
                                 <th class="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${bangkokDistricts.length === 0 ? 
-                                '<tr><td colspan="5" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">🏢</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลเขต</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลแขวง เขต และจังหวัด</p></td></tr>' :
+                                '<tr><td colspan="4" class="px-6 py-20 text-center text-gray-500"><div class="text-6xl mb-4">🏢</div><p class="font-semibold text-xl text-gray-700">ยังไม่มีข้อมูลเขต</p><p class="text-gray-500 mt-2">กรุณาเพิ่มข้อมูลแขวง เขต และจังหวัด</p></td></tr>' :
                                 bangkokDistricts.map((district, index) => `
                                     <tr class="table-row transition-all duration-300 border-b border-gray-100 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
                                         <td class="px-6 py-4 font-semibold text-gray-900">${district.subdistrict}</td>
                                         <td class="px-6 py-4 font-bold text-blue-600">${district.district}</td>
                                         <td class="px-6 py-4 font-medium text-green-600">${district.province}</td>
-                                        <td class="px-6 py-4 text-right font-medium text-gray-900">${district.population ? district.population.toLocaleString() : '0'}</td>
                                         <td class="px-6 py-4 text-center">
                                             <button onclick="editBangkokDistrict(${index})" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:from-blue-600 hover:to-blue-700 mr-2 transition-all transform hover:scale-105">แก้ไข</button>
                                             <button onclick="deleteBangkokDistrict(${index})" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-lg text-sm hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105">ลบ</button>
@@ -11917,7 +11950,7 @@
                             </div>
                             
                             <!-- Province (Auto-filled) -->
-                            <div>
+                            <div class="md:col-span-2">
                                 <label class="block text-sm font-semibold text-gray-700 mb-3">
                                     <svg class="w-4 h-4 inline mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"/>
@@ -11925,17 +11958,6 @@
                                     จังหวัด
                                 </label>
                                 <input type="text" id="bangkokProvince" class="w-full input-field bg-gray-50" value="กรุงเทพมหานคร" readonly>
-                            </div>
-
-                            <!-- Population -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-700 mb-3">
-                                    <svg class="w-4 h-4 inline mr-2 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
-                                    </svg>
-                                    จำนวนประชากร
-                                </label>
-                                <input type="number" id="bangkokPopulation" class="w-full input-field" placeholder="เช่น 50000" required min="0">
                             </div>
                         </div>
                         
@@ -12036,7 +12058,6 @@
                 document.getElementById('bangkokSubdistrict').value = district.subdistrict;
                 document.getElementById('bangkokDistrict').value = district.district;
                 document.getElementById('bangkokProvince').value = district.province;
-                document.getElementById('bangkokPopulation').value = district.population || 0;
                 updateDistrictPreview();
             }
         }
@@ -12056,10 +12077,9 @@
             const subdistrict = document.getElementById('bangkokSubdistrict').value.trim();
             const district = document.getElementById('bangkokDistrict').value.trim();
             const province = document.getElementById('bangkokProvince').value.trim();
-            const population = parseInt(document.getElementById('bangkokPopulation').value.trim()) || 0;
             
-            if (!subdistrict || !district || !province || population < 0) {
-                showNotification('กรุณากรอกข้อมูลให้ครบถ้วน และจำนวนประชากรต้องไม่ติดลบ', 'error');
+            if (!subdistrict || !district || !province) {
+                showNotification('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
                 return;
             }
             
@@ -12093,8 +12113,7 @@
                 const newBangkokDistrict = {
                     subdistrict,
                     district,
-                    province,
-                    population
+                    province
                 };
                 
                 if (editIndex !== null) {
