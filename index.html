@@ -3652,7 +3652,7 @@
                 }
                 
                 // Generate report HTML
-                const reportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts || [], bangkokPopulation || []);
+                const reportHTML = await generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts || [], bangkokPopulation || []);
                 
                 // Display in preview
                 const reportContentElement = document.getElementById('reportContent');
@@ -3828,10 +3828,10 @@
 
             // คำนวณการเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง
             const endDateYear = parseInt(endDate.split('/')[2]) - 543; // แปลง พ.ศ. เป็น ค.ศ.
-            const medianComparison = await calculateMedianComparison(disease.code, patients.length, startDate, endDate, endDateYear);
-            
-            // คำนวณการเปรียบเทียบกับปีก่อนหน้า
-            const previousYearComparison = await calculatePreviousYearComparison(disease.code, patients.length, startDate, endDate, endDateYear);
+            const [medianComparisonResult, previousYearComparisonResult] = await Promise.all([
+                calculateMedianComparison(disease.code, patients.length, startDate, endDate, endDateYear),
+                calculatePreviousYearComparison(disease.code, patients.length, startDate, endDate, endDateYear)
+            ]);
             
             return `
                 <div class="report-content" style="font-family: 'Anuphan', sans-serif;">
@@ -3867,13 +3867,13 @@
                         ${districtStats.length > 0 ? `
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- เขตที่มีอัตราป่วยมากที่สุด คือ ${districtStats[0].district} (${districtStats[0].rate} ต่อประชากรแสนคน) ${districtStats.length > 1 ? `รองลงมา ได้แก่ ${districtStats[1].district} (${districtStats[1].rate} ต่อประชากรแสนคน)` : ''} ${districtStats.length > 2 ? `และ ${districtStats[2].district} (${districtStats[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
                         ` : ''}
-                        ${medianComparison ? `
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${endDateYear + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า ${medianComparison.comparison} ค่ามัธยฐาน 5 ปีย้อนหลังในช่วงเวลาเดียวกัน</li>
+                        ${medianComparisonResult ? `
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${endDateYear + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า ${medianComparisonResult.comparison} ค่ามัธยฐาน 5 ปีย้อนหลังในช่วงเวลาเดียวกัน</li>
                         ` : `
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ไม่สามารถเปรียบเทียบกับค่ามัธยฐานได้ เนื่องจากไม่มีข้อมูลย้อนหลังเพียงพอในช่วงเวลาเดียวกัน</li>
                         `}
-                        ${previousYearComparison ? `
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${endDateYear + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับปี ${endDateYear + 542} พบว่า ${previousYearComparison.comparison} ปี ${endDateYear + 542} ในช่วงเวลาเดียวกัน</li>
+                        ${previousYearComparisonResult ? `
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${endDateYear + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับปี ${endDateYear + 542} พบว่า ${previousYearComparisonResult.comparison} ปี ${endDateYear + 542} ในช่วงเวลาเดียวกัน</li>
                         ` : `
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ไม่สามารถเปรียบเทียบกับปีก่อนหน้าได้ เนื่องจากไม่มีข้อมูล</li>
                         `}
