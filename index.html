@@ -3378,12 +3378,13 @@
                 console.log('🔄 Starting report generation...', { diseaseCode, startDate, endDate });
                 
                 // Load necessary data
-                const [diseases, patients, rawAgePopulation, bangkokDistricts, bangkokPopulation] = await Promise.all([
+                const [diseases, patients, rawAgePopulation, bangkokDistricts, bangkokPopulation, diseaseHistory] = await Promise.all([
                     loadFromFirebase('diseases'),
                     loadFromFirebase('patients'),
                     loadFromFirebase('agePopulation'),
                     loadFromFirebase('bangkokDistricts'),
-                    loadFromFirebase('population')
+                    loadFromFirebase('population'),
+                    loadFromFirebase('diseaseHistory')
                 ]);
                 
                 console.log('📊 Data loaded:', {
@@ -3391,8 +3392,15 @@
                     patients: patients ? Object.keys(patients).length : 0,
                     agePopulation: rawAgePopulation ? rawAgePopulation.length : 0,
                     districts: bangkokDistricts ? bangkokDistricts.length : 0,
-                    bangkokPopulation: bangkokPopulation ? bangkokPopulation.length : 0
+                    bangkokPopulation: bangkokPopulation ? bangkokPopulation.length : 0,
+                    diseaseHistory: diseaseHistory ? diseaseHistory.length : 0
                 });
+
+                // เก็บข้อมูลโรคย้อนหลังไว้ใน window.masterData
+                window.masterData = {
+                    ...window.masterData,
+                    diseaseHistory: diseaseHistory || []
+                };
                 
                 // Validate required data
                 if (!diseases || !Array.isArray(diseases) || diseases.length === 0) {
