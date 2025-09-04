@@ -3375,8 +3375,6 @@
         // Generate report content based on selected criteria
         async function generateReportContent(diseaseCode, startDate, endDate) {
             try {
-                console.log('🔄 Starting report generation...', { diseaseCode, startDate, endDate });
-                
                 // Load necessary data
                 const [diseases, patients, rawAgePopulation, bangkokDistricts, bangkokPopulation, diseaseHistory] = await Promise.all([
                     loadFromFirebase('diseases'),
@@ -3386,15 +3384,6 @@
                     loadFromFirebase('population'),
                     loadFromFirebase('diseaseHistory')
                 ]);
-                
-                console.log('📊 Data loaded:', {
-                    diseases: diseases ? diseases.length : 0,
-                    patients: patients ? Object.keys(patients).length : 0,
-                    agePopulation: rawAgePopulation ? rawAgePopulation.length : 0,
-                    districts: bangkokDistricts ? bangkokDistricts.length : 0,
-                    bangkokPopulation: bangkokPopulation ? bangkokPopulation.length : 0,
-                    diseaseHistory: diseaseHistory ? diseaseHistory.length : 0
-                });
 
                 // เก็บข้อมูลโรคย้อนหลังไว้ใน window.masterData
                 window.masterData = {
@@ -4149,46 +4138,80 @@
 
         // คำนวณค่ามัธยฐานและสร้างข้อความเปรียบเทียบ
         function getMedianComparisonText(diseaseName, diseaseCode, currentPatients, startDate, endDate) {
+            console.log('🔄 เริ่มการคำนวณค่ามัธยฐาน 5 ปีย้อนหลัง:', {
+                disease: `${diseaseCode} - ${diseaseName}`,
+                startDate: startDate.toLocaleDateString('th-TH'),
+                endDate: endDate.toLocaleDateString('th-TH')
+            });
+
             // ดึงข้อมูลโรคย้อนหลังจากฐานข้อมูล
             const diseaseHistory = window.masterData.diseaseHistory || [];
+            console.log('📊 ข้อมูลโรคย้อนหลังที่มีทั้งหมด:', diseaseHistory.length, 'รายการ');
             
             // ปีและเดือนตามวันที่สิ้นสุด
             const endYear = endDate.getFullYear();
             const endMonth = endDate.getMonth() + 1; // JavaScript months are 0-based
+            console.log('📅 ช่วงเวลาที่ต้องการ:', {
+                endYear: `${endYear} (พ.ศ. ${endYear + 543})`,
+                endMonth: endMonth,
+                yearRange: `${endYear - 5} - ${endYear - 1} (พ.ศ. ${endYear - 5 + 543} - ${endYear - 1 + 543})`
+            });
             
             // กรองข้อมูลย้อนหลัง 5 ปี
             const historicalData = diseaseHistory
-                .filter(record => 
-                    record.diseaseCode === diseaseCode && // รหัสโรคตรงกัน
-                    record.year >= endYear - 5 && record.year < endYear && // 5 ปีย้อนหลังไม่รวมปีปัจจุบัน
-                    record.months && record.months[String(endMonth).padStart(2, '0')] // มีข้อมูลเดือนที่ต้องการ
-                )
+                .filter(record => {
+                    const isMatch = record.diseaseCode === diseaseCode && // รหัสโรคตรงกัน
+                        record.year >= endYear - 5 && record.year < endYear && // 5 ปีย้อนหลังไม่รวมปีปัจจุบัน
+                        record.months && record.months[String(endMonth).padStart(2, '0')]; // มีข้อมูลเดือนที่ต้องการ
+                    if (!isMatch) {
+                        console.log('❌ ข้อมูลที่ไม่ตรงเงื่อนไข:', {
+                            year: record.year,
+                            diseaseCode: record.diseaseCode,
+                            hasMonth: record.months ? !!record.months[String(endMonth).padStart(2, '0')] : false
+                        });
+                    }
+                    return isMatch;
+                })
                 .map(record => ({
                     year: record.year,
                     cases: record.months[String(endMonth).padStart(2, '0')].cases || 0
                 }))
                 .sort((a, b) => a.cases - b.cases); // เรียงจำนวนผู้ป่วยจากน้อยไปมาก
 
+            console.log('📊 ข้อมูลที่ใช้คำนวณค่ามัธยฐาน:', historicalData);
+
             // ถ้าไม่มีข้อมูลครบ 5 ปี
             if (historicalData.length < 5) {
+                console.log('⚠️ ข้อมูลไม่เพียงพอ:', historicalData.length, 'ปี (ต้องการ 5 ปี)');
                 return `- ในปี ${endYear + 543} ตั้งแต่เดือน${startDate.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDate.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วย${diseaseName} ไม่สามารถเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลังได้ เนื่องจากไม่มีข้อมูลย้อนหลังเพียงพอในช่วงเวลาเดียวกัน`;
             }
 
             // คำนวณค่ามัธยฐาน (ค่าตรงกลางจาก 5 ค่า)
             const median = historicalData[2].cases; // index 2 คือค่าตรงกลางจาก 5 ค่า
+            console.log('📊 ค่ามัธยฐาน:', median, 'ราย จาก', historicalData.map(d => `${d.year} (${d.cases})`).join(', '));
 
             // นับจำนวนผู้ป่วยปัจจุบัน
             const currentCases = currentPatients.length;
+            console.log('📊 จำนวนผู้ป่วยปัจจุบัน:', currentCases, 'ราย');
 
             // เปรียบเทียบและสร้างข้อความ
             let comparisonText = `- ในปี ${endYear + 543} ตั้งแต่เดือน${startDate.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDate.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วย${diseaseName} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง (ปี ${endYear - 5 + 543} ถึง ${endYear - 1 + 543}) พบว่า `;
 
+            console.log('🔄 เปรียบเทียบ:', {
+                currentCases,
+                median,
+                difference: currentCases - median
+            });
+
             if (currentCases === median) {
+                console.log('✅ ผลการเปรียบเทียบ: เท่ากัน');
                 comparisonText += 'ไม่แตกต่างกัน ในช่วงเวลาเดียวกัน';
             } else if (currentCases > median) {
                 const ratio = (currentCases / median).toFixed(1);
+                console.log('📈 ผลการเปรียบเทียบ: สูงกว่า', ratio, 'เท่า');
                 comparisonText += `สูงกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น ${ratio} เท่า ในช่วงเวลาเดียวกัน`;
             } else {
+                console.log('📉 ผลการเปรียบเทียบ: ต่ำกว่า');
                 comparisonText += 'ต่ำกว่าค่ามัธยฐาน 5 ปีย้อนหลังในช่วงเวลาเดียวกัน';
             }
 
