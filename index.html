@@ -3652,7 +3652,7 @@
                 }
                 
                 // Generate report HTML
-                const reportHTML = await generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts || [], bangkokPopulation || []);
+                const reportHTML = generateReportHTML(selectedDisease, filteredPatients, startDate, endDate, agePopulation, bangkokDistricts || [], bangkokPopulation || []);
                 
                 // Display in preview
                 const reportContentElement = document.getElementById('reportContent');
@@ -3683,7 +3683,7 @@
         }
 
         // Generate the actual report HTML content
-        async function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts, bangkokPopulation) {
+        function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts, bangkokPopulation) {
             const startDateObj = new Date(startDate);
             const endDateObj = new Date(endDate);
             
@@ -3825,13 +3825,6 @@
             // Generate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
             const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
             const districtStats = calculateDistrictStats(patients, bangkokDistricts, bangkokPopulation, reportYear);
-
-            // คำนวณการเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง
-            const endDateYear = parseInt(endDate.split('/')[2]) - 543; // แปลง พ.ศ. เป็น ค.ศ.
-            const [medianComparisonResult, previousYearComparisonResult] = await Promise.all([
-                calculateMedianComparison(disease.code, patients.length, startDate, endDate, endDateYear),
-                calculatePreviousYearComparison(disease.code, patients.length, startDate, endDate, endDateYear)
-            ]);
             
             return `
                 <div class="report-content" style="font-family: 'Anuphan', sans-serif;">
@@ -3867,16 +3860,7 @@
                         ${districtStats.length > 0 ? `
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- เขตที่มีอัตราป่วยมากที่สุด คือ ${districtStats[0].district} (${districtStats[0].rate} ต่อประชากรแสนคน) ${districtStats.length > 1 ? `รองลงมา ได้แก่ ${districtStats[1].district} (${districtStats[1].rate} ต่อประชากรแสนคน)` : ''} ${districtStats.length > 2 ? `และ ${districtStats[2].district} (${districtStats[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
                         ` : ''}
-                        ${medianComparisonResult ? `
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${endDateYear + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า ${medianComparisonResult.comparison} ค่ามัธยฐาน 5 ปีย้อนหลังในช่วงเวลาเดียวกัน</li>
-                        ` : `
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ไม่สามารถเปรียบเทียบกับค่ามัธยฐานได้ เนื่องจากไม่มีข้อมูลย้อนหลังเพียงพอในช่วงเวลาเดียวกัน</li>
-                        `}
-                        ${previousYearComparisonResult ? `
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${endDateYear + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับปี ${endDateYear + 542} พบว่า ${previousYearComparisonResult.comparison} ปี ${endDateYear + 542} ในช่วงเวลาเดียวกัน</li>
-                        ` : `
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ไม่สามารถเปรียบเทียบกับปีก่อนหน้าได้ เนื่องจากไม่มีข้อมูล</li>
-                        `}
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">${getMedianComparisonText(disease.name, disease.code, patients, startDateObj, endDateObj)}</li>
                     </ul>
                 </div>
             `;
@@ -3967,104 +3951,6 @@
             }
             
             return null;
-        }
-
-        // คำนวณการเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง
-        async function calculateMedianComparison(diseaseCode, currentCases, startDate, endDate, currentYear) {
-            try {
-                // ดึงข้อมูลจาก diseaseHistory
-                const diseaseHistory = await loadFromFirebase('diseaseHistory');
-                if (!diseaseHistory) return null;
-
-                // กรองข้อมูล 5 ปีย้อนหลัง (ไม่รวมปีปัจจุบัน)
-                const historicalData = diseaseHistory.filter(record => {
-                    const year = parseInt(record.year);
-                    return record.diseaseCode === diseaseCode &&
-                           year >= currentYear - 5 &&
-                           year < currentYear;
-                });
-
-                if (historicalData.length < 5) {
-                    console.log('ไม่มีข้อมูลย้อนหลังเพียงพอ');
-                    return null;
-                }
-
-                // คำนวณจำนวนผู้ป่วยในช่วงเดือนเดียวกันของแต่ละปี
-                const yearCases = historicalData.map(record => {
-                    const startMonth = parseInt(startDate.split('/')[1]);
-                    const endMonth = parseInt(endDate.split('/')[1]);
-                    let cases = 0;
-                    
-                    // รวมจำนวนผู้ป่วยในช่วงเดือนที่ต้องการ
-                    for (let month = startMonth; month <= endMonth; month++) {
-                        const monthStr = month.toString().padStart(2, '0');
-                        if (record.months && record.months[monthStr]) {
-                            cases += record.months[monthStr].cases || 0;
-                        }
-                    }
-                    return cases;
-                });
-
-                // เรียงข้อมูลและหาค่ามัธยฐาน
-                const sortedCases = [...yearCases].sort((a, b) => a - b);
-                const medianCases = sortedCases[Math.floor(sortedCases.length / 2)];
-
-                // เปรียบเทียบกับปีปัจจุบัน
-                if (currentCases > medianCases) {
-                    return { comparison: 'มากกว่า', median: medianCases };
-                } else if (currentCases < medianCases) {
-                    return { comparison: 'น้อยกว่า', median: medianCases };
-                } else {
-                    return { comparison: 'เท่ากับ', median: medianCases };
-                }
-            } catch (error) {
-                console.error('Error calculating median comparison:', error);
-                return null;
-            }
-        }
-
-        // คำนวณการเปรียบเทียบกับปีก่อนหน้า
-        async function calculatePreviousYearComparison(diseaseCode, currentCases, startDate, endDate, currentYear) {
-            try {
-                // ดึงข้อมูลจาก diseaseHistory
-                const diseaseHistory = await loadFromFirebase('diseaseHistory');
-                if (!diseaseHistory) return null;
-
-                // หาข้อมูลปีก่อนหน้า
-                const previousYearData = diseaseHistory.find(record => 
-                    record.diseaseCode === diseaseCode && 
-                    parseInt(record.year) === currentYear - 1
-                );
-
-                if (!previousYearData) {
-                    console.log('ไม่มีข้อมูลปีก่อนหน้า');
-                    return null;
-                }
-
-                // คำนวณจำนวนผู้ป่วยในช่วงเดือนเดียวกันของปีก่อนหน้า
-                const startMonth = parseInt(startDate.split('/')[1]);
-                const endMonth = parseInt(endDate.split('/')[1]);
-                let previousYearCases = 0;
-
-                for (let month = startMonth; month <= endMonth; month++) {
-                    const monthStr = month.toString().padStart(2, '0');
-                    if (previousYearData.months && previousYearData.months[monthStr]) {
-                        previousYearCases += previousYearData.months[monthStr].cases || 0;
-                    }
-                }
-
-                // เปรียบเทียบกับปีปัจจุบัน
-                if (currentCases > previousYearCases) {
-                    return { comparison: 'สูงกว่า', cases: previousYearCases };
-                } else if (currentCases < previousYearCases) {
-                    return { comparison: 'ต่ำกว่า', cases: previousYearCases };
-                } else {
-                    return { comparison: 'เท่ากับ', cases: previousYearCases };
-                }
-            } catch (error) {
-                console.error('Error calculating previous year comparison:', error);
-                return null;
-            }
         }
 
         // Calculate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
@@ -4251,6 +4137,54 @@
                 percentageTop, 
                 allData: stats // ข้อมูลทั้งหมดสำหรับ popup
             };
+        }
+
+        // คำนวณค่ามัธยฐานและสร้างข้อความเปรียบเทียบ
+        function getMedianComparisonText(diseaseName, diseaseCode, currentPatients, startDate, endDate) {
+            // ดึงข้อมูลโรคย้อนหลังจากฐานข้อมูล
+            const diseaseHistory = window.masterData.diseaseHistory || [];
+            
+            // ปีและเดือนตามวันที่สิ้นสุด
+            const endYear = endDate.getFullYear();
+            const endMonth = endDate.getMonth() + 1; // JavaScript months are 0-based
+            
+            // กรองข้อมูลย้อนหลัง 5 ปี
+            const historicalData = diseaseHistory
+                .filter(record => 
+                    record.diseaseCode === diseaseCode && // รหัสโรคตรงกัน
+                    record.year >= endYear - 5 && record.year < endYear && // 5 ปีย้อนหลังไม่รวมปีปัจจุบัน
+                    record.months && record.months[String(endMonth).padStart(2, '0')] // มีข้อมูลเดือนที่ต้องการ
+                )
+                .map(record => ({
+                    year: record.year,
+                    cases: record.months[String(endMonth).padStart(2, '0')].cases || 0
+                }))
+                .sort((a, b) => a.cases - b.cases); // เรียงจำนวนผู้ป่วยจากน้อยไปมาก
+
+            // ถ้าไม่มีข้อมูลครบ 5 ปี
+            if (historicalData.length < 5) {
+                return `- ในปี ${endYear + 543} ตั้งแต่เดือน${startDate.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDate.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วย${diseaseName} ไม่สามารถเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลังได้ เนื่องจากไม่มีข้อมูลย้อนหลังเพียงพอในช่วงเวลาเดียวกัน`;
+            }
+
+            // คำนวณค่ามัธยฐาน (ค่าตรงกลางจาก 5 ค่า)
+            const median = historicalData[2].cases; // index 2 คือค่าตรงกลางจาก 5 ค่า
+
+            // นับจำนวนผู้ป่วยปัจจุบัน
+            const currentCases = currentPatients.length;
+
+            // เปรียบเทียบและสร้างข้อความ
+            let comparisonText = `- ในปี ${endYear + 543} ตั้งแต่เดือน${startDate.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDate.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วย${diseaseName} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง (ปี ${endYear - 5 + 543} ถึง ${endYear - 1 + 543}) พบว่า `;
+
+            if (currentCases === median) {
+                comparisonText += 'ไม่แตกต่างกัน ในช่วงเวลาเดียวกัน';
+            } else if (currentCases > median) {
+                const ratio = (currentCases / median).toFixed(1);
+                comparisonText += `สูงกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น ${ratio} เท่า ในช่วงเวลาเดียวกัน`;
+            } else {
+                comparisonText += 'ต่ำกว่าค่ามัธยฐาน 5 ปีย้อนหลังในช่วงเวลาเดียวกัน';
+            }
+
+            return comparisonText;
         }
 
         // Calculate district statistics
