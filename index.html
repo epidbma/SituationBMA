@@ -3683,7 +3683,7 @@
         }
 
         // Generate the actual report HTML content
-        function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts, bangkokPopulation) {
+        async function generateReportHTML(disease, patients, startDate, endDate, agePopulation, bangkokDistricts, bangkokPopulation) {
             const startDateObj = new Date(startDate);
             const endDateObj = new Date(endDate);
             
@@ -3822,16 +3822,17 @@
                 });
             }
             
+            // โหลดข้อมูลโรคย้อนหลัง
+            const diseaseHistorySnapshot = await get(ref(database, 'diseaseHistory'));
+            const diseaseHistory = diseaseHistorySnapshot.val() || [];
+
             // Generate age group statistics - ใช้คอลัมน์ ageGroup จากฐานข้อมูลผู้ป่วยโดยตรง
             const ageGroupStats = calculateAgeGroupStats(patients, agePopulation);
             const districtStats = calculateDistrictStats(patients, bangkokDistricts, bangkokPopulation, reportYear);
 
-            // คำนวณค่ามัธยฐาน 5 ปีย้อนหลัง
-            const medianStats = calculateFiveYearMedian(allPatients, disease, startDate, endDate);
-            const medianComparison = medianStats && medianStats.ratio ? 
-                `มากกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น ${medianStats.ratio} เท่า` :
-                `ไม่สามารถเปรียบเทียบกับค่ามัธยฐานได้ เนื่องจากไม่มีข้อมูลย้อนหลังเพียงพอ`;
-
+            // คำนวณการเปรียบเทียบกับค่ามัธยฐาน
+            const medianComparison = calculateMedianComparison(diseaseHistory, patients, disease.code, startDate, endDate);
+            
             return `
                 <div class="report-content" style="font-family: 'Anuphan', sans-serif;">
                     <!-- Header -->
@@ -3866,7 +3867,7 @@
                         ${districtStats.length > 0 ? `
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- เขตที่มีอัตราป่วยมากที่สุด คือ ${districtStats[0].district} (${districtStats[0].rate} ต่อประชากรแสนคน) ${districtStats.length > 1 ? `รองลงมา ได้แก่ ${districtStats[1].district} (${districtStats[1].rate} ต่อประชากรแสนคน)` : ''} ${districtStats.length > 2 ? `และ ${districtStats[2].district} (${districtStats[2].rate} ต่อประชากรแสนคน)` : ''} ตามลำดับ</li>
                         ` : ''}
-                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า ${medianComparison}ในช่วงเวลาเดียวกัน</li>
+                        <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับค่ามัธยฐาน 5 ปีย้อนหลัง พบว่า ${medianComparison.hasEnoughData ? medianComparison.comparison : medianComparison.message}</li>
                         <li style="margin: 0.4rem 0; text-indent: -0.2cm; padding-left: 0.2cm;">- ในปี ${new Date().getFullYear() + 543} ตั้งแต่เดือน${startDateObj.toLocaleString('th-TH', { month: 'long' })}ถึงเดือน${endDateObj.toLocaleString('th-TH', { month: 'long' })} จำนวนผู้ป่วยโรค${disease.name} เมื่อเปรียบเทียบกับปี ${new Date().getFullYear() + 542} พบว่า สูงกว่าปี ${new Date().getFullYear() + 542} คิดเป็น 1.1 เท่า ในช่วงเวลาเดียวกัน</li>
                     </ul>
                 </div>
@@ -4146,69 +4147,6 @@
             };
         }
 
-        // Calculate 5-year median for the same period
-        function calculateFiveYearMedian(allPatients, disease, startDate, endDate) {
-            // แปลงวันที่ให้เป็น Date object
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            const currentYear = end.getFullYear();
-            
-            // เก็บจำนวนผู้ป่วยแยกตามปี
-            const yearlyPatients = {};
-            
-            // วนลูปผ่านข้อมูลผู้ป่วยทั้งหมด
-            allPatients.forEach(patient => {
-                if (!patient.onsetDate || !patient.diseaseCode) return;
-                
-                // ตรวจสอบว่าเป็นโรคที่ต้องการหรือไม่
-                if (patient.diseaseCode.toString() !== disease.code.toString()) return;
-                
-                const onsetDate = new Date(patient.onsetDate);
-                const patientYear = onsetDate.getFullYear();
-                
-                // ตรวจสอบว่าอยู่ในช่วงเดือนเดียวกันหรือไม่
-                if (onsetDate.getMonth() < start.getMonth() || onsetDate.getMonth() > end.getMonth()) return;
-                
-                // นับจำนวนผู้ป่วยในแต่ละปี
-                if (!yearlyPatients[patientYear]) {
-                    yearlyPatients[patientYear] = 0;
-                }
-                yearlyPatients[patientYear]++;
-            });
-            
-            // เก็บจำนวนผู้ป่วย 5 ปีย้อนหลัง (ไม่รวมปีปัจจุบัน)
-            const fiveYearCounts = [];
-            for (let year = currentYear - 5; year < currentYear; year++) {
-                if (yearlyPatients[year]) {
-                    fiveYearCounts.push(yearlyPatients[year]);
-                }
-            }
-            
-            // คำนวณค่ามัธยฐาน
-            if (fiveYearCounts.length === 0) return null;
-            
-            const sorted = fiveYearCounts.sort((a, b) => a - b);
-            const middle = Math.floor(sorted.length / 2);
-            
-            let median;
-            if (sorted.length % 2 === 0) {
-                median = (sorted[middle - 1] + sorted[middle]) / 2;
-            } else {
-                median = sorted[middle];
-            }
-            
-            // คำนวณอัตราส่วนเทียบกับปีปัจจุบัน
-            const currentYearCount = yearlyPatients[currentYear] || 0;
-            const ratio = median > 0 ? (currentYearCount / median) : null;
-            
-            return {
-                median,
-                currentYearCount,
-                ratio: ratio !== null ? parseFloat(ratio.toFixed(1)) : null,
-                yearlyData: yearlyPatients
-            };
-        }
-
         // Calculate district statistics
         function calculateDistrictStats(patients, bangkokDistricts, bangkokPopulation, reportYear) {
             const districtStats = {};
@@ -4280,6 +4218,80 @@
         // Hide report preview
         function hideReportPreview() {
             document.getElementById('reportPreviewSection').classList.add('hidden');
+        }
+
+        // คำนวณค่ามัธยฐานและเปรียบเทียบ
+        function calculateMedianComparison(diseaseHistory, currentPatients, diseaseCode, startDate, endDate) {
+            const startYear = new Date(startDate).getFullYear();
+            const endYear = new Date(endDate).getFullYear();
+            
+            // นับจำนวนผู้ป่วยปีปัจจุบัน
+            const currentYearPatients = currentPatients.length;
+            
+            // หาจำนวนผู้ป่วยย้อนหลัง 5 ปี
+            const previousYears = [];
+            for (let year = startYear - 5; year < startYear; year++) {
+                const yearData = diseaseHistory.find(d => 
+                    d.year === year.toString() && 
+                    d.diseaseCode === diseaseCode
+                );
+                
+                if (yearData && yearData.months) {
+                    // รวมจำนวนผู้ป่วยในช่วงเดือนเดียวกัน
+                    let totalPatients = 0;
+                    const startMonth = new Date(startDate).getMonth() + 1;
+                    const endMonth = new Date(endDate).getMonth() + 1;
+                    
+                    for (let month = startMonth; month <= endMonth; month++) {
+                        const monthStr = month.toString().padStart(2, '0');
+                        if (yearData.months[monthStr]) {
+                            totalPatients += yearData.months[monthStr].cases || 0;
+                        }
+                    }
+                    previousYears.push({ year, patients: totalPatients });
+                }
+            }
+            
+            if (previousYears.length < 5) {
+                return {
+                    hasEnoughData: false,
+                    message: "ไม่สามารถเปรียบเทียบกับค่ามัธยฐานได้ เนื่องจากไม่มีข้อมูลย้อนหลังเพียงพอในช่วงเวลาเดียวกัน"
+                };
+            }
+            
+            // คำนวณค่ามัธยฐาน
+            const sortedCounts = previousYears
+                .map(y => y.patients)
+                .sort((a, b) => a - b);
+            const median = sortedCounts[Math.floor(sortedCounts.length / 2)];
+            
+            // เปรียบเทียบกับค่ามัธยฐาน
+            if (median === 0) {
+                return {
+                    hasEnoughData: false,
+                    message: "ไม่สามารถเปรียบเทียบได้เนื่องจากค่ามัธยฐานเป็น 0"
+                };
+            }
+            
+            const ratio = currentYearPatients / median;
+            let comparison = '';
+            
+            if (ratio > 1) {
+                comparison = `สูงกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น ${ratio.toFixed(1)} เท่า`;
+            } else if (ratio < 1) {
+                comparison = `ต่ำกว่าค่ามัธยฐาน 5 ปีย้อนหลัง คิดเป็น ${ratio.toFixed(1)} เท่า`;
+            } else {
+                comparison = `เท่ากับค่ามัธยฐาน 5 ปีย้อนหลัง`;
+            }
+            
+            return {
+                hasEnoughData: true,
+                currentPatients: currentYearPatients,
+                median: median,
+                ratio: ratio,
+                comparison: comparison,
+                previousYears: previousYears
+            };
         }
 
         // Print report function
